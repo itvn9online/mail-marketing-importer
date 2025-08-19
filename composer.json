@@ -1,0 +1,33 @@
+{
+	"name": "mail-marketing-importer/wordpress-plugin",
+	"description": "WordPress plugin for importing email marketing data from Excel files",
+	"type": "wordpress-plugin",
+	"version": "1.0.0",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+		{
+			"name": "Dao Quoc Dai",
+			"email": "itvn9online@gmail.com"
+		}
+	],
+	"require": {
+		"php": ">=7.4",
+		"phpoffice/phpspreadsheet": "^1.28"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^9.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"MailMarketingImporter\\": "includes/"
+		}
+	},
+	"scripts": {
+		"test": "phpunit",
+		"install-deps": "composer install --no-dev"
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"sort-packages": true
+	}
+}

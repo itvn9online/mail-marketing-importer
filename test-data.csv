@@ -1,0 +1,8 @@
+email,name,phone
+john@example.com,John Doe,0123456789
+jane@example.com,Jane Smith,0987654321
+bob@example.com,Bob Johnson,0111222333,name,phone
+test1@example.com,John Doe,123456789
+test2@example.com,Jane Smith,987654321
+invalid-email,Invalid User,111111111
+test3@example.com,Valid User,222222222

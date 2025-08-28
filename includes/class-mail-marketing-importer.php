@@ -22,6 +22,9 @@ class Mail_Marketing_Importer
         // Debug: Add a simple test action
         add_action('admin_post_test_import', array($this, 'test_import'));
         add_action('admin_post_test_unsubscribe', array($this, 'test_unsubscribe'));
+
+        // Email status toggle actions
+        add_action('wp_ajax_toggle_email_status', array($this, 'handle_toggle_email_status'));
     }
 
     /**
@@ -517,12 +520,12 @@ class Mail_Marketing_Importer
                                             <td><?php echo number_format($campaign->contact_count); ?></td>
                                             <td>
                                                 <?php if ($campaign->start_date): ?>
-                                                    <?php echo date('d/m/Y H:i', strtotime($campaign->start_date)); ?>
+                                                    <?php echo $campaign->start_date; ?>
                                                 <?php else: ?>
                                                     <em>Gửi ngay</em>
                                                 <?php endif; ?>
                                             </td>
-                                            <td><?php echo date('M j, Y', strtotime($campaign->created_at)); ?></td>
+                                            <td><?php echo $campaign->created_at; ?></td>
                                             <td>
                                                 <a href="<?php echo admin_url('admin.php?page=email-campaigns&edit=' . $campaign->id); ?>" class="button button-small">Edit</a>
                                                 <a href="https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/v1/?token=9557ff3fc1295832f54c9fe3351d977b&action=mail_marketing&campaign_id=<?php echo $campaign->id; ?>"
@@ -539,88 +542,284 @@ class Mail_Marketing_Importer
                             <p>No campaigns created yet. Create your first campaign above to get started!</p>
                         <?php endif; ?>
                     </div>
+
+                    <!-- Email List Section - Show when not editing -->
+                    <div id="imported-email-list" class="campaign-section">
+                        <h2>Imported Email List</h2>
+                        <?php $this->render_email_list(); ?>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
+    <?php
+    }
 
-        <style>
-            .campaign-stats-overview {
-                display: flex;
-                gap: 20px;
-                margin: 20px 0;
-            }
+    /**
+     * Render email list with filters
+     */
+    private function render_email_list()
+    {
+        global $wpdb;
 
-            .campaign-stat-box {
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                border-radius: 4px;
-                padding: 20px;
-                text-align: center;
-                min-width: 120px;
-            }
+        // Get filter parameters
+        $status_filter = isset($_GET['email_status']) ? sanitize_text_field($_GET['email_status']) : '';
+        $deleted_filter = isset($_GET['email_deleted']) ? sanitize_text_field($_GET['email_deleted']) : '';
+        $unsubscribed_filter = isset($_GET['email_unsubscribed']) ? sanitize_text_field($_GET['email_unsubscribed']) : '';
+        $campaign_filter = isset($_GET['email_campaign']) ? intval($_GET['email_campaign']) : '';
+        $search_email = isset($_GET['search_email']) ? sanitize_text_field($_GET['search_email']) : '';
+        $search_phone = isset($_GET['search_phone']) ? sanitize_text_field($_GET['search_phone']) : '';
 
-            .campaign-stat-number {
-                font-size: 2em;
-                font-weight: bold;
-                color: #0073aa;
-            }
+        // Pagination
+        $per_page = 20;
+        $current_page = isset($_GET['email_page']) ? max(1, intval($_GET['email_page'])) : 1;
+        $offset = ($current_page - 1) * $per_page;
 
-            .campaign-stat-label {
-                color: #666;
-                margin-top: 5px;
-            }
+        // Build WHERE clause
+        $where_conditions = array();
+        $where_values = array();
 
-            .campaign-container {
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                border-radius: 4px;
-                margin: 20px 0;
-            }
+        if ($status_filter !== '') {
+            $where_conditions[] = "mm.status = %s";
+            $where_values[] = $status_filter;
+        }
 
-            .campaign-section {
-                padding: 20px;
-                margin-bottom: 20px;
-            }
+        if ($deleted_filter !== '') {
+            $where_conditions[] = "mm.is_deleted = %s";
+            $where_values[] = $deleted_filter;
+        }
 
-            .campaign-section:not(:last-child) {
-                border-bottom: 1px solid #eee;
-            }
+        if ($unsubscribed_filter !== '') {
+            $where_conditions[] = "mm.is_unsubscribed = %s";
+            $where_values[] = $unsubscribed_filter;
+        }
 
-            .campaign-status {
-                padding: 3px 8px;
-                border-radius: 3px;
-                font-size: 12px;
-                font-weight: 500;
-            }
+        if ($campaign_filter) {
+            $where_conditions[] = "mm.campaign_id = %d";
+            $where_values[] = $campaign_filter;
+        }
 
-            .campaign-status-active {
-                background: #d4edda;
-                color: #155724;
-            }
+        if (!empty($search_email)) {
+            $where_conditions[] = "mm.email LIKE %s";
+            $where_values[] = '%' . $search_email . '%';
+        }
 
-            .campaign-status-inactive {
-                background: #f8d7da;
-                color: #721c24;
-            }
+        if (!empty($search_phone)) {
+            $where_conditions[] = "mm.phone LIKE %s";
+            $where_values[] = '%' . $search_phone . '%';
+        }
 
-            .campaign-status-completed {
-                background: #d1ecf1;
-                color: #0c5460;
-            }
+        $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 
-            .email-placeholders {
-                margin-top: 10px;
-                padding: 10px;
-                background: #f8f9fa;
-                border-radius: 4px;
-                font-size: 12px;
-            }
+        // Get total count for pagination
+        $count_query = "
+            SELECT COUNT(mm.id) 
+            FROM {$wpdb->prefix}mail_marketing mm 
+            LEFT JOIN {$wpdb->prefix}mail_marketing_campaigns mmc ON mm.campaign_id = mmc.id 
+            $where_clause
+        ";
 
-            .campaigns-table .button {
-                margin-right: 5px;
-            }
-        </style>
-<?php
+        if (!empty($where_values)) {
+            $total_records = $wpdb->get_var($wpdb->prepare($count_query, $where_values));
+        } else {
+            $total_records = $wpdb->get_var($count_query);
+        }
+
+        // Get emails with pagination
+        $query = "
+            SELECT mm.*, mmc.name as campaign_name
+            FROM {$wpdb->prefix}mail_marketing mm 
+            LEFT JOIN {$wpdb->prefix}mail_marketing_campaigns mmc ON mm.campaign_id = mmc.id 
+            $where_clause
+            ORDER BY mm.id DESC 
+            LIMIT %d OFFSET %d
+        ";
+
+        $query_values = array_merge($where_values, array($per_page, $offset));
+        $emails = $wpdb->get_results($wpdb->prepare($query, $query_values));
+        // print_r($emails);
+
+        // Get campaigns for filter dropdown
+        $campaigns = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}mail_marketing_campaigns ORDER BY name");
+
+        // Calculate pagination
+        $total_pages = ceil($total_records / $per_page);
+
+    ?>
+        <div class="email-list-filters">
+            <form method="get" action="">
+                <!-- Preserve existing GET parameters -->
+                <input type="hidden" name="page" value="<?php echo esc_attr($_GET['page'] ?? ''); ?>">
+                <input type="hidden" name="filter" value="1">
+                <?php if (isset($_GET['edit'])): ?>
+                    <input type="hidden" name="edit" value="<?php echo esc_attr($_GET['edit']); ?>">
+                <?php endif; ?>
+
+                <div class="filter-row">
+                    <label for="email_status">Status:</label>
+                    <select name="email_status" id="email_status">
+                        <option value="">All Status</option>
+                        <option value="0" <?php selected($status_filter, '0'); ?>>Pending</option>
+                        <option value="1" <?php selected($status_filter, '1'); ?>>Sent</option>
+                    </select>
+
+                    <label for="email_deleted">Deleted:</label>
+                    <select name="email_deleted" id="email_deleted">
+                        <option value="">All</option>
+                        <option value="0" <?php selected($deleted_filter, '0'); ?>>Active</option>
+                        <option value="1" <?php selected($deleted_filter, '1'); ?>>Deleted</option>
+                    </select>
+
+                    <label for="email_unsubscribed">Unsubscribed:</label>
+                    <select name="email_unsubscribed" id="email_unsubscribed">
+                        <option value="">All</option>
+                        <option value="0" <?php selected($unsubscribed_filter, '0'); ?>>Subscribed</option>
+                        <option value="1" <?php selected($unsubscribed_filter, '1'); ?>>Unsubscribed</option>
+                    </select>
+
+                    <label for="email_campaign">Campaign:</label>
+                    <select name="email_campaign" id="email_campaign">
+                        <option value="">All Campaigns</option>
+                        <?php foreach ($campaigns as $campaign): ?>
+                            <option value="<?php echo esc_attr($campaign->id); ?>" <?php selected($campaign_filter, $campaign->id); ?>>
+                                <?php echo esc_html($campaign->name); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <label for="search_email">Search Email:</label>
+                    <input type="text" name="search_email" id="search_email" value="<?php echo esc_attr($search_email); ?>" placeholder="Enter email to search">
+
+                    <label for="search_phone">Search Phone:</label>
+                    <input type="text" name="search_phone" id="search_phone" value="<?php echo esc_attr($search_phone); ?>" placeholder="Enter phone to search">
+
+                    <input type="submit" class="button button-primary" value="Filter">
+                    <a href="<?php echo admin_url('admin.php?page=email-campaigns' . (isset($_GET['edit']) ? '&edit=' . intval($_GET['edit']) : '')); ?>&filter=1"
+                        class="button">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="email-list-stats">
+            <p><strong>Total Records:</strong> <?php echo number_format($total_records); ?> emails found</p>
+        </div>
+
+        <?php if (!empty($emails)): ?>
+            <table class="wp-list-table widefat fixed striped emails-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Campaign</th>
+                        <th>Status</th>
+                        <th>Deleted</th>
+                        <th>Unsubscribed</th>
+                        <th>Sent At</th>
+                        <th>Opened At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($emails as $email): ?>
+                        <tr>
+                            <td><?php echo $email->id; ?></td>
+                            <td><?php echo esc_html($email->email); ?></td>
+                            <td>
+                                <?php
+                                $display_name = '';
+                                if ($email->first_name || $email->last_name) {
+                                    $display_name = trim($email->first_name . ' ' . $email->last_name);
+                                } elseif ($email->name) {
+                                    $display_name = $email->name;
+                                }
+                                echo esc_html($display_name ?: 'N/A');
+                                ?>
+                            </td>
+                            <td><?php echo esc_html($email->phone ?: 'N/A'); ?></td>
+                            <td><?php echo esc_html($email->campaign_name ?: 'No Campaign'); ?></td>
+                            <td>
+                                <span class="email-status email-status-<?php echo $email->status; ?> clickable-status"
+                                    data-email-id="<?php echo $email->id; ?>"
+                                    data-field="status"
+                                    data-current-value="<?php echo $email->status; ?>"
+                                    title="Click to toggle status">
+                                    <?php echo $email->status == 1 ? 'Sent' : 'Pending'; ?>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="email-deleted email-is_deleted-<?php echo $email->is_deleted; ?> clickable-status"
+                                    data-email-id="<?php echo $email->id; ?>"
+                                    data-field="is_deleted"
+                                    data-current-value="<?php echo $email->is_deleted; ?>"
+                                    title="Click to toggle deleted status">
+                                    <?php echo $email->is_deleted == 1 ? 'Yes' : 'No'; ?>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="email-unsubscribed email-is_unsubscribed-<?php echo $email->is_unsubscribed; ?> clickable-status"
+                                    data-email-id="<?php echo $email->id; ?>"
+                                    data-field="is_unsubscribed"
+                                    data-current-value="<?php echo $email->is_unsubscribed; ?>"
+                                    title="Click to toggle unsubscribed status">
+                                    <?php echo $email->is_unsubscribed == 1 ? 'Yes' : 'No'; ?>
+                                </span>
+                            </td>
+                            <td><?php echo $email->sended_at ? $email->sended_at : 'N/A'; ?></td>
+                            <td><?php echo $email->opened_at ? $email->opened_at : 'N/A'; ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <?php if ($total_pages > 1): ?>
+                <div class="email-pagination">
+                    <?php
+                    $base_url = admin_url('admin.php?page=email-campaigns');
+                    if (isset($_GET['edit'])) {
+                        $base_url .= '&edit=' . intval($_GET['edit']);
+                    }
+
+                    // Add filter parameters to pagination links
+                    $filter_params = array();
+                    if ($status_filter !== '') $filter_params[] = 'email_status=' . urlencode($status_filter);
+                    if ($deleted_filter !== '') $filter_params[] = 'email_deleted=' . urlencode($deleted_filter);
+                    if ($unsubscribed_filter !== '') $filter_params[] = 'email_unsubscribed=' . urlencode($unsubscribed_filter);
+                    if ($campaign_filter) $filter_params[] = 'email_campaign=' . urlencode($campaign_filter);
+                    if (!empty($search_email)) $filter_params[] = 'search_email=' . urlencode($search_email);
+                    if (!empty($search_phone)) $filter_params[] = 'search_phone=' . urlencode($search_phone);
+
+                    if (!empty($filter_params)) {
+                        $base_url .= '&' . implode('&', $filter_params);
+                    }
+                    ?>
+
+                    <div class="tablenav-pages">
+                        <span class="displaying-num"><?php echo number_format($total_records); ?> items</span>
+                        <span class="pagination-links">
+                            <?php if ($current_page > 1): ?>
+                                <a href="<?php echo $base_url . '&email_page=1'; ?>" class="first-page button">«</a>
+                                <a href="<?php echo $base_url . '&email_page=' . ($current_page - 1); ?>" class="prev-page button">‹</a>
+                            <?php endif; ?>
+
+                            <span class="paging-input">
+                                <span class="tablenav-paging-text">
+                                    <?php echo $current_page; ?> of <span class="total-pages"><?php echo $total_pages; ?></span>
+                                </span>
+                            </span>
+
+                            <?php if ($current_page < $total_pages): ?>
+                                <a href="<?php echo $base_url . '&email_page=' . ($current_page + 1); ?>" class="next-page button">›</a>
+                                <a href="<?php echo $base_url . '&email_page=' . $total_pages; ?>" class="last-page button">»</a>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+        <?php else: ?>
+            <p>No emails found matching the selected filters.</p>
+<?php endif;
     }
 
     /**
@@ -1351,5 +1550,70 @@ class Mail_Marketing_Importer
             wp_redirect(admin_url('admin.php?page=email-campaigns&error=delete_failed'));
         }
         exit;
+    }
+
+    /**
+     * Handle AJAX toggle email status
+     */
+    public function handle_toggle_email_status()
+    {
+        // Security check
+        if (!wp_verify_nonce($_POST['nonce'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed');
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized access');
+        }
+
+        $email_id = intval($_POST['email_id']);
+        $field = sanitize_text_field($_POST['field']);
+        $current_value = intval($_POST['current_value']);
+
+        // Validate field name
+        $allowed_fields = array('status', 'is_deleted', 'is_unsubscribed');
+        if (!in_array($field, $allowed_fields)) {
+            wp_send_json_error('Invalid field');
+        }
+
+        global $wpdb;
+
+        // Toggle the value (0 becomes 1, 1 becomes 0)
+        $new_value = $current_value == 1 ? 0 : 1;
+
+        // Update the database
+        $result = $wpdb->update(
+            $wpdb->prefix . 'mail_marketing',
+            array($field => $new_value, 'updated_at' => current_time('mysql')),
+            array('id' => $email_id),
+            array('%d', '%s'),
+            array('%d')
+        );
+
+        if ($result !== false) {
+            wp_send_json_success(array(
+                'new_value' => $new_value,
+                'display_text' => $this->get_display_text($field, $new_value)
+            ));
+        } else {
+            wp_send_json_error('Failed to update database');
+        }
+    }
+
+    /**
+     * Get display text for field values
+     */
+    private function get_display_text($field, $value)
+    {
+        switch ($field) {
+            case 'status':
+                return $value == 1 ? 'Sent' : 'Pending';
+            case 'is_deleted':
+                return $value == 1 ? 'Yes' : 'No';
+            case 'is_unsubscribed':
+                return $value == 1 ? 'Yes' : 'No';
+            default:
+                return $value;
+        }
     }
 }

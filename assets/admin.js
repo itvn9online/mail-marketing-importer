@@ -482,4 +482,73 @@ jQuery(document).ready(function ($) {
 			}, 5000);
 		}
 	});
+
+	// nếu url có tham số page và page = email-campaigns và có tham số email_page thì tự động cuộn chuột đến #imported-email-list
+	function getUrlParameter(name) {
+		var regex = new RegExp("[?&]" + name + "=([^&#]*)");
+		var results = regex.exec(window.location.href);
+		return results ? decodeURIComponent(results[1]) : null;
+	}
+
+	if (
+		getUrlParameter("page") === "email-campaigns" &&
+		(getUrlParameter("email_page") || getUrlParameter("filter"))
+	) {
+		// Thực hiện hành động nào đó
+		$("html, body").animate(
+			{
+				scrollTop: $("#imported-email-list").offset().top - 60,
+			},
+			1000
+		);
+	}
+
+	// Handle clickable status toggle
+	$(document).on("click", ".clickable-status", function (e) {
+		e.preventDefault();
+
+		var $this = $(this);
+		var emailId = $this.data("email-id");
+		var field = $this.data("field");
+		var currentValue = $this.data("current-value");
+
+		// Show loading state
+		var originalText = $this.text();
+		$this.text("Updating...");
+		$this.addClass("updating");
+
+		// Make AJAX request
+		$.ajax({
+			url: mmi_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "toggle_email_status",
+				nonce: mmi_ajax.nonce,
+				email_id: emailId,
+				field: field,
+				current_value: currentValue,
+			},
+			success: function (response) {
+				if (response.success) {
+					// Update the display
+					$this.text(response.data.display_text);
+					$this.data("current-value", response.data.new_value);
+
+					// Update CSS class
+					$this.removeClass("email-" + field + "-" + currentValue);
+					$this.addClass("email-" + field + "-" + response.data.new_value);
+				} else {
+					alert("Error: " + response.data);
+					$this.text(originalText);
+				}
+			},
+			error: function () {
+				alert("Failed to update status. Please try again.");
+				$this.text(originalText);
+			},
+			complete: function () {
+				$this.removeClass("updating");
+			},
+		});
+	});
 });

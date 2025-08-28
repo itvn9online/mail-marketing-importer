@@ -33,7 +33,9 @@ function mail_marketing_importer_init()
 add_action('init', 'mail_marketing_importer_init');
 
 // Add settings link to plugin list
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'mail_marketing_importer_settings_link');
+if (strpos($_SERVER['REQUEST_URI'], '/plugins.php') !== false) {
+    add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'mail_marketing_importer_settings_link');
+}
 function mail_marketing_importer_settings_link($links)
 {
     $settings_link = '<a href="' . admin_url('admin.php?page=mail-marketing-importer') . '">' . __('Settings') . '</a>';

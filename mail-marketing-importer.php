@@ -190,7 +190,7 @@ function get_email_content_settings($campaign_id = 0)
 <h2>Thank you for subscribing!</h2>
 <p>Thank you for subscribing to receive updates from us. We will send you the latest information about our products and services.</p>
 <hr>
-<p style="font-size: 12px; color: #666;">Don\'t want future emails? <a href="{UNSUBSCRIBE_URL}">{UNSUBSCRIBE_URL}</a></p>';
+<p style="font-size: 12px; color: #666;">Don\'t want future emails? <a href="{UNSUBSCRIBE_URL}">Unsubscribe</a></p>';
 
     // Get email content from database
     if ($campaign_id > 0) {

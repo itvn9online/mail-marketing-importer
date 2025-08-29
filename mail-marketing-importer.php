@@ -208,6 +208,9 @@ function get_email_content_settings($campaign_id = 0)
     // Handle empty content - use default if content is empty or just whitespace
     if (empty(trim($email_content))) {
         $email_content = $default_html_content;
+    } else {
+        // Định dạng HTML cho email content
+        $email_content = apply_filters('the_content', $email_content);
     }
 
     // Handle empty subject - use default if subject is empty or just whitespace

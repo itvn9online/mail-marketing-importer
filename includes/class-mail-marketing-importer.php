@@ -975,21 +975,22 @@ class Mail_Marketing_Importer
         echo '<p>Recently opened emails:</p>';
 
         $recent_opens = $wpdb->get_results("
-            SELECT email, name, opened_at 
+            SELECT email, name, phone, opened_at 
             FROM {$wpdb->prefix}mail_marketing 
             WHERE opened_at IS NOT NULL 
             ORDER BY opened_at DESC 
-            LIMIT 10
+            LIMIT 20
         ");
 
         if (!empty($recent_opens)) {
             echo '<table class="wp-list-table widefat fixed striped">';
-            echo '<thead><tr><th>Email</th><th>Name</th><th>Opened At</th></tr></thead>';
+            echo '<thead><tr><th>Email</th><th>Name</th><th>Phone</th><th>Opened At</th></tr></thead>';
             echo '<tbody>';
             foreach ($recent_opens as $open) {
                 echo '<tr>';
                 echo '<td>' . esc_html($open->email) . '</td>';
                 echo '<td>' . esc_html($open->name ?: 'N/A') . '</td>';
+                echo '<td><a href="tel:' . esc_html($open->phone) . '">' . esc_html($open->phone ?: 'N/A') . '</a></td>';
                 echo '<td>' . esc_html($open->opened_at) . '</td>';
                 echo '</tr>';
             }

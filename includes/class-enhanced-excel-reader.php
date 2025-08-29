@@ -140,6 +140,8 @@ class Enhanced_Excel_Reader
                     $skipped++;
                     continue;
                 }
+                // chuyển email về chữ thường
+                $email = strtolower($email);
                 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $errors[] = "Row " . ($row_index + 1) . ": Invalid email format - " . $email;
                     $skipped++;

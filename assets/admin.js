@@ -483,23 +483,34 @@ jQuery(document).ready(function ($) {
 		}
 	});
 
-	// nếu url có tham số page và page = email-campaigns và có tham số email_page thì tự động cuộn chuột đến #imported-email-list
+	// nếu page = email-campaigns và có tham số email_page thì tự động cuộn chuột đến #imported-email-list
 	function getUrlParameter(name) {
 		var regex = new RegExp("[?&]" + name + "=([^&#]*)");
 		var results = regex.exec(window.location.href);
 		return results ? decodeURIComponent(results[1]) : null;
 	}
 
-	if (
-		getUrlParameter("page") === "email-campaigns" &&
-		(getUrlParameter("email_page") || getUrlParameter("filter"))
-	) {
-		// Thực hiện hành động nào đó
-		$("html, body").animate(
-			{
-				scrollTop: $("#imported-email-list").offset().top - 60,
-			},
-			1000
+	function addCurrentMenu(node, cl) {
+		$(node).addClass("current").addClass(cl);
+		$("a." + cl)
+			.closest("li")
+			.addClass("current");
+	}
+
+	if (pagenow == "tools_page_email-campaigns") {
+		if (getUrlParameter("email_page") || getUrlParameter("filter")) {
+			// Thực hiện hành động nào đó
+			$("html, body").animate(
+				{
+					scrollTop: $("#imported-email-list").offset().top - 60,
+				},
+				1000
+			);
+		}
+
+		addCurrentMenu(
+			'#menu-tools a[href="tools.php?page=email-campaigns"]',
+			"email-campaigns"
 		);
 	}
 

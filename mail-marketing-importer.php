@@ -4,7 +4,7 @@
  * Plugin Name: Mail Marketing Importer
  * Plugin URI: https://echbay.com
  * Description: Import email marketing data from Excel files (.xlsx, .xls, .csv)
- * Version: 1.2.1
+ * Version: 1.2.2
  * Author: Dao Quoc Dai
  * License: GPL v2 or later
  * Text Domain: mail-marketing-importer
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 // Define plugin constants
 define('MMI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MMI_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('MMI_PLUGIN_VERSION', '1.2.1');
+define('MMI_PLUGIN_VERSION', '1.2.2');
 
 // Include required files
 require_once MMI_PLUGIN_PATH . 'includes/class-mail-marketing-importer.php';

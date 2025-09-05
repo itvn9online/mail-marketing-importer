@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background-color: #ffffff;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 2px solid #3498db;
+        }
+
+        .header {
+            background: #3498db;
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .content {
+            padding: 35px 30px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: #3498db;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .main-text {
+            font-size: 15px;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        .info-box {
+            background: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .info-box h3 {
+            color: #3498db;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+
+        .stats {
+            display: table;
+            width: 100%;
+            margin: 25px 0;
+        }
+
+        .stat-item {
+            display: table-cell;
+            text-align: center;
+            padding: 20px 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8f9fa;
+            border: 2px dashed #3498db;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: background 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background: #2980b9;
+        }
+
+        .footer {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .footer-info {
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .unsubscribe {
+            font-size: 12px;
+            color: #bdc3c7;
+        }
+
+        .unsubscribe a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .stats {
+                display: block;
+            }
+
+            .stat-item {
+                display: block;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Business Newsletter</h1>
+        </div>
+        <div class="content">
+            <div class="greeting">Dear {USER_NAME},</div>
+            <div class="main-text">
+                Thank you for subscribing to our business newsletter. You have successfully joined our professional network of industry leaders, entrepreneurs, and business enthusiasts.
+            </div>
+            <div class="info-box">
+                <h3>What You Can Expect</h3>
+                <p>Weekly industry insights, business trends analysis, networking opportunities, and exclusive resources to help grow your business.</p>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number">50K+</span>
+                    <span class="stat-label">Subscribers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">200+</span>
+                    <span class="stat-label">Articles</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">98%</span>
+                    <span class="stat-label">Satisfaction</span>
+                </div>
+            </div>
+            <div class="main-text">
+                Our newsletter is published every Tuesday and contains carefully curated content from industry experts. We respect your time and privacy, ensuring each email delivers maximum value.
+            </div>
+            <div class="cta-section">
+                <p style="margin: 0 0 15px 0; font-weight: bold;">Ready to dive in?</p>
+                <a href="#" class="cta-button">Access Resources</a>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="footer-info">
+                This email was sent to you because you subscribed to our business newsletter.<br>
+                We are committed to providing valuable content and respecting your privacy.
+            </div>
+            <div class="unsubscribe">
+                <a href="{UNSUBSCRIBE_URL}">Unsubscribe</a> |
+                <a href="#">Update Preferences</a> |
+                <a href="#">Contact Us</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

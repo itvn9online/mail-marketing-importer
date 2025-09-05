@@ -119,10 +119,7 @@ class Mail_Marketing_Importer
                                 <div class="campaign-field-group" id="new-campaign-group">
                                     <label for="new_campaign_name">Campaign Name:</label>
                                     <input type="text" name="new_campaign_name" id="new_campaign_name" placeholder="Enter campaign name" maxlength="255">
-
-                                    <label for="new_campaign_description" style="margin-top: 10px;">Description (optional):</label>
-                                    <textarea name="new_campaign_description" id="new_campaign_description" placeholder="Campaign description" rows="3" maxlength="500"></textarea>
-                                    <small class="description">Maximum 500 characters</small>
+                                    <small class="description">You can complete other details after importing emails</small>
                                 </div>
                             </div>
                         </div>
@@ -399,6 +396,19 @@ class Mail_Marketing_Importer
                                 </td>
                             </tr>
                             <tr>
+                                <th scope="row">Email Template</th>
+                                <td>
+                                    <select name="email_template" class="regular-text">
+                                        <?php
+                                        $current_template = $edit_campaign && !empty($edit_campaign->email_template) ? $edit_campaign->email_template : 'default.html';
+                                        echo $this->get_email_templates_options_with_selected($current_template);
+                                        ?>
+                                    </select>
+                                    <p class="description">Choose an email template for this campaign</p>
+                                    <p><a href="<?php echo MMI_PLUGIN_URL; ?>template-preview-page.html" target="_blank" style="font-size: 12px;">Preview Templates →</a></p>
+                                </td>
+                            </tr>
+                            <tr>
                                 <th scope="row">Email Subject (*)</th>
                                 <td>
                                     <input type="text" name="email_subject" class="regular-text"
@@ -570,7 +580,7 @@ class Mail_Marketing_Importer
         $search_phone = isset($_GET['search_phone']) ? sanitize_text_field($_GET['search_phone']) : '';
 
         // Pagination
-        $per_page = 20;
+        $per_page = 50;
         $current_page = isset($_GET['email_page']) ? max(1, intval($_GET['email_page'])) : 1;
         $offset = ($current_page - 1) * $per_page;
 
@@ -864,8 +874,19 @@ class Mail_Marketing_Importer
     {
         if (isset($_GET['success']) && $_GET['success'] == '1') {
             $imported = isset($_GET['imported']) ? intval($_GET['imported']) : 0;
+            $skipped = isset($_GET['skipped']) ? intval($_GET['skipped']) : 0;
+            $new_campaign = isset($_GET['new_campaign']) ? true : false;
+
             echo '<div class="notice notice-success is-dismissible"><p>';
-            echo '<strong>Success!</strong> Import completed successfully. Imported ' . $imported . ' records.';
+            echo '<strong>Success!</strong> Import completed successfully. Imported ' . $imported . ' records';
+            if ($skipped > 0) {
+                echo ', skipped ' . $skipped . ' duplicates';
+            }
+            echo '.';
+
+            if ($new_campaign) {
+                echo '<br><strong>Note:</strong> Please complete your campaign details below (email subject, content, template) before sending emails.';
+            }
             echo '</p></div>';
         }
 
@@ -1086,19 +1107,19 @@ class Mail_Marketing_Importer
                 }
             } elseif ($_POST['campaign_option'] === 'new' && !empty($_POST['new_campaign_name'])) {
                 $campaign_name = sanitize_text_field($_POST['new_campaign_name']);
-                $campaign_description = sanitize_textarea_field($_POST['new_campaign_description'] ?? '');
 
-                // Create new campaign
+                // Create new campaign with minimal info - details can be added later
                 $result = $wpdb->insert(
                     $wpdb->prefix . 'mail_marketing_campaigns',
                     array(
                         'name' => $campaign_name,
-                        'description' => $campaign_description,
+                        'description' => '',
+                        'email_template' => 'default.html',
                         'status' => 'active',
                         'created_at' => current_time('mysql'),
                         'updated_at' => current_time('mysql')
                     ),
-                    array('%s', '%s', '%s', '%s', '%s')
+                    array('%s', '%s', '%s', '%s', '%s', '%s')
                 );
 
                 if ($result !== false) {
@@ -1121,7 +1142,7 @@ class Mail_Marketing_Importer
             if ($result['success']) {
                 $imported = isset($result['imported']) ? $result['imported'] : 0;
                 $skipped = isset($result['skipped']) ? $result['skipped'] : 0;
-                wp_redirect(admin_url('admin.php?page=email-campaigns&edit=' . $campaign_id . '&success=1&imported=' . $imported . '&skipped=' . $skipped));
+                wp_redirect(admin_url('admin.php?page=email-campaigns&edit=' . $campaign_id . '&success=1&imported=' . $imported . '&skipped=' . $skipped . '&new_campaign=1'));
             } else {
                 wp_redirect(admin_url('tools.php?page=mail-marketing-importer&error=import_failed&message=' . urlencode($result['message'])));
             }
@@ -1247,6 +1268,103 @@ class Mail_Marketing_Importer
         } else {
             return $bytes . ' bytes';
         }
+    }
+
+    /**
+     * Get email templates options for select dropdown
+     */
+    private function get_email_templates_options()
+    {
+        $templates_dir = MMI_PLUGIN_PATH . 'html-template/';
+        $templates = array();
+
+        // Define template names and descriptions
+        $template_info = array(
+            'default.html' => 'Default Simple',
+            'modern-minimal.html' => 'Modern Minimal',
+            'corporate-elegant.html' => 'Corporate Elegant',
+            'creative-colorful.html' => 'Creative Colorful',
+            'professional-business.html' => 'Professional Business',
+            'tech-modern.html' => 'Tech Modern'
+        );
+
+        $options = '';
+
+        foreach ($template_info as $file => $name) {
+            if (file_exists($templates_dir . $file)) {
+                $selected = ($file === 'default.html') ? ' selected' : '';
+                $options .= '<option value="' . esc_attr($file) . '"' . $selected . '>' . esc_html($name) . '</option>';
+            }
+        }
+
+        return $options;
+    }
+
+    /**
+     * Get email templates options with specific selection
+     */
+    private function get_email_templates_options_with_selected($selected_template)
+    {
+        $templates_dir = MMI_PLUGIN_PATH . 'html-template/';
+
+        // Define template names and descriptions
+        $template_info = array(
+            'default.html' => 'Default Simple',
+            'modern-minimal.html' => 'Modern Minimal',
+            'corporate-elegant.html' => 'Corporate Elegant',
+            'creative-colorful.html' => 'Creative Colorful',
+            'professional-business.html' => 'Professional Business',
+            'tech-modern.html' => 'Tech Modern'
+        );
+
+        $options = '';
+
+        foreach ($template_info as $file => $name) {
+            if (file_exists($templates_dir . $file)) {
+                $selected = ($file === $selected_template) ? ' selected' : '';
+                $options .= '<option value="' . esc_attr($file) . '"' . $selected . '>' . esc_html($name) . '</option>';
+            }
+        }
+
+        return $options;
+    }
+
+    /**
+     * Load and process email template
+     */
+    private function load_email_template($template_name, $data = array())
+    {
+        $templates_dir = MMI_PLUGIN_PATH . 'html-template/';
+        $template_path = $templates_dir . $template_name;
+
+        // Fallback to default template if specified template doesn't exist
+        if (!file_exists($template_path)) {
+            $template_path = $templates_dir . 'default.html';
+        }
+
+        // Load template content
+        $template_content = file_get_contents($template_path);
+
+        if ($template_content === false) {
+            return '<p>Error loading email template.</p>';
+        }
+
+        // Replace placeholders
+        $placeholders = array(
+            '{USER_NAME}' => $data['user_name'] ?? 'Valued Customer',
+            '{USER_EMAIL}' => $data['user_email'] ?? '',
+            '{SITE_NAME}' => get_bloginfo('name'),
+            '{SITE_URL}' => home_url(),
+            '{UNSUBSCRIBE_URL}' => $data['unsubscribe_url'] ?? '#',
+            '{CURRENT_DATE}' => date('F j, Y'),
+            '{CURRENT_YEAR}' => date('Y')
+        );
+
+        foreach ($placeholders as $placeholder => $value) {
+            $template_content = str_replace($placeholder, $value, $template_content);
+        }
+
+        return $template_content;
     }
 
     /**
@@ -1417,6 +1535,7 @@ class Mail_Marketing_Importer
         $description = sanitize_textarea_field($_POST['campaign_description']);
         $email_subject = sanitize_text_field($_POST['email_subject']);
         $email_content = wp_kses_post($_POST['email_content']);
+        $email_template = sanitize_text_field($_POST['email_template'] ?? 'default.html');
         $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
 
         // Convert datetime-local format to MySQL datetime format
@@ -1431,12 +1550,13 @@ class Mail_Marketing_Importer
                 'description' => $description,
                 'email_subject' => $email_subject,
                 'email_content' => $email_content,
+                'email_template' => $email_template,
                 'start_date' => $start_date,
                 'status' => 'active',
                 'created_at' => current_time('mysql'),
                 'updated_at' => current_time('mysql')
             ),
-            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
         );
 
         if (!$result) {
@@ -1466,6 +1586,7 @@ class Mail_Marketing_Importer
         $description = sanitize_textarea_field($_POST['campaign_description']);
         $email_subject = sanitize_text_field($_POST['email_subject']);
         $email_content = wp_kses_post($_POST['email_content']);
+        $email_template = sanitize_text_field($_POST['email_template'] ?? 'default.html');
         $status = sanitize_text_field($_POST['campaign_status']);
         $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
 
@@ -1481,12 +1602,13 @@ class Mail_Marketing_Importer
                 'description' => $description,
                 'email_subject' => $email_subject,
                 'email_content' => $email_content,
+                'email_template' => $email_template,
                 'start_date' => $start_date,
                 'status' => $status,
                 'updated_at' => current_time('mysql')
             ),
             array('id' => $campaign_id),
-            array('%s', '%s', '%s', '%s', '%s', '%s', '%s'),
+            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),
             array('%d')
         );
 

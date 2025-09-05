@@ -71,27 +71,6 @@ jQuery(document).ready(function ($) {
 		}
 	});
 
-	// Character counter for campaign description
-	$("#new_campaign_description").on("input", function () {
-		var length = $(this).val().length;
-		var maxLength = 500;
-		var remaining = maxLength - length;
-
-		if (!$(this).next(".char-counter").length) {
-			$(this).after('<small class="char-counter description"></small>');
-		}
-
-		var counterText = remaining + " characters remaining";
-		if (remaining < 0) {
-			counterText = "Exceeded by " + Math.abs(remaining) + " characters";
-			$(this).next(".char-counter").css("color", "red");
-		} else {
-			$(this).next(".char-counter").css("color", "#666");
-		}
-
-		$(this).next(".char-counter").text(counterText);
-	});
-
 	// Handle file selection and dynamic column loading
 	$("#import_file").on("change", function () {
 		var file = this.files[0];

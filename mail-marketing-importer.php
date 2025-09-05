@@ -4,7 +4,7 @@
  * Plugin Name: Mail Marketing Importer
  * Plugin URI: https://echbay.com
  * Description: Import email marketing data from Excel files (.xlsx, .xls, .csv)
- * Version: 1.2.2
+ * Version: 1.2.3
  * Author: Dao Quoc Dai
  * License: GPL v2 or later
  * Text Domain: mail-marketing-importer
@@ -17,8 +17,8 @@ if (!defined('ABSPATH')) {
 
 // Define plugin constants
 define('MMI_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('MMI_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('MMI_PLUGIN_VERSION', '1.2.2');
+define('MMI_PLUGIN_PATH', __DIR__ . '/');
+define('MMI_PLUGIN_VERSION', '1.2.3');
 
 // Include required files
 require_once MMI_PLUGIN_PATH . 'includes/class-mail-marketing-importer.php';
@@ -95,6 +95,7 @@ function mail_marketing_importer_update_database()
       `description` text DEFAULT NULL,
       `email_subject` varchar(255) DEFAULT NULL,
       `email_content` longtext DEFAULT NULL,
+      `email_template` varchar(255) DEFAULT 'default.html',
       `start_date` datetime DEFAULT NULL,
       `status` enum('active','inactive','completed') NOT NULL DEFAULT 'active',
       `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -131,6 +132,7 @@ function mail_marketing_importer_update_database()
     $campaign_columns_to_add = array(
         'email_subject' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_subject varchar(255) DEFAULT NULL",
         'email_content' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_content longtext DEFAULT NULL",
+        'email_template' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_template varchar(255) DEFAULT 'default.html'",
         'start_date' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN start_date datetime DEFAULT NULL",
     );
 
@@ -186,11 +188,7 @@ add_action('admin_post_mmi_force_db_update', 'mail_marketing_importer_force_db_u
 // Function to get email content settings
 function get_email_content_settings($campaign_id = 0)
 {
-    $default_html_content = '<p>Dear {USER_NAME},</p>
-<h2>Thank you for subscribing!</h2>
-<p>Thank you for subscribing to receive updates from us. We will send you the latest information about our products and services.</p>
-<hr>
-<p style="font-size: 12px; color: #666;">Don\'t want future emails? <a href="{UNSUBSCRIBE_URL}">Unsubscribe</a></p>';
+    $default_html_content = file_get_contents(MMI_PLUGIN_PATH . 'html-template/default.html');
 
     // Get email content from database
     if ($campaign_id > 0) {

@@ -550,7 +550,6 @@ span[style*="color: red"] {
     font-weight: 500;
 }
 
-.email-status-1,
 .email-is_unsubscribed-1,
 .email-is_deleted-1 {
     background: #f8d7da;
@@ -562,6 +561,7 @@ span[style*="color: red"] {
     color: #856404;
 }
 
+.email-status-1,
 .email-is_unsubscribed-0,
 .email-is_deleted-0 {
     background: #d4edda;

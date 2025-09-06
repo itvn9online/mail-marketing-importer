@@ -424,7 +424,7 @@ jQuery(document).ready(function ($) {
 				}
 			}
 
-			// Get content from WordPress editor
+			// Get content from WordPress editor (no longer required - template fallback)
 			var emailContent = "";
 			if (typeof tinyMCE !== "undefined" && tinyMCE.get("email_content")) {
 				emailContent = tinyMCE.get("email_content").getContent();
@@ -432,20 +432,11 @@ jQuery(document).ready(function ($) {
 				emailContent = $("#email_content").val();
 			}
 
-			if (!emailContent || emailContent.trim() === "") {
-				alert("Please enter email content.");
-				if (typeof tinyMCE !== "undefined" && tinyMCE.get("email_content")) {
-					tinyMCE.get("email_content").focus();
-				} else {
-					$("#email_content").focus();
-				}
-				e.preventDefault();
-				return false;
-			}
-
+			// Note: Email content is now optional - if empty, template content will be used
 			console.log(
 				"Campaign form submission - Email content length:",
-				emailContent.length
+				emailContent.length,
+				"(Empty content will use selected template)"
 			);
 			console.log("Form action:", $(this).find('input[name="action"]').val());
 

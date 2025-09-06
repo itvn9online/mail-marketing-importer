@@ -8,7 +8,7 @@
  */
 
 // Check if PhpSpreadsheet is available
-if (file_exists(MMI_PLUGIN_PATH . 'vendor/phpspreadsheet/vendor/autoload.php')) {
+if (is_file(MMI_PLUGIN_PATH . 'vendor/phpspreadsheet/vendor/autoload.php')) {
     require_once MMI_PLUGIN_PATH . 'vendor/phpspreadsheet/vendor/autoload.php';
 } else {
     echo MMI_PLUGIN_PATH . 'vendor/phpspreadsheet/vendor/autoload.php' . '<br>' . PHP_EOL;
@@ -383,7 +383,7 @@ class Enhanced_Excel_Reader
         }
 
         // Clean up temp file if created
-        if (isset($temp_file) && file_exists($temp_file)) {
+        if (isset($temp_file) && is_file($temp_file)) {
             unlink($temp_file);
         }
 

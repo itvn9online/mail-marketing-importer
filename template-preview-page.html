@@ -76,8 +76,6 @@
 </head>
 
 <body>
-    <a href="../wp-admin/tools.php?page=email-campaigns" class="back-link">← Back to Campaigns</a>
-
     <div class="preview-header">
         <h1>Email Template Preview</h1>
         <div class="template-selector">
@@ -88,6 +86,11 @@
                 <option value="creative-colorful.html">Creative Colorful</option>
                 <option value="professional-business.html">Professional Business</option>
                 <option value="tech-modern.html">Tech Modern</option>
+                <option value="newsletter-classic.html">Newsletter Classic</option>
+                <option value="dark-mode-modern.html">Dark Mode Modern</option>
+                <option value="corporate-professional.html">Corporate Professional</option>
+                <option value="ecommerce-sale.html">E-commerce Sale</option>
+                <option value="eco-friendly-green.html">Eco-Friendly Green</option>
             </select>
             <button class="preview-button" onclick="loadTemplate()">Preview Template</button>
         </div>
@@ -103,13 +106,34 @@
             const preview = document.getElementById('templatePreview');
             const selectedTemplate = templateSelect.value;
 
+            // Update URL parameter
+            const url = new URL(window.location);
+            url.searchParams.set('template', selectedTemplate);
+            window.history.pushState({}, '', url);
+
             // Create preview URL
             const previewUrl = 'template-preview.php?template=' + encodeURIComponent(selectedTemplate);
             preview.src = previewUrl;
         }
 
+        // Function to get URL parameter
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
         // Load default template on page load
         window.onload = function () {
+            // Check if template parameter exists in URL
+            const templateParam = getUrlParameter('template');
+            const templateSelect = document.getElementById('templateSelect');
+
+            if (templateParam) {
+                // Set the select option to match the URL parameter
+                templateSelect.value = templateParam;
+            }
+
+            // Load the template (either from URL param or default)
             loadTemplate();
         };
 

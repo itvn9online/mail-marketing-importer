@@ -1,115 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
+<div style="margin: 0; padding: 0; font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <!-- Main Container -->
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); overflow: hidden; max-width: 600px;">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f8f9fa;
-        }
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; font-size: 28px; font-weight: 300; color: #ffffff;">
+                                Welcome to Our Community
+                            </h1>
+                        </td>
+                    </tr>
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <div style="font-size: 18px; color: #667eea; margin-bottom: 20px;">
+                                Hello {USER_NAME},
+                            </div>
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }
+                            <div style="color: #666666; font-size: 16px; line-height: 1.8; margin-bottom: 30px;">
+                                {{content}}
+                            </div>
 
-        .header h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 300;
-        }
+                            <div style="font-size: 16px; margin-bottom: 30px; color: #555;">
+                                Thank you for joining our community! We're excited to have you on board and can't wait to share our latest updates, exclusive offers, and valuable insights with you.
+                            </div>
 
-        .content {
-            padding: 40px 30px;
-        }
+                            <div style="font-size: 16px; margin-bottom: 30px; color: #555;">
+                                Stay tuned for amazing content that will help you get the most out of our services.
+                            </div>
 
-        .greeting {
-            font-size: 18px;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
+                            <!-- Call to Action -->
+                            <div style="text-align: center;">
+                                <a href="#"
+                                    style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; margin: 20px 0; transition: transform 0.3s ease;">
+                                    Get Started
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
 
-        .main-text {
-            font-size: 16px;
-            margin-bottom: 30px;
-            color: #555;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-weight: bold;
-            margin: 20px 0;
-            transition: transform 0.3s ease;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-        }
-
-        .footer {
-            background: #f8f9fa;
-            padding: 20px 30px;
-            text-align: center;
-            border-top: 1px solid #eee;
-        }
-
-        .unsubscribe {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .unsubscribe a {
-            color: #667eea;
-            text-decoration: none;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Welcome to Our Community</h1>
-        </div>
-        <div class="content">
-            <div class="greeting">Hello {USER_NAME},</div>
-            <div class="main-text">
-                Thank you for joining our community! We're excited to have you on board and can't wait to share our latest updates, exclusive offers, and valuable insights with you.
-            </div>
-            <div class="main-text">
-                Stay tuned for amazing content that will help you get the most out of our services.
-            </div>
-            <div style="text-align: center;">
-                <a href="#" class="cta-button">Get Started</a>
-            </div>
-        </div>
-        <div class="footer">
-            <div class="unsubscribe">
-                Don't want to receive these emails? <a href="{UNSUBSCRIBE_URL}">Unsubscribe here</a>
-            </div>
-        </div>
-    </div>
-</body>
-
-</html>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #eee;">
+                            <div style="font-size: 12px; color: #999;">
+                                Don't want to receive these emails?
+                                <a href="{UNSUBSCRIBE_URL}" style="color: #667eea; text-decoration: none;">Unsubscribe here</a>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>

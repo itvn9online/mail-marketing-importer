@@ -1,239 +1,114 @@
-<!DOCTYPE html>
-<html lang="en">
+<div style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1a1a1a; background-color: #f5f5f7;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f7; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <!-- Main Container -->
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; max-width: 600px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #1a1a1a;
-            background-color: #f5f5f7;
-        }
+                    <!-- Header with tech gradient -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="padding: 40px 30px; text-align: center;">
+                                        <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 12px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                                            <div style="font-size: 24px; color: white;">⚡</div>
+                                        </div>
+                                        <h1 style="margin: 0; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
+                                            Tech Update
+                                        </h1>
+                                        <div style="font-size: 16px; margin-top: 8px; color: rgba(255,255,255,0.9);">
+                                            Innovation at your fingertips
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-        .container {
-            max-width: 600px;
-            margin: 40px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 50px 40px;">
+                            <div style="font-size: 18px; color: #667eea; margin-bottom: 25px; font-weight: 600;">
+                                Hi {USER_NAME},
+                            </div>
 
-        .header {
-            background: #000000;
-            color: #ffffff;
-            padding: 60px 40px;
-            text-align: center;
-        }
+                            <div style="color: #1a1a1a; font-size: 16px; line-height: 1.8; margin-bottom: 30px;">
+                                {{content}}
+                            </div>
 
-        .header h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-        }
+                            <!-- Feature Cards -->
+                            <div style="margin: 35px 0;">
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                    <tr>
+                                        <td style="width: 48%; padding: 20px; background-color: #f8f9fa; border-radius: 8px; vertical-align: top;">
+                                            <div style="font-size: 20px; margin-bottom: 8px;">🚀</div>
+                                            <div style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">Performance</div>
+                                            <div style="font-size: 14px; color: #666; line-height: 1.5;">Blazing fast speeds and optimized performance</div>
+                                        </td>
+                                        <td style="width: 4%;"></td>
+                                        <td style="width: 48%; padding: 20px; background-color: #f8f9fa; border-radius: 8px; vertical-align: top;">
+                                            <div style="font-size: 20px; margin-bottom: 8px;">🔒</div>
+                                            <div style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">Security</div>
+                                            <div style="font-size: 14px; color: #666; line-height: 1.5;">Enterprise-grade security and privacy</div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
 
-        .header .tagline {
-            font-size: 16px;
-            opacity: 0.8;
-            margin-top: 8px;
-            font-weight: 400;
-        }
+                            <div style="font-size: 16px; margin-bottom: 30px; color: #4a4a4a; line-height: 1.7;">
+                                Our latest technology updates bring you cutting-edge features designed to enhance your experience. We're committed to staying at the forefront of innovation to serve you better.
+                            </div>
 
-        .content {
-            padding: 50px 40px;
-        }
+                            <!-- Code snippet style box -->
+                            <div style="background-color: #1a1a1a; color: #00ff41; padding: 20px; border-radius: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; margin: 25px 0;">
+                                <div style="opacity: 0.7; margin-bottom: 8px;">// Latest Features</div>
+                                <div>✓ Enhanced API performance</div>
+                                <div>✓ Real-time notifications</div>
+                                <div>✓ Advanced analytics dashboard</div>
+                            </div>
 
-        .greeting {
-            font-size: 20px;
-            color: #1d1d1f;
-            margin-bottom: 30px;
-            font-weight: 500;
-        }
+                            <!-- Call to Action -->
+                            <div style="text-align: center; margin: 40px 0;">
+                                <a href="#"
+                                    style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; letter-spacing: -0.3px;">
+                                    Explore Features →
+                                </a>
+                            </div>
 
-        .main-text {
-            font-size: 17px;
-            margin-bottom: 30px;
-            color: #1d1d1f;
-            line-height: 1.7;
-        }
+                            <!-- Tech stats -->
+                            <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 8px; margin: 30px 0;">
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                    <tr>
+                                        <td style="width: 33.33%; text-align: center; padding: 10px;">
+                                            <div style="font-size: 24px; font-weight: 700; color: #667eea; margin-bottom: 5px;">99.9%</div>
+                                            <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Uptime</div>
+                                        </td>
+                                        <td style="width: 33.33%; text-align: center; padding: 10px;">
+                                            <div style="font-size: 24px; font-weight: 700; color: #667eea; margin-bottom: 5px;">50ms</div>
+                                            <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Response</div>
+                                        </td>
+                                        <td style="width: 33.33%; text-align: center; padding: 10px;">
+                                            <div style="font-size: 24px; font-weight: 700; color: #667eea; margin-bottom: 5px;">1M+</div>
+                                            <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Requests</div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
 
-        .features {
-            margin: 40px 0;
-        }
-
-        .feature {
-            display: flex;
-            align-items: flex-start;
-            margin: 25px 0;
-            padding: 20px;
-            background: #f5f5f7;
-            border-radius: 8px;
-        }
-
-        .feature-icon {
-            width: 44px;
-            height: 44px;
-            background: #007aff;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 20px;
-            flex-shrink: 0;
-        }
-
-        .feature-content h3 {
-            margin: 0 0 8px 0;
-            font-size: 18px;
-            font-weight: 600;
-            color: #1d1d1f;
-        }
-
-        .feature-content p {
-            margin: 0;
-            font-size: 15px;
-            color: #86868b;
-            line-height: 1.6;
-        }
-
-        .cta-section {
-            text-align: center;
-            margin: 50px 0;
-            padding: 40px 30px;
-            background: linear-gradient(135deg, #f5f5f7 0%, #e5e5ea 100%);
-            border-radius: 12px;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: #007aff;
-            color: white;
-            text-decoration: none;
-            padding: 16px 32px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 17px;
-            transition: all 0.2s ease;
-        }
-
-        .cta-button:hover {
-            background: #0051d5;
-            transform: translateY(-1px);
-        }
-
-        .footer {
-            background: #f5f5f7;
-            padding: 40px;
-            text-align: center;
-            border-top: 1px solid #d2d2d7;
-        }
-
-        .footer-links {
-            margin: 20px 0;
-        }
-
-        .footer-links a {
-            color: #007aff;
-            text-decoration: none;
-            margin: 0 15px;
-            font-size: 15px;
-        }
-
-        .unsubscribe {
-            font-size: 13px;
-            color: #86868b;
-            margin-top: 20px;
-        }
-
-        .unsubscribe a {
-            color: #007aff;
-            text-decoration: none;
-        }
-
-        @media only screen and (max-width: 600px) {
-            .container {
-                margin: 20px;
-                border-radius: 8px;
-            }
-
-            .header,
-            .content,
-            .footer {
-                padding: 30px 25px;
-            }
-
-            .feature {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .feature-icon {
-                margin: 0 auto 15px auto;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Innovation Weekly</h1>
-            <div class="tagline">Discover. Learn. Innovate.</div>
-        </div>
-        <div class="content">
-            <div class="greeting">Hello {USER_NAME},</div>
-            <div class="main-text">
-                Welcome to Innovation Weekly! You've just joined thousands of forward-thinking professionals who stay ahead of the curve with our carefully curated insights on technology, business, and innovation.
-            </div>
-            <div class="features">
-                <div class="feature">
-                    <div class="feature-icon">🚀</div>
-                    <div class="feature-content">
-                        <h3>Cutting-Edge Insights</h3>
-                        <p>Get exclusive access to the latest trends, breakthrough technologies, and industry analysis from leading experts.</p>
-                    </div>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">💡</div>
-                    <div class="feature-content">
-                        <h3>Actionable Strategies</h3>
-                        <p>Transform insights into action with practical strategies and frameworks you can implement immediately.</p>
-                    </div>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🌐</div>
-                    <div class="feature-content">
-                        <h3>Global Perspective</h3>
-                        <p>Gain a worldwide view of innovation with stories and case studies from leading companies across the globe.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="main-text">
-                Every week, you'll receive a thoughtfully crafted newsletter that respects your time while delivering maximum value. No spam, no fluff – just premium content that matters.
-            </div>
-            <div class="cta-section">
-                <p style="margin: 0 0 25px 0; font-size: 18px; color: #1d1d1f; font-weight: 500;">Ready to explore?</p>
-                <a href="#" class="cta-button">Start Your Journey</a>
-            </div>
-        </div>
-        <div class="footer">
-            <div class="footer-links">
-                <a href="#">About Us</a>
-                <a href="#">Archives</a>
-                <a href="#">Contact</a>
-                <a href="#">Privacy</a>
-            </div>
-            <div class="unsubscribe">
-                You're receiving this because you subscribed to Innovation Weekly.<br>
-                <a href="{UNSUBSCRIBE_URL}">Unsubscribe</a> or <a href="#">manage your preferences</a>
-            </div>
-        </div>
-    </div>
-</body>
-
-</html>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1a1a1a; padding: 25px 40px; text-align: center;">
+                            <div style="font-size: 12px; color: #888;">
+                                Stay connected with tech updates.
+                                <a href="{UNSUBSCRIBE_URL}" style="color: #667eea; text-decoration: none;">Unsubscribe</a>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>

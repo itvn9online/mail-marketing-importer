@@ -396,19 +396,6 @@ class Mail_Marketing_Importer
                                 </td>
                             </tr>
                             <tr>
-                                <th scope="row">Email Template</th>
-                                <td>
-                                    <select name="email_template" class="regular-text">
-                                        <?php
-                                        $current_template = $edit_campaign && !empty($edit_campaign->email_template) ? $edit_campaign->email_template : 'default.html';
-                                        echo $this->get_email_templates_options_with_selected($current_template);
-                                        ?>
-                                    </select>
-                                    <p class="description">Choose an email template for this campaign</p>
-                                    <p><a href="<?php echo MMI_PLUGIN_URL; ?>template-preview-page.html" target="_blank" style="font-size: 12px;">Preview Templates →</a></p>
-                                </td>
-                            </tr>
-                            <tr>
                                 <th scope="row">Email Subject (*)</th>
                                 <td>
                                     <input type="text" name="email_subject" class="regular-text"
@@ -422,7 +409,20 @@ class Mail_Marketing_Importer
                                 </td>
                             </tr>
                             <tr>
-                                <th scope="row">Email Content (*)</th>
+                                <th scope="row">Email Template</th>
+                                <td>
+                                    <select name="email_template" class="regular-text">
+                                        <?php
+                                        $current_template = $edit_campaign && !empty($edit_campaign->email_template) ? $edit_campaign->email_template : 'default.html';
+                                        echo $this->get_email_templates_options_with_selected($current_template);
+                                        ?>
+                                    </select>
+                                    <p class="description">Choose an email template for this campaign</p>
+                                    <p><a href="<?php echo MMI_PLUGIN_URL; ?>template-preview-page.html?template=<?php echo $current_template; ?>" target="_blank" style="font-size: 12px;">Preview Templates →</a></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Email Content</th>
                                 <td>
                                     <?php
 
@@ -444,13 +444,17 @@ class Mail_Marketing_Importer
                                     // 
                                     wp_editor($content, 'email_content', array(
                                         'textarea_name' => 'email_content',
-                                        'textarea_rows' => 10,
+                                        'textarea_rows' => 20,
                                         'teeny' => false,
                                         'media_buttons' => true,
                                         'tinymce' => true,
                                         'quicktags' => true
                                     ));
                                     ?>
+                                    <p class="description">
+                                        <strong>💡 Smart Template System:</strong> Leave this field empty to automatically use the content from your selected email template.
+                                        You can also customize the template content here with your own HTML/text.
+                                    </p>
                                     <div class="email-placeholders">
                                         <strong>Available placeholders:</strong><br>
                                         <small style="color: #666; font-style: italic;">Double-click any placeholder to copy it to clipboard</small><br>
@@ -1285,13 +1289,18 @@ class Mail_Marketing_Importer
             'corporate-elegant.html' => 'Corporate Elegant',
             'creative-colorful.html' => 'Creative Colorful',
             'professional-business.html' => 'Professional Business',
-            'tech-modern.html' => 'Tech Modern'
+            'tech-modern.html' => 'Tech Modern',
+            'newsletter-classic.html' => 'Newsletter Classic',
+            'dark-mode-modern.html' => 'Dark Mode Modern',
+            'corporate-professional.html' => 'Corporate Professional',
+            'ecommerce-sale.html' => 'E-commerce Sale',
+            'eco-friendly-green.html' => 'Eco-Friendly Green'
         );
 
         $options = '';
 
         foreach ($template_info as $file => $name) {
-            if (file_exists($templates_dir . $file)) {
+            if (is_file($templates_dir . $file)) {
                 $selected = ($file === 'default.html') ? ' selected' : '';
                 $options .= '<option value="' . esc_attr($file) . '"' . $selected . '>' . esc_html($name) . '</option>';
             }
@@ -1314,13 +1323,18 @@ class Mail_Marketing_Importer
             'corporate-elegant.html' => 'Corporate Elegant',
             'creative-colorful.html' => 'Creative Colorful',
             'professional-business.html' => 'Professional Business',
-            'tech-modern.html' => 'Tech Modern'
+            'tech-modern.html' => 'Tech Modern',
+            'newsletter-classic.html' => 'Newsletter Classic',
+            'dark-mode-modern.html' => 'Dark Mode Modern',
+            'corporate-professional.html' => 'Corporate Professional',
+            'ecommerce-sale.html' => 'E-commerce Sale',
+            'eco-friendly-green.html' => 'Eco-Friendly Green'
         );
 
         $options = '';
 
         foreach ($template_info as $file => $name) {
-            if (file_exists($templates_dir . $file)) {
+            if (is_file($templates_dir . $file)) {
                 $selected = ($file === $selected_template) ? ' selected' : '';
                 $options .= '<option value="' . esc_attr($file) . '"' . $selected . '>' . esc_html($name) . '</option>';
             }
@@ -1338,7 +1352,7 @@ class Mail_Marketing_Importer
         $template_path = $templates_dir . $template_name;
 
         // Fallback to default template if specified template doesn't exist
-        if (!file_exists($template_path)) {
+        if (!is_file($template_path)) {
             $template_path = $templates_dir . 'default.html';
         }
 
@@ -1351,6 +1365,8 @@ class Mail_Marketing_Importer
 
         // Replace placeholders
         $placeholders = array(
+            '{FIRST_NAME}' => $data['first_name'] ?? 'Valued Customer',
+            '{LAST_NAME}' => $data['last_name'] ?? 'Valued Customer',
             '{USER_NAME}' => $data['user_name'] ?? 'Valued Customer',
             '{USER_EMAIL}' => $data['user_email'] ?? '',
             '{SITE_NAME}' => get_bloginfo('name'),
@@ -1415,7 +1431,7 @@ class Mail_Marketing_Importer
 
         // Test file reading
         $test_file = MMI_PLUGIN_PATH . 'test-data.csv';
-        if (file_exists($test_file)) {
+        if (is_file($test_file)) {
             echo '<div style="padding: 20px; background: #e8f4f8; margin: 20px;"><h2>Test File Import</h2>';
             echo '<p>Test file exists: ' . $test_file . '</p>';
             echo '<p>File size: ' . filesize($test_file) . ' bytes</p>';

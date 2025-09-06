@@ -4,7 +4,7 @@
  * Plugin Name: Mail Marketing Importer
  * Plugin URI: https://echbay.com
  * Description: Import email marketing data from Excel files (.xlsx, .xls, .csv)
- * Version: 1.2.3
+ * Version: 1.2.4
  * Author: Dao Quoc Dai
  * License: GPL v2 or later
  * Text Domain: mail-marketing-importer
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 // Define plugin constants
 define('MMI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MMI_PLUGIN_PATH', __DIR__ . '/');
-define('MMI_PLUGIN_VERSION', '1.2.3');
+define('MMI_PLUGIN_VERSION', '1.2.4');
 
 // Include required files
 require_once MMI_PLUGIN_PATH . 'includes/class-mail-marketing-importer.php';
@@ -189,31 +189,43 @@ add_action('admin_post_mmi_force_db_update', 'mail_marketing_importer_force_db_u
 function get_email_content_settings($campaign_id = 0)
 {
     $default_html_content = file_get_contents(MMI_PLUGIN_PATH . 'html-template/default.html');
+    $default_subject = 'Welcome to {SITE_NAME}';
 
     // Get email content from database
     if ($campaign_id > 0) {
         global $wpdb;
-        $email_content_settings = $wpdb->get_row($wpdb->prepare(
+        $data = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}mail_marketing_campaigns WHERE id = %d",
             $campaign_id
         ), ARRAY_A);
-        // print_r($email_content_settings);
-    }
+        // print_r($data);
 
-    $email_content = $email_content_settings['email_content'] ?? $default_html_content;
-    $email_subject = $email_content_settings['email_subject'] ?? '';
+        // nếu có bản ghi thì lấy, không thì dùng mặc định
+        $email_content = $data['email_content'] ?? '';
+        $email_subject = $data['email_subject'] ?? '';
 
-    // Handle empty content - use default if content is empty or just whitespace
-    if (empty(trim($email_content))) {
-        $email_content = $default_html_content;
+        // Handle empty content - use default if content is empty or just whitespace
+        if (empty(trim($email_content))) {
+            $email_template = $data['email_template'] ?? '';
+            if ($email_template != 'default.html') {
+                $template_path = MMI_PLUGIN_PATH . 'html-template/' . $email_template;
+                if (is_file($template_path)) {
+                    $default_html_content = file_get_contents($template_path);
+                }
+            }
+            $email_content = $default_html_content;
+        } else {
+            // Định dạng HTML cho email content
+            $email_content = apply_filters('the_content', $email_content);
+        }
+
+        // Handle empty subject - use default if subject is empty or just whitespace
+        if (empty(trim($email_subject))) {
+            $email_subject = $default_subject;
+        }
     } else {
-        // Định dạng HTML cho email content
-        $email_content = apply_filters('the_content', $email_content);
-    }
-
-    // Handle empty subject - use default if subject is empty or just whitespace
-    if (empty(trim($email_subject))) {
-        $email_subject = 'Welcome to {SITE_NAME}';
+        $email_content = $default_html_content;
+        $email_subject = $default_subject;
     }
 
     return array(

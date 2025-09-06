@@ -1,148 +1,66 @@
-<!DOCTYPE html>
-<html lang="en">
+<div style="margin: 0; padding: 0; font-family: 'Georgia', serif; line-height: 1.6; color: #2c3e50; background-color: #f8f9fa;"></div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; padding: 20px 0;">
+    <tr>
+        <td align="center">
+            <!-- Main Container -->
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; max-width: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Georgia', serif;
-            line-height: 1.7;
-            color: #2c3e50;
-            background-color: #ecf0f1;
-        }
+                <!-- Header with gold accent -->
+                <tr>
+                    <td style="background-color: #1a1a1a; padding: 30px; text-align: center; border-top: 4px solid #d4af37;">
+                        <h1 style="margin: 0; font-size: 32px; font-weight: 300; color: #ffffff; font-family: 'Georgia', serif; letter-spacing: 2px;">
+                            EXECUTIVE COMMUNICATION
+                        </h1>
+                        <div style="width: 60px; height: 2px; background-color: #d4af37; margin: 20px auto;"></div>
+                    </td>
+                </tr>
 
-        .container {
-            max-width: 650px;
-            margin: 20px auto;
-            background: #ffffff;
-            border: 1px solid #d5dbdb;
-        }
+                <!-- Content -->
+                <tr>
+                    <td style="padding: 50px 40px;">
+                        <div style="font-size: 18px; color: #d4af37; margin-bottom: 25px; font-weight: 600;">
+                            Dear {USER_NAME},
+                        </div>
 
-        .header {
-            background: #34495e;
-            color: #ecf0f1;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-        }
+                        <div style="color: #2c3e50; font-size: 16px; line-height: 1.8; margin-bottom: 30px; font-family: 'Georgia', serif;">
+                            {{content}}
+                        </div>
 
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 10px solid #34495e;
-        }
+                        <div style="font-size: 16px; margin-bottom: 25px; color: #34495e; font-family: 'Georgia', serif; line-height: 1.8;">
+                            We are pleased to present this exclusive communication from our executive team. Your continued partnership and trust in our organization drives our commitment to excellence.
+                        </div>
 
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: normal;
-            letter-spacing: 1px;
-        }
+                        <div style="font-size: 16px; margin-bottom: 35px; color: #34495e; font-family: 'Georgia', serif; line-height: 1.8;">
+                            Should you require any additional information or have questions regarding this communication, please do not hesitate to contact our dedicated support team.
+                        </div>
 
-        .content {
-            padding: 40px 35px;
-        }
+                        <!-- Call to Action -->
+                        <div style="text-align: center; margin: 40px 0;">
+                            <a href="#" style="display: inline-block; background-color: #d4af37; color: #1a1a1a; text-decoration: none; padding: 16px 35px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border: none; font-size: 14px;">
+                                View Details
+                            </a>
+                        </div>
 
-        .greeting {
-            font-size: 18px;
-            color: #e74c3c;
-            margin-bottom: 25px;
-            font-style: italic;
-        }
+                        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #ecf0f1;">
+                            <div style="font-size: 14px; color: #7f8c8d; font-style: italic; text-align: center;">
+                                Best regards,<br>
+                                <strong style="color: #2c3e50;">The Executive Team</strong>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
 
-        .main-text {
-            font-size: 16px;
-            margin-bottom: 25px;
-            text-align: justify;
-        }
-
-        .highlight-box {
-            background: #f8f9fa;
-            border-left: 4px solid #e74c3c;
-            padding: 20px;
-            margin: 25px 0;
-            font-style: italic;
-        }
-
-        .cta-section {
-            text-align: center;
-            margin: 35px 0;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: #e74c3c;
-            color: white;
-            text-decoration: none;
-            padding: 12px 25px;
-            border: 2px solid #e74c3c;
-            font-weight: bold;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-        }
-
-        .cta-button:hover {
-            background: transparent;
-            color: #e74c3c;
-        }
-
-        .footer {
-            background: #f8f9fa;
-            padding: 25px 35px;
-            border-top: 1px solid #d5dbdb;
-            text-align: center;
-        }
-
-        .unsubscribe {
-            font-size: 13px;
-            color: #7f8c8d;
-            font-style: italic;
-        }
-
-        .unsubscribe a {
-            color: #e74c3c;
-            text-decoration: none;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>EXCLUSIVE NEWSLETTER</h1>
-        </div>
-        <div class="content">
-            <div class="greeting">Dear {USER_NAME},</div>
-            <div class="main-text">
-                We are delighted to welcome you to our exclusive newsletter community. As a valued subscriber, you will receive carefully curated content, insider tips, and special offers that are not available anywhere else.
-            </div>
-            <div class="highlight-box">
-                "Stay ahead of the curve with our expert insights and industry trends that matter most to your success."
-            </div>
-            <div class="main-text">
-                Our team is committed to delivering high-quality content that adds real value to your professional and personal growth. We respect your time and promise to send only the most relevant and engaging updates.
-            </div>
-            <div class="cta-section">
-                <a href="#" class="cta-button">EXPLORE NOW</a>
-            </div>
-        </div>
-        <div class="footer">
-            <div class="unsubscribe">
-                You're receiving this because you subscribed to our newsletter.<br>
-                <a href="{UNSUBSCRIBE_URL}">Unsubscribe</a> if you no longer wish to receive these emails.
-            </div>
-        </div>
-    </div>
-</body>
-
-</html>
+                <!-- Footer -->
+                <tr>
+                    <td style="background-color: #1a1a1a; padding: 25px 40px; text-align: center;">
+                        <div style="font-size: 12px; color: #95a5a6;">
+                            This is a confidential communication. If you wish to opt out, please
+                            <a href="{UNSUBSCRIBE_URL}" style="color: #d4af37; text-decoration: none;">unsubscribe here</a>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</div>

@@ -13,18 +13,8 @@ $template = isset($_GET['template']) ? basename($_GET['template']) : 'default.ht
 // Remove any path characters for security
 $template = preg_replace('/[^a-zA-Z0-9\-\.]/', '', $template);
 
-// Define allowed templates
-$allowed_templates = array(
-    'default.html',
-    'modern-minimal.html',
-    'corporate-elegant.html',
-    'creative-colorful.html',
-    'professional-business.html',
-    'tech-modern.html'
-);
-
-// Validate template
-if (!in_array($template, $allowed_templates)) {
+// Validate template phải là file .html
+if (substr($template, -5) !== '.html') {
     $template = 'default.html';
 }
 
@@ -33,7 +23,7 @@ $template_dir = dirname(__FILE__) . '/html-template/';
 $template_path = $template_dir . $template;
 
 // Check if template exists
-if (!file_exists($template_path)) {
+if (!is_file($template_path)) {
     echo '<p style="padding: 20px; color: #d63638;">Template not found: ' . htmlspecialchars($template) . '</p>';
     exit;
 }
@@ -48,6 +38,8 @@ if ($template_content === false) {
 
 // Sample data for preview
 $sample_data = array(
+    '{FIRST_NAME}' => 'John',
+    '{LAST_NAME}' => 'Doe',
     '{USER_NAME}' => 'John Doe',
     '{USER_EMAIL}' => 'john.doe@example.com',
     '{SITE_NAME}' => 'Your Website Name',
@@ -63,4 +55,17 @@ foreach ($sample_data as $placeholder => $value) {
 }
 
 // Output the processed template
-echo $template_content;
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <?php echo $template_content; ?>
+</body>
+
+</html>

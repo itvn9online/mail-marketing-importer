@@ -1,208 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
+<div style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background-color: #ffffff;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <!-- Main Container -->
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; max-width: 600px; border: 2px solid #3498db;">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #2c3e50;
-            background-color: #ffffff;
-        }
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #3498db; color: white; padding: 30px; text-align: center;">
+                            <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #ffffff;">
+                                Professional Update
+                            </h1>
+                            <div style="font-size: 14px; margin-top: 10px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px;">
+                                Business Communication
+                            </div>
+                        </td>
+                    </tr>
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #ffffff;
-            border: 2px solid #3498db;
-        }
+                    <!-- Blue accent bar -->
+                    <tr>
+                        <td style="background-color: #2980b9; height: 5px;"></td>
+                    </tr>
 
-        .header {
-            background: #3498db;
-            color: white;
-            padding: 25px 30px;
-            text-align: center;
-        }
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 35px;">
+                            <div style="font-size: 18px; color: #3498db; margin-bottom: 20px; font-weight: 600;">
+                                Dear {USER_NAME},
+                            </div>
 
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
+                            <div style="color: #2c3e50; font-size: 16px; line-height: 1.8; margin-bottom: 25px;">
+                                {{content}}
+                            </div>
 
-        .content {
-            padding: 35px 30px;
-        }
+                            <!-- Key Points Section -->
+                            <div style="background-color: #ecf0f1; padding: 25px; border-left: 4px solid #3498db; margin: 25px 0;">
+                                <h3 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 18px;">Key Highlights</h3>
+                                <ul style="margin: 0; padding-left: 20px; color: #34495e;">
+                                    <li style="margin-bottom: 8px;">Enhanced business solutions and services</li>
+                                    <li style="margin-bottom: 8px;">Streamlined processes for better efficiency</li>
+                                    <li style="margin-bottom: 8px;">Dedicated support for your success</li>
+                                </ul>
+                            </div>
 
-        .greeting {
-            font-size: 18px;
-            color: #3498db;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
+                            <div style="font-size: 16px; margin-bottom: 25px; color: #34495e; line-height: 1.7;">
+                                We remain committed to providing you with exceptional service and innovative solutions that drive your business forward. Our team is always available to address any questions or concerns you may have.
+                            </div>
 
-        .main-text {
-            font-size: 15px;
-            margin-bottom: 20px;
-            text-align: justify;
-        }
+                            <!-- Statistics Section -->
+                            <div style="text-align: center; margin: 35px 0;">
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                    <tr>
+                                        <td style="width: 33.33%; text-align: center; padding: 20px 10px;">
+                                            <div style="font-size: 32px; font-weight: bold; color: #3498db; margin-bottom: 8px;">98%</div>
+                                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px;">Satisfaction</div>
+                                        </td>
+                                        <td style="width: 33.33%; text-align: center; padding: 20px 10px; border-left: 1px solid #ecf0f1; border-right: 1px solid #ecf0f1;">
+                                            <div style="font-size: 32px; font-weight: bold; color: #3498db; margin-bottom: 8px;">24/7</div>
+                                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px;">Support</div>
+                                        </td>
+                                        <td style="width: 33.33%; text-align: center; padding: 20px 10px;">
+                                            <div style="font-size: 32px; font-weight: bold; color: #3498db; margin-bottom: 8px;">500+</div>
+                                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px;">Clients</div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
 
-        .info-box {
-            background: #ecf0f1;
-            border: 1px solid #bdc3c7;
-            padding: 20px;
-            margin: 25px 0;
-            text-align: center;
-        }
+                            <!-- Call to Action -->
+                            <div style="text-align: center; margin: 35px 0;">
+                                <a href="#"
+                                    style="display: inline-block; background-color: #3498db; color: white; text-decoration: none; padding: 15px 30px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; border-radius: 3px;">
+                                    View Details
+                                </a>
+                            </div>
 
-        .info-box h3 {
-            color: #3498db;
-            margin: 0 0 15px 0;
-            font-size: 18px;
-        }
+                            <div style="margin-top: 35px; padding-top: 25px; border-top: 2px solid #ecf0f1; text-align: center;">
+                                <div style="font-size: 14px; color: #7f8c8d;">
+                                    Best regards,<br>
+                                    <strong style="color: #2c3e50;">The Professional Team</strong>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
 
-        .stats {
-            display: table;
-            width: 100%;
-            margin: 25px 0;
-        }
-
-        .stat-item {
-            display: table-cell;
-            text-align: center;
-            padding: 20px 10px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-        }
-
-        .stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #3498db;
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #7f8c8d;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .cta-section {
-            text-align: center;
-            margin: 30px 0;
-            padding: 25px;
-            background: #f8f9fa;
-            border: 2px dashed #3498db;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: #3498db;
-            color: white;
-            text-decoration: none;
-            padding: 15px 30px;
-            border: none;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: background 0.3s ease;
-        }
-
-        .cta-button:hover {
-            background: #2980b9;
-        }
-
-        .footer {
-            background: #34495e;
-            color: #ecf0f1;
-            padding: 25px 30px;
-            text-align: center;
-        }
-
-        .footer-info {
-            font-size: 13px;
-            margin-bottom: 15px;
-        }
-
-        .unsubscribe {
-            font-size: 12px;
-            color: #bdc3c7;
-        }
-
-        .unsubscribe a {
-            color: #3498db;
-            text-decoration: none;
-        }
-
-        @media only screen and (max-width: 600px) {
-            .stats {
-                display: block;
-            }
-
-            .stat-item {
-                display: block;
-                margin-bottom: 10px;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Business Newsletter</h1>
-        </div>
-        <div class="content">
-            <div class="greeting">Dear {USER_NAME},</div>
-            <div class="main-text">
-                Thank you for subscribing to our business newsletter. You have successfully joined our professional network of industry leaders, entrepreneurs, and business enthusiasts.
-            </div>
-            <div class="info-box">
-                <h3>What You Can Expect</h3>
-                <p>Weekly industry insights, business trends analysis, networking opportunities, and exclusive resources to help grow your business.</p>
-            </div>
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-number">50K+</span>
-                    <span class="stat-label">Subscribers</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">200+</span>
-                    <span class="stat-label">Articles</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">98%</span>
-                    <span class="stat-label">Satisfaction</span>
-                </div>
-            </div>
-            <div class="main-text">
-                Our newsletter is published every Tuesday and contains carefully curated content from industry experts. We respect your time and privacy, ensuring each email delivers maximum value.
-            </div>
-            <div class="cta-section">
-                <p style="margin: 0 0 15px 0; font-weight: bold;">Ready to dive in?</p>
-                <a href="#" class="cta-button">Access Resources</a>
-            </div>
-        </div>
-        <div class="footer">
-            <div class="footer-info">
-                This email was sent to you because you subscribed to our business newsletter.<br>
-                We are committed to providing valuable content and respecting your privacy.
-            </div>
-            <div class="unsubscribe">
-                <a href="{UNSUBSCRIBE_URL}">Unsubscribe</a> |
-                <a href="#">Update Preferences</a> |
-                <a href="#">Contact Us</a>
-            </div>
-        </div>
-    </div>
-</body>
-
-</html>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #34495e; padding: 20px 35px; text-align: center;">
+                            <div style="font-size: 12px; color: #ecf0f1;">
+                                This is a professional communication.
+                                <a href="{UNSUBSCRIBE_URL}" style="color: #3498db; text-decoration: none;">Unsubscribe</a> if you no longer wish to receive these updates.
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>

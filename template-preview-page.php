@@ -80,17 +80,15 @@
         <h1>Email Template Preview</h1>
         <div class="template-selector">
             <select id="templateSelect">
-                <option value="default.html">Default Simple</option>
-                <option value="modern-minimal.html">Modern Minimal</option>
-                <option value="corporate-elegant.html">Corporate Elegant</option>
-                <option value="creative-colorful.html">Creative Colorful</option>
-                <option value="professional-business.html">Professional Business</option>
-                <option value="tech-modern.html">Tech Modern</option>
-                <option value="newsletter-classic.html">Newsletter Classic</option>
-                <option value="dark-mode-modern.html">Dark Mode Modern</option>
-                <option value="corporate-professional.html">Corporate Professional</option>
-                <option value="ecommerce-sale.html">E-commerce Sale</option>
-                <option value="eco-friendly-green.html">Eco-Friendly Green</option>
+                <?php
+                // lấy danh sách file .html trong thư mục html-template
+                $template_dir = __DIR__ . '/html-template/';
+                $templates = glob($template_dir . '*.html');
+                foreach ($templates as $template_file) {
+                    $template_name = basename($template_file);
+                    echo '<option value="' . htmlspecialchars($template_name) . '">' . htmlspecialchars($template_name) . '</option>';
+                }
+                ?>
             </select>
             <button class="preview-button" onclick="loadTemplate()">Preview Template</button>
         </div>
@@ -123,7 +121,7 @@
         }
 
         // Load default template on page load
-        window.onload = function () {
+        window.onload = function() {
             // Check if template parameter exists in URL
             const templateParam = getUrlParameter('template');
             const templateSelect = document.getElementById('templateSelect');

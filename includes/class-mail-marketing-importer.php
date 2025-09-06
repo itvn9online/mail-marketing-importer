@@ -418,7 +418,7 @@ class Mail_Marketing_Importer
                                         ?>
                                     </select>
                                     <p class="description">Choose an email template for this campaign</p>
-                                    <p><a href="<?php echo MMI_PLUGIN_URL; ?>template-preview-page.html?template=<?php echo $current_template; ?>" target="_blank" style="font-size: 12px;">Preview Templates →</a></p>
+                                    <p><a href="<?php echo MMI_PLUGIN_URL; ?>template-preview-page.php?template=<?php echo $current_template; ?>" target="_blank" style="font-size: 12px;">Preview Templates →</a></p>
                                 </td>
                             </tr>
                             <tr>
@@ -1279,34 +1279,7 @@ class Mail_Marketing_Importer
      */
     private function get_email_templates_options()
     {
-        $templates_dir = MMI_PLUGIN_PATH . 'html-template/';
-        $templates = array();
-
-        // Define template names and descriptions
-        $template_info = array(
-            'default.html' => 'Default Simple',
-            'modern-minimal.html' => 'Modern Minimal',
-            'corporate-elegant.html' => 'Corporate Elegant',
-            'creative-colorful.html' => 'Creative Colorful',
-            'professional-business.html' => 'Professional Business',
-            'tech-modern.html' => 'Tech Modern',
-            'newsletter-classic.html' => 'Newsletter Classic',
-            'dark-mode-modern.html' => 'Dark Mode Modern',
-            'corporate-professional.html' => 'Corporate Professional',
-            'ecommerce-sale.html' => 'E-commerce Sale',
-            'eco-friendly-green.html' => 'Eco-Friendly Green'
-        );
-
-        $options = '';
-
-        foreach ($template_info as $file => $name) {
-            if (is_file($templates_dir . $file)) {
-                $selected = ($file === 'default.html') ? ' selected' : '';
-                $options .= '<option value="' . esc_attr($file) . '"' . $selected . '>' . esc_html($name) . '</option>';
-            }
-        }
-
-        return $options;
+        return $this->get_email_templates_options_with_selected('default.html');
     }
 
     /**
@@ -1314,30 +1287,14 @@ class Mail_Marketing_Importer
      */
     private function get_email_templates_options_with_selected($selected_template)
     {
-        $templates_dir = MMI_PLUGIN_PATH . 'html-template/';
-
-        // Define template names and descriptions
-        $template_info = array(
-            'default.html' => 'Default Simple',
-            'modern-minimal.html' => 'Modern Minimal',
-            'corporate-elegant.html' => 'Corporate Elegant',
-            'creative-colorful.html' => 'Creative Colorful',
-            'professional-business.html' => 'Professional Business',
-            'tech-modern.html' => 'Tech Modern',
-            'newsletter-classic.html' => 'Newsletter Classic',
-            'dark-mode-modern.html' => 'Dark Mode Modern',
-            'corporate-professional.html' => 'Corporate Professional',
-            'ecommerce-sale.html' => 'E-commerce Sale',
-            'eco-friendly-green.html' => 'Eco-Friendly Green'
-        );
-
+        // lấy danh sách file .html trong thư mục html-template
+        $template_dir = MMI_PLUGIN_PATH . 'html-template/';
+        $templates = glob($template_dir . '*.html');
         $options = '';
-
-        foreach ($template_info as $file => $name) {
-            if (is_file($templates_dir . $file)) {
-                $selected = ($file === $selected_template) ? ' selected' : '';
-                $options .= '<option value="' . esc_attr($file) . '"' . $selected . '>' . esc_html($name) . '</option>';
-            }
+        foreach ($templates as $template_file) {
+            $template_name = basename($template_file);
+            $selected = ($template_name === $selected_template) ? ' selected' : '';
+            $options .= '<option value="' . esc_attr($template_name) . '"' . $selected . '>' . esc_html($template_name) . '</option>';
         }
 
         return $options;

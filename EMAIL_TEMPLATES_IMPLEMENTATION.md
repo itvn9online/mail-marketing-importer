@@ -34,7 +34,7 @@
 
 ### ✅ 5. Hệ thống xem trước
 
-- Tạo `template-preview-page.html` để xem trước mẫu
+- Tạo `template-preview-page.php` để xem trước mẫu
 - Tạo `template-preview.php` để load mẫu với dữ liệu demo
 - Tích hợp link xem trước vào admin interface
 
@@ -92,7 +92,7 @@ wp-content/plugins/mail-marketing-importer/
 │   ├── creative-colorful.html
 │   ├── professional-business.html
 │   └── tech-modern.html
-├── template-preview-page.html
+├── template-preview-page.php
 ├── template-preview.php
 └── EMAIL_TEMPLATES_README.md
 ```

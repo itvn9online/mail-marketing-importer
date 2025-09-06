@@ -67,7 +67,7 @@ Plugin Mail Marketing Importer đã được cập nhật với 6 mẫu email ma
 
 ### 3. Xem trước mẫu email
 
-- Truy cập: `yoursite.com/wp-content/plugins/mail-marketing-importer/template-preview-page.html`
+- Truy cập: `yoursite.com/wp-content/plugins/mail-marketing-importer/template-preview-page.php`
 - Chọn mẫu từ dropdown để xem trước
 - Mẫu sẽ hiển thị với dữ liệu demo
 
@@ -97,7 +97,7 @@ Nếu plugin đã được cài đặt trước đó, cần chạy script cập 
 
 1. Tạo file `.html` mới trong thư mục `html-template/`
 2. Cập nhật mảng `$template_info` trong class `Mail_Marketing_Importer`
-3. Thêm vào `template-preview.php` và `template-preview-page.html`
+3. Thêm vào `template-preview.php` và `template-preview-page.php`
 
 ### Chỉnh sửa mẫu có sẵn
 

@@ -11,6 +11,16 @@
 if (is_file(MMI_PLUGIN_PATH . 'vendor/phpspreadsheet/vendor/autoload.php')) {
     require_once MMI_PLUGIN_PATH . 'vendor/phpspreadsheet/vendor/autoload.php';
 } else {
+    // If the zip file exists, try to extract it
+    if (is_file(MMI_PLUGIN_PATH . 'vendor/phpspreadsheet.zip')) {
+        $zip = new ZipArchive;
+        if ($zip->open(MMI_PLUGIN_PATH . 'vendor/phpspreadsheet.zip') === TRUE) {
+            $zip->extractTo(MMI_PLUGIN_PATH . 'vendor/');
+            $zip->close();
+        }
+    }
+
+    // 
     echo MMI_PLUGIN_PATH . 'vendor/phpspreadsheet/vendor/autoload.php' . '<br>' . PHP_EOL;
 
     die('PhpSpreadsheet library is required. Please install it using: composer require phpoffice/phpspreadsheet');

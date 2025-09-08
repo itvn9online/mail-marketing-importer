@@ -84,7 +84,6 @@ function mail_marketing_importer_update_database()
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ";
 
-    echo $sql_query . '<br>' . PHP_EOL;
     $wpdb->query($sql_query);
 
     // Create campaigns table
@@ -106,7 +105,6 @@ function mail_marketing_importer_update_database()
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ";
 
-    echo $campaigns_sql . '<br>' . PHP_EOL;
     $wpdb->query($campaigns_sql);
 
     // Add new columns for existing installations (for plugin updates)
@@ -123,7 +121,6 @@ function mail_marketing_importer_update_database()
     foreach ($columns_to_add as $column => $sql) {
         $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}mail_marketing LIKE '{$column}'");
         if (empty($column_exists)) {
-            echo $sql . '<br>' . PHP_EOL;
             $wpdb->query($sql);
         }
     }
@@ -139,7 +136,6 @@ function mail_marketing_importer_update_database()
     foreach ($campaign_columns_to_add as $column => $sql) {
         $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}mail_marketing_campaigns LIKE '{$column}'");
         if (empty($column_exists)) {
-            echo $sql . '<br>' . PHP_EOL;
             $wpdb->query($sql);
         }
     }
@@ -170,7 +166,7 @@ function mail_marketing_importer_update_database()
         }
     } catch (Exception $e) {
         // Foreign key constraint failed, but that's okay for some hosting environments
-        die('MMI: Foreign key constraint could not be added: ' . $e->getMessage());
+        error_log('MMI: Foreign key constraint could not be added: ' . $e->getMessage());
     }
 }
 

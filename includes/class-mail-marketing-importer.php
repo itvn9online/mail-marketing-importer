@@ -542,7 +542,7 @@ class Mail_Marketing_Importer
                                             <td><?php echo $campaign->created_at; ?></td>
                                             <td>
                                                 <a href="<?php echo admin_url('admin.php?page=email-campaigns&edit=' . $campaign->id); ?>" class="button button-small">Edit</a>
-                                                <a href="https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/v1/?token=9557ff3fc1295832f54c9fe3351d977b&action=mail_marketing&campaign_id=<?php echo $campaign->id; ?>"
+                                                <a href="<?php echo home_url(); ?>/wp-content/themes/marketing/api/v1/?token=9557ff3fc1295832f54c9fe3351d977b&action=mail_marketing&campaign_id=<?php echo $campaign->id; ?>"
                                                     class="button button-small button-primary" target="_blank">Send Email</a>
                                                 <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=delete_campaign&campaign_id=' . $campaign->id), 'delete_campaign_' . $campaign->id); ?>"
                                                     class="button button-small button-link-delete"
@@ -1458,7 +1458,7 @@ class Mail_Marketing_Importer
 
         // Generate unsubscribe token
         $unsubscribe_token = md5($sample_record->email . '|' . $sample_record->id . '|' . wp_salt());
-        $unsubscribe_url = home_url('/api/v1/unsubscribe/?token=' . $unsubscribe_token . '&email=' . urlencode($sample_record->email) . '&id=' . $sample_record->id);
+        $unsubscribe_url = home_url() . '/wp-content/themes/marketing/api/v1/unsubscribe/?token=' . $unsubscribe_token . '&email=' . urlencode($sample_record->email) . '&id=' . $sample_record->id;
 
         echo '<p><strong>Sample Email Record:</strong></p>';
         echo '<ul>';
@@ -1537,7 +1537,7 @@ class Mail_Marketing_Importer
         }
 
         if ($result) {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&campaign_created=1'));
+            wp_redirect(admin_url('admin.php?page=email-campaigns&edit=' . $wpdb->insert_id . '&campaign_created=1'));
         } else {
             wp_redirect(admin_url('admin.php?page=email-campaigns&error=create_failed'));
         }
@@ -1609,15 +1609,6 @@ class Mail_Marketing_Importer
 
         global $wpdb;
 
-        // Set all contacts in this campaign to have null campaign_id
-        $result = $wpdb->update(
-            $wpdb->prefix . 'mail_marketing',
-            array('campaign_id' => null),
-            array('campaign_id' => $campaign_id),
-            array('%s'),
-            array('%d')
-        );
-
         // tạm thời không xóa campaign, chỉ cập nhật trạng thái
         if (1 > 2) {
             // Delete the campaign
@@ -1626,12 +1617,21 @@ class Mail_Marketing_Importer
                 array('id' => $campaign_id),
                 array('%d')
             );
+
+            // Set all contacts in this campaign to have null campaign_id
+            $wpdb->update(
+                $wpdb->prefix . 'mail_marketing',
+                array('campaign_id' => null),
+                array('campaign_id' => $campaign_id),
+                array('%s'),
+                array('%d')
+            );
         } else {
-            // Update campaign status to draft
+            // Update campaign status to inactive
             $result = $wpdb->update(
                 $wpdb->prefix . 'mail_marketing_campaigns',
                 array(
-                    'campaign_status' => 'draft',
+                    'status' => 'inactive',
                     'updated_at' => current_time('mysql')
                 ),
                 array('id' => $campaign_id),

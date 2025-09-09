@@ -622,3 +622,121 @@ span[style*="color: red"] {
 .email-pagination .button {
     margin: 0 2px;
 }
+
+/* URL Detection Styles */
+.detected-urls-empty {
+    color: #999;
+    font-style: italic;
+}
+
+.detected-urls-title {
+    margin: 5px 0;
+}
+
+.detected-urls-node {
+    margin: 2px 0;
+    padding: 4px 8px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.detected-urls-node a {
+    text-decoration: none;
+    color: #0073aa;
+    /* cursor: pointer; */
+}
+
+.detected-urls-node a:hover {
+    text-decoration: underline;
+}
+
+.detected-urls-node span {
+    color: #d63638;
+}
+
+.email-url-detection {
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.email-url-detection:hover {
+    background-color: #e8f4fd !important;
+    border-left-color: #005a87 !important;
+}
+
+#detected-urls-list {
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 13px;
+}
+
+#detected-urls-list div[style*="background: #fff"] {
+    transition: all 0.2s ease;
+    word-break: break-all;
+}
+
+#detected-urls-list div[style*="background: #fff"]:hover {
+    background-color: #f0f8ff !important;
+    border-color: #0073aa !important;
+    transform: translateX(2px);
+}
+
+#detected-urls-list span[style*="color: #0073aa"] {
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+#detected-urls-list span[style*="color: #0073aa"]:hover {
+    color: #005a87 !important;
+    text-decoration: underline;
+}
+
+/* Responsive design for URL list */
+@media (max-width: 768px) {
+    #detected-urls-list div[style*="background: #fff"] {
+        font-size: 11px;
+        padding: 3px 6px !important;
+    }
+
+    .email-url-detection {
+        margin-left: -10px;
+        margin-right: -10px;
+        border-radius: 0;
+    }
+}
+
+/* URL counter badges */
+.email-url-detection strong {
+    position: relative;
+}
+
+.email-url-detection strong:after {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #00a32a;
+    border-radius: 50%;
+    margin-left: 5px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(1.1);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

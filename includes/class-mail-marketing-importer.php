@@ -25,6 +25,9 @@ class Mail_Marketing_Importer
 
         // Email status toggle actions
         add_action('wp_ajax_toggle_email_status', array($this, 'handle_toggle_email_status'));
+
+        // Bulk unsubscribe action
+        add_action('admin_post_bulk_unsubscribe_email', array($this, 'handle_bulk_unsubscribe'));
     }
 
     /**
@@ -466,6 +469,15 @@ class Mail_Marketing_Importer
                                         <span class="placeholder-item" data-placeholder="{UNSUBSCRIBE_URL}" title="Double-click to copy">{UNSUBSCRIBE_URL}</span>
                                         <span class="placeholder-item" data-placeholder="{CITY}" title="Double-click to copy">{CITY}</span>
                                     </div>
+
+                                    <!-- URL Detection Section -->
+                                    <div class="email-url-detection" style="margin-top: 15px; padding: 10px; background-color: #f0f8ff; border-left: 4px solid #0073aa; border-radius: 3px;">
+                                        <strong>🔗 URLs detected in email content:</strong><br>
+                                        <small style="color: #666; font-style: italic;">URLs are automatically detected and updated when you edit the content</small>
+                                        <div id="detected-urls-list" style="margin-top: 8px; min-height: 20px;">
+                                            <span style="color: #999; font-style: italic;">No URLs detected yet...</span>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
@@ -700,16 +712,50 @@ class Mail_Marketing_Importer
                         <?php endforeach; ?>
                     </select>
 
-                    <label for="search_email">Search Email:</label>
+                    <label for="search_email">Email:</label>
                     <input type="text" name="search_email" id="search_email" value="<?php echo esc_attr($search_email); ?>" placeholder="Enter email to search">
 
-                    <label for="search_phone">Search Phone:</label>
+                    <label for="search_phone">Phone:</label>
                     <input type="text" name="search_phone" id="search_phone" value="<?php echo esc_attr($search_phone); ?>" placeholder="Enter phone to search">
 
                     <input type="submit" class="button button-primary" value="Filter">
                     <a href="<?php echo admin_url('admin.php?page=email-campaigns' . (isset($_GET['edit']) ? '&edit=' . intval($_GET['edit']) : '')); ?>&filter=1"
-                        class="button">Clear Filters</a>
+                        class="button">Clear</a>
                 </div>
+            </form>
+        </div>
+
+        <!-- Bulk Unsubscribe Section -->
+        <div class="bulk-unsubscribe-section" style="background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 1px rgba(0, 0, 0, .04);">
+            <?php
+
+            // Bulk unsubscribe notification
+            if (isset($_GET['bulk_unsubscribed']) && $_GET['bulk_unsubscribed'] == '1') {
+                $affected_rows = isset($_GET['affected_rows']) ? intval($_GET['affected_rows']) : 0;
+                $email = isset($_GET['email']) ? urldecode($_GET['email']) : '';
+                echo '<div class="redcolor"><p>';
+                echo '<strong>Bulk Unsubscribe Completed!</strong> Successfully unsubscribed ' . $affected_rows . ' record(s) with email: <code>' . esc_html($email) . '</code>';
+                echo '</p></div>';
+            }
+
+            ?>
+            <h3 style="margin-top: 0; color: #d63638; font-size: 1.1em;">🚫 Bulk Unsubscribe Email</h3>
+            <p style="color: #666; margin-bottom: 15px;">Enter an email address to unsubscribe all records with that email from future campaigns.</p>
+
+            <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <input type="hidden" name="action" value="bulk_unsubscribe_email">
+                <?php wp_nonce_field('bulk_unsubscribe_nonce', 'bulk_unsubscribe_nonce'); ?>
+
+                <label for="unsubscribe_email" style="font-weight: 500;">Email to unsubscribe:</label>
+                <input type="email" name="unsubscribe_email" id="unsubscribe_email"
+                    placeholder="example@domain.com" required
+                    style="width: 250px; border: 1px solid #ddd; border-radius: 3px;">
+
+                <input type="submit" class="button button-secondary" value="Unsubscribe Email">
+
+                <small style="color: #666; width: 100%; margin-top: 5px;">
+                    ⚠️ This will mark ALL database records with this email as unsubscribed (is_unsubscribed = 1)
+                </small>
             </form>
         </div>
 
@@ -961,6 +1007,12 @@ class Mail_Marketing_Importer
                     break;
                 case 'update_failed':
                     echo 'Failed to update campaign.';
+                    break;
+                case 'invalid_email':
+                    echo !empty($message) ? $message : 'Please enter a valid email address.';
+                    break;
+                case 'unsubscribe_failed':
+                    echo !empty($message) ? $message : 'Failed to unsubscribe email. Please try again.';
                     break;
                 default:
                     echo 'An unknown error occurred.';
@@ -1711,5 +1763,47 @@ class Mail_Marketing_Importer
             default:
                 return $value;
         }
+    }
+
+    /**
+     * Handle bulk unsubscribe email
+     */
+    public function handle_bulk_unsubscribe()
+    {
+        global $wpdb;
+
+        // Security checks
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized access');
+        }
+
+        if (!wp_verify_nonce($_POST['bulk_unsubscribe_nonce'], 'bulk_unsubscribe_nonce')) {
+            wp_die('Security check failed');
+        }
+
+        // Validate email input
+        $email = sanitize_email($_POST['unsubscribe_email'] ?? '');
+        if (empty($email) || !is_email($email)) {
+            wp_redirect(admin_url('admin.php?page=email-campaigns&error=invalid_email&message=' . urlencode('Please enter a valid email address')));
+            exit;
+        }
+
+        // Update all records with this email
+        $result = $wpdb->update(
+            $wpdb->prefix . 'mail_marketing',
+            array('is_unsubscribed' => 1, 'updated_at' => current_time('mysql')),
+            array('email' => $email),
+            array('%d', '%s'),
+            array('%s')
+        );
+
+        if ($result !== false) {
+            $affected_rows = $wpdb->rows_affected;
+            wp_redirect(admin_url('admin.php?page=email-campaigns&bulk_unsubscribed=1&affected_rows=' . $affected_rows . '&email=' . urlencode($email)));
+        } else {
+            wp_redirect(admin_url('admin.php?page=email-campaigns&error=unsubscribe_failed&message=' . urlencode('Failed to update database')));
+        }
+
+        exit;
     }
 }

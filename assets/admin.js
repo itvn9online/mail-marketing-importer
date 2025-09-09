@@ -478,6 +478,14 @@ jQuery(document).ready(function ($) {
 			);
 		}
 
+		if (getUrlParameter("search_email")) {
+			$("#search_email").focus();
+		}
+
+		if (getUrlParameter("bulk_unsubscribed")) {
+			$("#unsubscribe_email").focus();
+		}
+
 		addCurrentMenu(
 			'#menu-tools a[href="tools.php?page=email-campaigns"]',
 			"email-campaigns"
@@ -532,4 +540,132 @@ jQuery(document).ready(function ($) {
 			},
 		});
 	});
+
+	// URL Detection for Email Content
+	function detectURLsInContent() {
+		let content = "";
+
+		// Get content from TinyMCE editor if available, otherwise from textarea
+		if (typeof tinymce !== "undefined" && tinymce.get("email_content")) {
+			content = tinymce.get("email_content").getContent();
+		} else {
+			content = $("#email_content").val() || "";
+		}
+		// console.log(content);
+
+		// Find all URLs in the content
+		const urls = [];
+		const emails = [];
+		const placeholders = [];
+
+		// tìm tất cả thẻ a và lấy href trong content
+		const anchorRegex = /<a [^>]*href="([^"]*)"[^>]*>/gi;
+		let anchorMatch;
+		while ((anchorMatch = anchorRegex.exec(content)) !== null) {
+			const href = $.trim(anchorMatch[1]);
+			if (!href || href == "#" || href.startsWith("javascript:")) {
+				console.log("Skipping invalid href:", href);
+				continue;
+			}
+
+			// nếu đây là email
+			if (href.startsWith("mailto:")) {
+				emails.push(href);
+			} else if (href.startsWith("{") && href.endsWith("}")) {
+				// nếu đây là placeholder
+				placeholders.push(href);
+			} else {
+				urls.push(href);
+			}
+		}
+		// console.log("Anchor URLs:", urls);
+		// console.log("Anchor Emails:", emails);
+		// console.log("Anchor Placeholders:", placeholders);
+
+		// Update the display
+		updateURLDisplay(urls, emails, placeholders);
+	}
+
+	function updateURLDisplay(urls, emails, placeholders) {
+		const container = $("#detected-urls-list");
+		let html = "";
+
+		if (urls.length === 0 && emails.length === 0 && placeholders.length === 0) {
+			html = '<span class="detected-urls-empty">No URLs detected...</span>';
+		} else {
+			if (urls.length > 0) {
+				html +=
+					'<div class="detected-urls-title"><strong>🌐 Web URLs (' +
+					urls.length +
+					"):</strong></div>";
+				urls.forEach(function (url, index) {
+					const displayUrl =
+						url.length > 180 ? url.substring(0, 180) + "..." : url;
+					html += '<div class="detected-urls-node">';
+					html +=
+						'<a target="_blank" href="' + url + '">' + displayUrl + "</a>";
+					html += "</div>";
+				});
+			}
+
+			if (emails.length > 0) {
+				html +=
+					'<div class="detected-urls-title"><strong>📧 Email Links (' +
+					emails.length +
+					"):</strong></div>";
+				emails.forEach(function (email, index) {
+					html += '<div class="detected-urls-node">';
+					html += "<span>" + email + "</span>";
+					html += "</div>";
+				});
+			}
+
+			if (placeholders.length > 0) {
+				html +=
+					'<div class="detected-urls-title"><strong>🔗 URL Placeholders (' +
+					placeholders.length +
+					"):</strong></div>";
+				placeholders.forEach(function (placeholder, index) {
+					html += '<div class="detected-urls-node">';
+					html += '<span style="color: #50575e;">' + placeholder + "</span>";
+					html += "</div>";
+				});
+			}
+		}
+
+		container.html(html);
+	}
+
+	// Initialize URL detection on page load
+	if ($("#email_content").length > 0) {
+		// Detect URLs immediately
+		setTimeout(detectURLsInContent, 1000);
+
+		// Monitor TinyMCE editor changes
+		$(document).on("tinymce-editor-init", function (event, editor) {
+			if (editor.id === "email_content") {
+				editor.on("keyup", function () {
+					setTimeout(detectURLsInContent, 3000);
+				});
+
+				editor.on("change", function () {
+					setTimeout(detectURLsInContent, 2000);
+				});
+
+				editor.on("paste", function () {
+					setTimeout(detectURLsInContent, 1000);
+				});
+			}
+		});
+
+		// Monitor textarea changes (fallback)
+		$("#email_content").on("keyup paste change", function () {
+			setTimeout(detectURLsInContent, 1000);
+		});
+
+		// Monitor when switching between Visual/Text tabs
+		$(document).on("click", ".wp-switch-editor", function () {
+			setTimeout(detectURLsInContent, 1000);
+		});
+	}
 });

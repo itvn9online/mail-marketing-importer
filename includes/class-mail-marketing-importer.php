@@ -404,11 +404,29 @@ class Mail_Marketing_Importer
                                     <input type="text" name="email_subject" class="regular-text"
                                         value="<?php echo (($edit_campaign && !empty($edit_campaign->email_subject)) ? esc_attr($edit_campaign->email_subject) : ($email_content_settings ? esc_attr($email_content_settings['subject']) : '')); ?>" required>
                                     <p class="description">Subject line for campaign emails.
-                                        <span class="placeholder-item" data-placeholder="{SITE_NAME}" title="Double-click to copy">{SITE_NAME}</span>
-                                        <span class="placeholder-item" data-placeholder="{USER_EMAIL}" title="Double-click to copy">{USER_EMAIL}</span>
-                                        <span class="placeholder-item" data-placeholder="{USER_NAME}" title="Double-click to copy">{USER_NAME}</span>
-                                        placeholders
+                                        <?php
+                                        foreach (
+                                            [
+                                                '{SITE_NAME}',
+                                                '{USER_EMAIL}',
+                                                '{USER_NAME}',
+                                            ] as $v
+                                        ) {
+                                        ?>
+                                            <span class="placeholder-item" data-placeholder="<?php echo $v; ?>" title="Double-click to copy"><?php echo $v; ?></span>
+                                        <?php
+                                        }
+                                        ?> Use the above placeholders
                                     </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Email URL</th>
+                                <td>
+                                    <input type="url" name="email_url" class="regular-text"
+                                        value="<?php echo $edit_campaign ? esc_attr($edit_campaign->email_url ?? '') : ''; ?>"
+                                        placeholder="https://example.com/landing-page">
+                                    <p class="description">Main URL that this campaign directs to (landing page, product page, etc.)</p>
                                 </td>
                             </tr>
                             <tr>
@@ -421,7 +439,10 @@ class Mail_Marketing_Importer
                                         ?>
                                     </select>
                                     <p class="description">Choose an email template for this campaign</p>
-                                    <p><a href="<?php echo MMI_PLUGIN_URL; ?>template-preview-page.php?template=<?php echo $current_template; ?>" target="_blank" style="font-size: 12px;">Preview Templates →</a></p>
+                                    <p>
+                                        <a href="<?php echo MMI_PLUGIN_URL; ?>template-preview-page.php?template=<?php echo $current_template; ?>" target="_blank" style="font-size: 12px;">Preview Templates →</a>
+                                        <button type="button" id="reset-to-template-btn" class="button button-secondary" style="margin-left: 10px; font-size: 11px;">Reset to Template</button>
+                                    </p>
                                 </td>
                             </tr>
                             <tr>
@@ -444,8 +465,11 @@ class Mail_Marketing_Importer
                                         $content .= '<hr><p>Don\'t want future emails? <a href="{UNSUBSCRIBE_URL}">Unsubscribe</a></p>';
                                     }
 
-                                    // 
-                                    wp_editor($content, 'email_content', array(
+                                    // Thay thế các URL mẫu
+                                    wp_editor(str_replace([
+                                        'http://{',
+                                        'https://{'
+                                    ], '{', $content), 'email_content', array(
                                         'textarea_name' => 'email_content',
                                         'textarea_rows' => 20,
                                         'teeny' => false,
@@ -461,13 +485,25 @@ class Mail_Marketing_Importer
                                     <div class="email-placeholders">
                                         <strong>Available placeholders:</strong><br>
                                         <small style="color: #666; font-style: italic;">Double-click any placeholder to copy it to clipboard</small><br>
-                                        <span class="placeholder-item" data-placeholder="{SITE_NAME}" title="Double-click to copy">{SITE_NAME}</span>
-                                        <span class="placeholder-item" data-placeholder="{USER_EMAIL}" title="Double-click to copy">{USER_EMAIL}</span>
-                                        <span class="placeholder-item" data-placeholder="{USER_NAME}" title="Double-click to copy">{USER_NAME}</span>
-                                        <span class="placeholder-item" data-placeholder="{FIRST_NAME}" title="Double-click to copy">{FIRST_NAME}</span>
-                                        <span class="placeholder-item" data-placeholder="{LAST_NAME}" title="Double-click to copy">{LAST_NAME}</span>
-                                        <span class="placeholder-item" data-placeholder="{UNSUBSCRIBE_URL}" title="Double-click to copy">{UNSUBSCRIBE_URL}</span>
-                                        <span class="placeholder-item" data-placeholder="{CITY}" title="Double-click to copy">{CITY}</span>
+                                        <?php
+                                        foreach (
+                                            [
+                                                '{SITE_NAME}',
+                                                '{USER_EMAIL}',
+                                                '{USER_NAME}',
+                                                '{FIRST_NAME}',
+                                                '{LAST_NAME}',
+                                                '{UNSUBSCRIBE_URL}',
+                                                '{CITY}',
+                                                '{CURRENT_DATE}',
+                                                '{EMAIL_URL}',
+                                            ] as $v
+                                        ) {
+                                        ?>
+                                            <span class="placeholder-item" data-placeholder="<?php echo $v; ?>" title="Double-click to copy"><?php echo $v; ?></span>
+                                        <?php
+                                        }
+                                        ?>
                                     </div>
 
                                     <!-- URL Detection Section -->
@@ -522,6 +558,7 @@ class Mail_Marketing_Importer
                                 <thead>
                                     <tr>
                                         <th>Campaign Name</th>
+                                        <th>Email title</th>
                                         <th>Status</th>
                                         <th>Contacts</th>
                                         <th>Ngày bắt đầu</th>
@@ -538,6 +575,7 @@ class Mail_Marketing_Importer
                                                     <br><em><?php echo esc_html(substr($campaign->description, 0, 80) . (strlen($campaign->description) > 80 ? '...' : '')); ?></em>
                                                 <?php endif; ?>
                                             </td>
+                                            <td><?php echo esc_html($campaign->email_subject); ?></td>
                                             <td>
                                                 <span class="campaign-status campaign-status-<?php echo esc_attr($campaign->status); ?>">
                                                     <?php echo ucfirst($campaign->status); ?>
@@ -733,9 +771,11 @@ class Mail_Marketing_Importer
             if (isset($_GET['bulk_unsubscribed']) && $_GET['bulk_unsubscribed'] == '1') {
                 $affected_rows = isset($_GET['affected_rows']) ? intval($_GET['affected_rows']) : 0;
                 $email = isset($_GET['email']) ? urldecode($_GET['email']) : '';
-                echo '<div class="redcolor"><p>';
-                echo '<strong>Bulk Unsubscribe Completed!</strong> Successfully unsubscribed ' . $affected_rows . ' record(s) with email: <code>' . esc_html($email) . '</code>';
-                echo '</p></div>';
+            ?>
+                <div class="redcolor" style="text-align: center;">
+                    <strong>Bulk Unsubscribe Completed!</strong> Successfully unsubscribed <?php echo $affected_rows; ?> record(s) with email: <code><?php echo esc_html($email); ?></code>
+                </div>
+            <?php
             }
 
             ?>
@@ -751,7 +791,7 @@ class Mail_Marketing_Importer
                     placeholder="example@domain.com" required
                     style="width: 250px; border: 1px solid #ddd; border-radius: 3px;">
 
-                <input type="submit" class="button button-secondary" value="Unsubscribe Email">
+                <input type="submit" id="unsubscribe_submit" class="button button-secondary" value="Unsubscribe Email" disabled>
 
                 <small style="color: #666; width: 100%; margin-top: 5px;">
                     ⚠️ This will mark ALL database records with this email as unsubscribed (is_unsubscribed = 1)
@@ -1380,6 +1420,7 @@ class Mail_Marketing_Importer
             '{USER_EMAIL}' => $data['user_email'] ?? '',
             '{SITE_NAME}' => get_bloginfo('name'),
             '{SITE_URL}' => home_url(),
+            '{EMAIL_URL}' => home_url(),
             '{UNSUBSCRIBE_URL}' => $data['unsubscribe_url'] ?? '#',
             '{CURRENT_DATE}' => date('F j, Y'),
             '{CURRENT_YEAR}' => date('Y')
@@ -1559,6 +1600,7 @@ class Mail_Marketing_Importer
         $name = sanitize_text_field($_POST['campaign_name']);
         $description = sanitize_textarea_field($_POST['campaign_description']);
         $email_subject = sanitize_text_field($_POST['email_subject']);
+        $email_url = esc_url_raw($_POST['email_url'] ?? '');
         $email_content = wp_kses_post($_POST['email_content']);
         $email_template = sanitize_text_field($_POST['email_template'] ?? 'default.html');
         $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
@@ -1574,6 +1616,7 @@ class Mail_Marketing_Importer
                 'name' => $name,
                 'description' => $description,
                 'email_subject' => $email_subject,
+                'email_url' => $email_url,
                 'email_content' => $email_content,
                 'email_template' => $email_template,
                 'start_date' => $start_date,
@@ -1581,7 +1624,7 @@ class Mail_Marketing_Importer
                 'created_at' => current_time('mysql'),
                 'updated_at' => current_time('mysql')
             ),
-            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
         );
 
         if (!$result) {
@@ -1610,6 +1653,7 @@ class Mail_Marketing_Importer
         $name = sanitize_text_field($_POST['campaign_name']);
         $description = sanitize_textarea_field($_POST['campaign_description']);
         $email_subject = sanitize_text_field($_POST['email_subject']);
+        $email_url = esc_url_raw($_POST['email_url'] ?? '');
         $email_content = wp_kses_post($_POST['email_content']);
         $email_template = sanitize_text_field($_POST['email_template'] ?? 'default.html');
         $status = sanitize_text_field($_POST['campaign_status']);
@@ -1620,12 +1664,42 @@ class Mail_Marketing_Importer
             $start_date = date('Y-m-d H:i:s', strtotime($start_date));
         }
 
+        // Load email content from template if not provided
+        if (empty($email_content)) {
+            $template_path = MMI_PLUGIN_PATH . 'html-template/' . $email_template;
+            if (is_file($template_path)) {
+                $email_content = file_get_contents($template_path);
+
+                // Convert email content to single line
+                if (function_exists('convert_to_single_line')) {
+                    $email_content = convert_to_single_line($email_content);
+                } else {
+                    function convert_content_to_single_line($text)
+                    {
+                        $text = explode("\n", $text);
+                        $str = [];
+                        foreach ($text as $v) {
+                            $v = trim($v);
+                            if ($v == '') {
+                                continue;
+                            }
+                            $str[] = $v;
+                        }
+                        return implode(' ', $str);
+                    }
+                    $email_content = convert_content_to_single_line($email_content);
+                }
+            }
+        }
+
+        // 
         $result = $wpdb->update(
             $wpdb->prefix . 'mail_marketing_campaigns',
             array(
                 'name' => $name,
                 'description' => $description,
                 'email_subject' => $email_subject,
+                'email_url' => $email_url,
                 'email_content' => $email_content,
                 'email_template' => $email_template,
                 'start_date' => $start_date,
@@ -1633,7 +1707,7 @@ class Mail_Marketing_Importer
                 'updated_at' => current_time('mysql')
             ),
             array('id' => $campaign_id),
-            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),
+            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),
             array('%d')
         );
 
@@ -1782,24 +1856,27 @@ class Mail_Marketing_Importer
         }
 
         // Validate email input
-        $email = sanitize_email($_POST['unsubscribe_email'] ?? '');
-        if (empty($email) || !is_email($email)) {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&error=invalid_email&message=' . urlencode('Please enter a valid email address')));
-            exit;
-        }
+        $emails = sanitize_email($_POST['unsubscribe_email'] ?? '');
+        $emails = explode(',', $emails);
+        foreach ($emails as $email) {
+            if (empty($email) || !is_email($email)) {
+                wp_redirect(admin_url('admin.php?page=email-campaigns&error=invalid_email&message=' . urlencode('Please enter a valid email address')));
+                exit;
+            }
 
-        // Update all records with this email
-        $result = $wpdb->update(
-            $wpdb->prefix . 'mail_marketing',
-            array('is_unsubscribed' => 1, 'updated_at' => current_time('mysql')),
-            array('email' => $email),
-            array('%d', '%s'),
-            array('%s')
-        );
+            // Update all records with this email
+            $result = $wpdb->update(
+                $wpdb->prefix . 'mail_marketing',
+                array('is_unsubscribed' => 1, 'updated_at' => current_time('mysql')),
+                array('email' => $email),
+                array('%d', '%s'),
+                array('%s')
+            );
+        }
 
         if ($result !== false) {
             $affected_rows = $wpdb->rows_affected;
-            wp_redirect(admin_url('admin.php?page=email-campaigns&bulk_unsubscribed=1&affected_rows=' . $affected_rows . '&email=' . urlencode($email)));
+            wp_redirect(admin_url('admin.php?page=email-campaigns&bulk_unsubscribed=1&email_unsubscribed=1&affected_rows=' . $affected_rows . '&email=' . urlencode($email)));
         } else {
             wp_redirect(admin_url('admin.php?page=email-campaigns&error=unsubscribe_failed&message=' . urlencode('Failed to update database')));
         }

@@ -44,6 +44,7 @@ $sample_data = array(
     '{USER_EMAIL}' => 'john.doe@example.com',
     '{SITE_NAME}' => 'Your Website Name',
     '{SITE_URL}' => 'https://yourwebsite.com',
+    '{EMAIL_URL}' => 'https://yourwebsite.com',
     '{UNSUBSCRIBE_URL}' => '#unsubscribe',
     '{CURRENT_DATE}' => date('F j, Y'),
     '{CURRENT_YEAR}' => date('Y')

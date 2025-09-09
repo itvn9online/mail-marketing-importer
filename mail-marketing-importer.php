@@ -93,6 +93,7 @@ function mail_marketing_importer_update_database()
       `name` varchar(255) NOT NULL,
       `description` text DEFAULT NULL,
       `email_subject` varchar(255) DEFAULT NULL,
+      `email_url` varchar(512) DEFAULT NULL,
       `email_content` longtext DEFAULT NULL,
       `email_template` varchar(255) DEFAULT 'default.html',
       `start_date` datetime DEFAULT NULL,
@@ -128,6 +129,7 @@ function mail_marketing_importer_update_database()
     // Add new columns to campaigns table for existing installations
     $campaign_columns_to_add = array(
         'email_subject' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_subject varchar(255) DEFAULT NULL",
+        'email_url' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_url varchar(512) DEFAULT NULL",
         'email_content' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_content longtext DEFAULT NULL",
         'email_template' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_template varchar(255) DEFAULT 'default.html'",
         'start_date' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN start_date datetime DEFAULT NULL",
@@ -181,6 +183,21 @@ function mail_marketing_importer_force_db_update()
 }
 add_action('admin_post_mmi_force_db_update', 'mail_marketing_importer_force_db_update');
 
+// function chuyển nội dung trong email template thành 1 dòng duy nhất
+function convert_to_single_line($text)
+{
+    $text = explode("\n", $text);
+    $str = [];
+    foreach ($text as $v) {
+        $v = trim($v);
+        if ($v == '') {
+            continue;
+        }
+        $str[] = $v;
+    }
+    return implode(' ', $str);
+}
+
 // Function to get email content settings
 function get_email_content_settings($campaign_id = 0)
 {
@@ -209,8 +226,12 @@ function get_email_content_settings($campaign_id = 0)
                     $default_html_content = file_get_contents($template_path);
                 }
             }
-            $email_content = $default_html_content;
+            $email_content = convert_to_single_line($default_html_content);
         } else {
+            $email_content = str_replace([
+                'http://{',
+                'https://{'
+            ], '{', $email_content);
             // Định dạng HTML cho email content
             $email_content = apply_filters('the_content', $email_content);
         }
@@ -220,7 +241,7 @@ function get_email_content_settings($campaign_id = 0)
             $email_subject = $default_subject;
         }
     } else {
-        $email_content = $default_html_content;
+        $email_content = convert_to_single_line($default_html_content);
         $email_subject = $default_subject;
     }
 

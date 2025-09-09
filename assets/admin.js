@@ -668,4 +668,42 @@ jQuery(document).ready(function ($) {
 			setTimeout(detectURLsInContent, 1000);
 		});
 	}
+
+	// khi người dùng paste 1 đoạn văn bản vào #unsubscribe_email thì tự động xóa khoảng trắng thừa và lọc lấy địa chỉ email hợp lệ trong chuỗi đó
+	$("#unsubscribe_email").on("change", function (e) {
+		let a = $(this).val();
+		a = a.replace(/\s+/g, " ").trim();
+		// console.log(a.split(/[\s,;]+/));
+		a = a.split(/[\s,;]+/).filter(function (email) {
+			// Lọc các email hợp lệ
+			var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+			return emailRegex.test(email);
+		});
+		$(this).val(a.join(", "));
+		$("#unsubscribe_submit").prop("disabled", a.length === 0);
+	});
+
+	// Handle Reset to Template button
+	$("#reset-to-template-btn").on("click", function (e) {
+		e.preventDefault();
+
+		if (
+			!confirm(
+				"This will clear all current email content and load the default template content."
+			)
+		) {
+			return;
+		}
+
+		// Clear both visual and text editor content
+		if (typeof tinymce !== "undefined") {
+			var editor = tinymce.get("email_content");
+			if (editor) {
+				editor.setContent("");
+			}
+		}
+
+		// Also clear textarea (for text mode)
+		$("#email_content").val("");
+	});
 });

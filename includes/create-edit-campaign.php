@@ -58,9 +58,10 @@ if (!defined('ABSPATH')) {
             <tr>
                 <th scope="row">Email URL</th>
                 <td>
-                    <input type="url" name="email_url" class="large-text"
+                    <input type="url" name="email_url" id="email_url" class="large-text"
                         value="<?php echo $edit_campaign ? esc_attr($edit_campaign->email_url ?? '') : ''; ?>"
-                        placeholder="https://example.com/landing-page">
+                        placeholder="https://example.com/landing-page" style="max-width: 80%;">
+                    <button type="button" id="add-utm-params-btn" class="button button-secondary" style="margin-left: 10px;">Add UTM Parameters</button>
                     <p class="description">Main URL that this campaign directs to (landing page, product page, etc.)</p>
                 </td>
             </tr>

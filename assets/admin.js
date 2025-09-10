@@ -706,4 +706,56 @@ jQuery(document).ready(function ($) {
 		// Also clear textarea (for text mode)
 		$("#email_content").val("");
 	});
+
+	// Handle Add UTM Parameters button
+	$("#add-utm-params-btn").on("click", function (e) {
+		e.preventDefault();
+
+		var emailUrlInput = $("#email_url");
+		var currentUrl = emailUrlInput.val().trim();
+
+		if (!currentUrl) {
+			alert("Vui lòng nhập URL trước khi thêm UTM parameters.");
+			emailUrlInput.focus();
+			return;
+		}
+
+		// Parse current URL
+		try {
+			var url = new URL(currentUrl);
+			var params = new URLSearchParams(url.search);
+
+			// Get campaign name for UTM parameters
+			var campaignName =
+				$('input[name="campaign_name"]').val().trim() || "email-campaign";
+			var siteName = window.location.hostname || "website";
+
+			// Add UTM parameters if they don't exist
+			if (!params.has("utm_source")) {
+				params.set("utm_source", "email");
+			}
+			if (!params.has("utm_medium")) {
+				params.set("utm_medium", "email_marketing");
+			}
+			if (!params.has("utm_campaign")) {
+				params.set(
+					"utm_campaign",
+					campaignName.toLowerCase().replace(/\s+/g, "_")
+				);
+			}
+			if (!params.has("utm_content")) {
+				params.set("utm_content", "email_link");
+			}
+
+			// Rebuild URL with UTM parameters
+			url.search = params.toString();
+			var newUrl = url.toString();
+
+			// Update input field
+			emailUrlInput.val(newUrl);
+		} catch (error) {
+			alert("URL không hợp lệ. Vui lòng kiểm tra lại format URL.");
+			emailUrlInput.focus();
+		}
+	});
 });

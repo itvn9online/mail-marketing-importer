@@ -359,7 +359,7 @@ class Mail_Marketing_Importer
                     <div class="campaign-stat-number"><?php echo number_format($active_campaigns); ?></div>
                     <div class="campaign-stat-label">Active Campaigns</div>
                 </div>
-                <?php if ($edit_campaign): ?>
+                <?php if (isset($_GET['edit'])): ?>
                     <div class="campaign-stat-box">
                         <div class="campaign-stat-number"><?php echo number_format($total_contacts); ?></div>
                         <div class="campaign-stat-label">Total Contacts</div>
@@ -367,252 +367,24 @@ class Mail_Marketing_Importer
                 <?php endif; ?>
             </div>
 
+            <div>
+                <a href="<?php echo admin_url('tools.php?page=email-campaigns'); ?>" class="button button-secondary">Existing campaign</a>
+
+                <a href="<?php echo admin_url('tools.php?page=email-campaigns&list=true'); ?>" class="button button-secondary">Email list</a>
+
+                <a href="<?php echo admin_url('tools.php?page=email-campaigns&add=true'); ?>" class="button button-primary">Add new campaign</a>
+            </div>
+
             <div class="campaign-container">
-                <!-- Create/Edit Campaign -->
-                <div class="campaign-section">
-                    <h2><?php echo $edit_campaign ? 'Edit Campaign' : 'Create New Campaign'; ?></h2>
-                    <?php if ($edit_campaign): ?>
-                        <p><a href="<?php echo admin_url('admin.php?page=email-campaigns'); ?>" class="button button-secondary">← Back to Campaigns</a></p>
-                    <?php endif; ?>
-
-                    <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
-                        <?php wp_nonce_field('campaign_action', 'campaign_nonce'); ?>
-                        <input type="hidden" name="action" value="<?php echo $edit_campaign ? 'update_campaign' : 'create_campaign'; ?>">
-                        <?php if ($edit_campaign): ?>
-                            <input type="hidden" name="campaign_id" value="<?php echo $edit_campaign->id; ?>">
-                        <?php endif; ?>
-
-                        <table class="form-table">
-                            <tr>
-                                <th scope="row">Campaign Name (*)</th>
-                                <td>
-                                    <input type="text" name="campaign_name" class="regular-text"
-                                        value="<?php echo $edit_campaign ? esc_attr($edit_campaign->name) : ''; ?>" required>
-                                    <p class="description">Enter a unique name for this campaign</p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Description</th>
-                                <td>
-                                    <textarea name="campaign_description" rows="3" class="large-text"><?php echo $edit_campaign ? esc_textarea($edit_campaign->description) : ''; ?></textarea>
-                                    <p class="description">Optional description of the campaign purpose</p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Email Subject (*)</th>
-                                <td>
-                                    <input type="text" name="email_subject" class="regular-text"
-                                        value="<?php echo (($edit_campaign && !empty($edit_campaign->email_subject)) ? esc_attr($edit_campaign->email_subject) : ($email_content_settings ? esc_attr($email_content_settings['subject']) : '')); ?>" required>
-                                    <p class="description">Subject line for campaign emails.
-                                        <?php
-                                        foreach (
-                                            [
-                                                '{SITE_NAME}',
-                                                '{USER_EMAIL}',
-                                                '{USER_NAME}',
-                                            ] as $v
-                                        ) {
-                                        ?>
-                                            <span class="placeholder-item" data-placeholder="<?php echo $v; ?>" title="Double-click to copy"><?php echo $v; ?></span>
-                                        <?php
-                                        }
-                                        ?> Use the above placeholders
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Email URL</th>
-                                <td>
-                                    <input type="url" name="email_url" class="regular-text"
-                                        value="<?php echo $edit_campaign ? esc_attr($edit_campaign->email_url ?? '') : ''; ?>"
-                                        placeholder="https://example.com/landing-page">
-                                    <p class="description">Main URL that this campaign directs to (landing page, product page, etc.)</p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Email Template</th>
-                                <td>
-                                    <select name="email_template" class="regular-text">
-                                        <?php
-                                        $current_template = $edit_campaign && !empty($edit_campaign->email_template) ? $edit_campaign->email_template : 'default.html';
-                                        echo $this->get_email_templates_options_with_selected($current_template);
-                                        ?>
-                                    </select>
-                                    <p class="description">Choose an email template for this campaign</p>
-                                    <p>
-                                        <a href="<?php echo MMI_PLUGIN_URL; ?>template-preview-page.php?template=<?php echo $current_template; ?>" target="_blank" style="font-size: 12px;">Preview Templates →</a>
-                                        <button type="button" id="reset-to-template-btn" class="button button-secondary" style="margin-left: 10px; font-size: 11px;">Reset to Template</button>
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Email Content</th>
-                                <td>
-                                    <?php
-
-                                    // 
-                                    $content = $edit_campaign ? $edit_campaign->email_content : '';
-                                    // var_dump($content);
-                                    if (empty($content)) {
-                                        if ($email_content_settings) {
-                                            $content = $email_content_settings['content'];
-                                        } else {
-                                            $content = '<p>Dear {USER_NAME},</p><p>We are excited to announce our latest campaign!</p>';
-                                        }
-                                    }
-                                    // thêm unsubscribe link placeholder nếu chưa có
-                                    if (strpos($content, '{UNSUBSCRIBE_URL}') === false) {
-                                        $content .= '<hr><p>Don\'t want future emails? <a href="{UNSUBSCRIBE_URL}">Unsubscribe</a></p>';
-                                    }
-
-                                    // Thay thế các URL mẫu
-                                    wp_editor(str_replace([
-                                        'http://{',
-                                        'https://{'
-                                    ], '{', $content), 'email_content', array(
-                                        'textarea_name' => 'email_content',
-                                        'textarea_rows' => 20,
-                                        'teeny' => false,
-                                        'media_buttons' => true,
-                                        'tinymce' => true,
-                                        'quicktags' => true
-                                    ));
-                                    ?>
-                                    <p class="description">
-                                        <strong>💡 Smart Template System:</strong> Leave this field empty to automatically use the content from your selected email template.
-                                        You can also customize the template content here with your own HTML/text.
-                                    </p>
-                                    <div class="email-placeholders">
-                                        <strong>Available placeholders:</strong><br>
-                                        <small style="color: #666; font-style: italic;">Double-click any placeholder to copy it to clipboard</small><br>
-                                        <?php
-                                        foreach (
-                                            [
-                                                '{SITE_NAME}',
-                                                '{USER_EMAIL}',
-                                                '{USER_NAME}',
-                                                '{FIRST_NAME}',
-                                                '{LAST_NAME}',
-                                                '{UNSUBSCRIBE_URL}',
-                                                '{CITY}',
-                                                '{CURRENT_DATE}',
-                                                '{EMAIL_URL}',
-                                            ] as $v
-                                        ) {
-                                        ?>
-                                            <span class="placeholder-item" data-placeholder="<?php echo $v; ?>" title="Double-click to copy"><?php echo $v; ?></span>
-                                        <?php
-                                        }
-                                        ?>
-                                    </div>
-
-                                    <!-- URL Detection Section -->
-                                    <div class="email-url-detection" style="margin-top: 15px; padding: 10px; background-color: #f0f8ff; border-left: 4px solid #0073aa; border-radius: 3px;">
-                                        <strong>🔗 URLs detected in email content:</strong><br>
-                                        <small style="color: #666; font-style: italic;">URLs are automatically detected and updated when you edit the content</small>
-                                        <div id="detected-urls-list" style="margin-top: 8px; min-height: 20px;">
-                                            <span style="color: #999; font-style: italic;">No URLs detected yet...</span>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Ngày bắt đầu gửi</th>
-                                <td>
-                                    <input type="datetime-local" name="start_date" class="regular-text"
-                                        value="<?php echo $edit_campaign && $edit_campaign->start_date ? date('Y-m-d\TH:i', strtotime($edit_campaign->start_date)) : ''; ?>">
-                                    <p class="description">Thời gian bắt đầu gửi email (để trống sẽ gửi ngay lập tức)</p>
-                                </td>
-                            </tr>
-                            <?php if ($edit_campaign): ?>
-                                <tr>
-                                    <th scope="row">Campaign Status</th>
-                                    <td>
-                                        <select name="campaign_status" class="regular-text">
-                                            <option value="active" <?php selected($edit_campaign->status, 'active'); ?>>Active</option>
-                                            <option value="draft" <?php selected($edit_campaign->status, 'draft'); ?>>Draft</option>
-                                            <option value="paused" <?php selected($edit_campaign->status, 'paused'); ?>>Paused</option>
-                                            <option value="completed" <?php selected($edit_campaign->status, 'completed'); ?>>Completed</option>
-                                        </select>
-                                        <p class="description">Current status of this campaign</p>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                        </table>
-
-                        <p class="submit">
-                            <input type="submit" class="button-primary" value="<?php echo $edit_campaign ? 'Update Campaign' : 'Create Campaign'; ?>">
-                            <?php if ($edit_campaign): ?>
-                                <a href="<?php echo admin_url('admin.php?page=email-campaigns'); ?>" class="button button-secondary">Cancel</a>
-                            <?php endif; ?>
-                        </p>
-                    </form>
-                </div>
-
-                <?php if (!$edit_campaign): ?>
-                    <!-- Existing Campaigns -->
-                    <div class="campaign-section">
-                        <h2>Existing Campaigns</h2>
-                        <?php if (!empty($campaigns)): ?>
-                            <table class="wp-list-table widefat fixed striped campaigns-table">
-                                <thead>
-                                    <tr>
-                                        <th>Campaign Name</th>
-                                        <th>Email title</th>
-                                        <th>Status</th>
-                                        <th>Contacts</th>
-                                        <th>Ngày bắt đầu</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($campaigns as $campaign): ?>
-                                        <tr>
-                                            <td>
-                                                <strong><?php echo esc_html($campaign->name); ?></strong>
-                                                <?php if ($campaign->description): ?>
-                                                    <br><em><?php echo esc_html(substr($campaign->description, 0, 80) . (strlen($campaign->description) > 80 ? '...' : '')); ?></em>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?php echo esc_html($campaign->email_subject); ?></td>
-                                            <td>
-                                                <span class="campaign-status campaign-status-<?php echo esc_attr($campaign->status); ?>">
-                                                    <?php echo ucfirst($campaign->status); ?>
-                                                </span>
-                                            </td>
-                                            <td><?php echo number_format($campaign->contact_count); ?></td>
-                                            <td>
-                                                <?php if ($campaign->start_date): ?>
-                                                    <?php echo $campaign->start_date; ?>
-                                                <?php else: ?>
-                                                    <em>Gửi ngay</em>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?php echo $campaign->created_at; ?></td>
-                                            <td>
-                                                <a href="<?php echo admin_url('admin.php?page=email-campaigns&edit=' . $campaign->id); ?>" class="button button-small">Edit</a>
-                                                <a href="<?php echo home_url(); ?>/wp-content/themes/marketing/api/v1/?token=9557ff3fc1295832f54c9fe3351d977b&action=mail_marketing&campaign_id=<?php echo $campaign->id; ?>"
-                                                    class="button button-small button-primary" target="_blank">Send Email</a>
-                                                <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=delete_campaign&campaign_id=' . $campaign->id), 'delete_campaign_' . $campaign->id); ?>"
-                                                    class="button button-small button-link-delete"
-                                                    onclick="return confirm('Are you sure you want to delete this campaign? This action cannot be undone.')">Delete</a>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        <?php else: ?>
-                            <p>No campaigns created yet. Create your first campaign above to get started!</p>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Email List Section - Show when not editing -->
-                    <div id="imported-email-list" class="campaign-section">
-                        <h2>Imported Email List</h2>
-                        <?php $this->render_email_list(); ?>
-                    </div>
-                <?php endif; ?>
+                <?php
+                if (isset($_GET['add']) || isset($_GET['edit'])) {
+                    include __DIR__ . '/create-edit-campaign.php';
+                } else if (isset($_GET['list']) || isset($_GET['filter'])) {
+                    include __DIR__ . '/email-list.php';
+                } else {
+                    include __DIR__ . '/existing-campaigns.php';
+                }
+                ?>
             </div>
         </div>
     <?php
@@ -703,7 +475,7 @@ class Mail_Marketing_Importer
         // print_r($emails);
 
         // Get campaigns for filter dropdown
-        $campaigns = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}mail_marketing_campaigns ORDER BY name");
+        $campaigns = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}mail_marketing_campaigns ORDER BY id DESC LIMIT 50");
 
         // Calculate pagination
         $total_pages = ceil($total_records / $per_page);
@@ -1422,8 +1194,8 @@ class Mail_Marketing_Importer
             '{SITE_URL}' => home_url(),
             '{EMAIL_URL}' => home_url(),
             '{UNSUBSCRIBE_URL}' => $data['unsubscribe_url'] ?? '#',
-            '{CURRENT_DATE}' => date('F j, Y'),
-            '{CURRENT_YEAR}' => date('Y')
+            '{CURRENT_DATE}' => date_i18n('F j, Y'),
+            '{CURRENT_YEAR}' => date_i18n('Y')
         );
 
         foreach ($placeholders as $placeholder => $value) {
@@ -1607,7 +1379,7 @@ class Mail_Marketing_Importer
 
         // Convert datetime-local format to MySQL datetime format
         if ($start_date) {
-            $start_date = date('Y-m-d H:i:s', strtotime($start_date));
+            $start_date = date_i18n('Y-m-d H:i:s', strtotime($start_date));
         }
 
         $result = $wpdb->insert(
@@ -1661,7 +1433,7 @@ class Mail_Marketing_Importer
 
         // Convert datetime-local format to MySQL datetime format
         if ($start_date) {
-            $start_date = date('Y-m-d H:i:s', strtotime($start_date));
+            $start_date = date_i18n('Y-m-d H:i:s', strtotime($start_date));
         }
 
         // Load email content from template if not provided
@@ -1673,22 +1445,9 @@ class Mail_Marketing_Importer
                 // Convert email content to single line
                 if (function_exists('convert_to_single_line')) {
                     $email_content = convert_to_single_line($email_content);
-                } else {
-                    function convert_content_to_single_line($text)
-                    {
-                        $text = explode("\n", $text);
-                        $str = [];
-                        foreach ($text as $v) {
-                            $v = trim($v);
-                            if ($v == '') {
-                                continue;
-                            }
-                            $str[] = $v;
-                        }
-                        return implode(' ', $str);
-                    }
-                    $email_content = convert_content_to_single_line($email_content);
                 }
+                // echo $email_content;
+                // die(__FILE__ . ':' . __LINE__);
             }
         }
 
@@ -1860,7 +1619,7 @@ class Mail_Marketing_Importer
         $emails = explode(',', $emails);
         foreach ($emails as $email) {
             if (empty($email) || !is_email($email)) {
-                wp_redirect(admin_url('admin.php?page=email-campaigns&error=invalid_email&message=' . urlencode('Please enter a valid email address')));
+                wp_redirect(admin_url('admin.php?page=email-campaigns&list=true&error=invalid_email&message=' . urlencode('Please enter a valid email address')));
                 exit;
             }
 
@@ -1876,9 +1635,9 @@ class Mail_Marketing_Importer
 
         if ($result !== false) {
             $affected_rows = $wpdb->rows_affected;
-            wp_redirect(admin_url('admin.php?page=email-campaigns&bulk_unsubscribed=1&email_unsubscribed=1&affected_rows=' . $affected_rows . '&email=' . urlencode($email)));
+            wp_redirect(admin_url('admin.php?page=email-campaigns&list=true&bulk_unsubscribed=1&email_unsubscribed=1&affected_rows=' . $affected_rows . '&email=' . urlencode($email)));
         } else {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&error=unsubscribe_failed&message=' . urlencode('Failed to update database')));
+            wp_redirect(admin_url('admin.php?page=email-campaigns&list=true&error=unsubscribe_failed&message=' . urlencode('Failed to update database')));
         }
 
         exit;

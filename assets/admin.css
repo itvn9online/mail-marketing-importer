@@ -694,6 +694,10 @@ span[style*="color: red"] {
     text-decoration: underline;
 }
 
+.text-center {
+    text-align: center;
+}
+
 /* Responsive design for URL list */
 @media (max-width: 768px) {
     #detected-urls-list div[style*="background: #fff"] {

@@ -186,16 +186,16 @@ add_action('admin_post_mmi_force_db_update', 'mail_marketing_importer_force_db_u
 // function chuyển nội dung trong email template thành 1 dòng duy nhất
 function convert_to_single_line($text)
 {
-    $text = explode("\n", $text);
-    $str = [];
-    foreach ($text as $v) {
-        $v = trim($v);
-        if ($v == '') {
-            continue;
-        }
-        $str[] = $v;
-    }
-    return implode(' ', $str);
+    // Handle different line endings (Windows \r\n, Unix \n, Mac \r)
+    $text = str_replace(["\r\n", "\r"], "\n", $text);
+
+    // Remove HTML comments (<!-- comment -->) including multiline comments
+    $text = preg_replace('/<!--.*?-->/s', '', $text);
+
+    // Split by newlines, trim each line, filter empty lines, then join with spaces
+    return implode(' ', array_filter(array_map('trim', explode("\n", $text)), function ($line) {
+        return $line !== '';
+    }));
 }
 
 // Function to get email content settings

@@ -279,7 +279,7 @@ class Enhanced_Excel_Reader
                                 'city' => $city,
                                 'state' => $state,
                                 'zip_code' => $zip_code,
-                                'updated_at' => date_i18n('Y-m-d H:i:s')
+                                'updated_at' => current_time('mysql')
                             ),
                             array('id' => $existing_record->id),
                             array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),
@@ -306,8 +306,8 @@ class Enhanced_Excel_Reader
                             'state' => $state,
                             'zip_code' => $zip_code,
                             'status' => 0, // Default to pending
-                            'created_at' => date_i18n('Y-m-d H:i:s'),
-                            'updated_at' => date_i18n('Y-m-d H:i:s')
+                            'created_at' => current_time('mysql'),
+                            'updated_at' => current_time('mysql')
                         ),
                         array('%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s')
                     );

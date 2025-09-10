@@ -74,8 +74,8 @@ class Excel_Reader
                         'name' => $this->sanitize_text($name),
                         'phone' => $this->sanitize_text($phone),
                         'status' => 0, // Default to pending
-                        'created_at' => date_i18n('Y-m-d H:i:s'),
-                        'updated_at' => date_i18n('Y-m-d H:i:s')
+                        'created_at' => current_time('mysql'),
+                        'updated_at' => current_time('mysql')
                     ),
                     array('%s', '%s', '%s', '%d', '%s', '%s')
                 );

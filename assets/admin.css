@@ -22,6 +22,151 @@
     font-size: 1.3em;
 }
 
+/* Zoho Refresh Token Tool Styles */
+.refresh-token-tool {
+    background: #fff3cd !important;
+    border: 1px solid #ffc107 !important;
+    border-left: 4px solid #ffc107 !important;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.refresh-token-tool h5 {
+    margin-top: 0 !important;
+    color: #856404 !important;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.refresh-token-tool input[type="text"],
+.refresh-token-tool input[type="password"] {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 6px 10px;
+    font-size: 12px;
+    width: 100%;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.refresh-token-tool input[type="text"]:focus,
+.refresh-token-tool input[type="password"]:focus {
+    border-color: #007cba;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.2);
+}
+
+.refresh-token-tool .button {
+    font-size: 11px !important;
+    padding: 4px 12px;
+    height: auto;
+    line-height: 1.2;
+}
+
+.refresh-token-tool .button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#generated-auth-url,
+#generated-refresh-token {
+    background: #f9f9f9 !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+}
+
+#token-status {
+    font-weight: 500;
+    padding: 5px 0;
+}
+
+.step-guide {
+    background: #e7f3ff;
+    border-radius: 3px;
+    border-left: 4px solid #2196f3;
+    padding: 10px;
+    margin-top: 15px;
+}
+
+.step-guide h6 {
+    margin-top: 0 !important;
+    color: #1976d2 !important;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.step-guide ol {
+    margin: 5px 0;
+    padding-left: 18px;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.step-guide li {
+    margin-bottom: 4px;
+}
+
+.step-guide .warning {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: #fff3cd;
+    border-radius: 2px;
+    font-size: 11px;
+    color: #856404;
+}
+
+/* Zoho API Main Settings */
+.zoho-api-settings h5 {
+    margin-top: 0 !important;
+    color: #333 !important;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Animation for successful operations */
+.success-flash {
+    animation: successFlash 0.6s ease-in-out;
+}
+
+@keyframes successFlash {
+    0% {
+        background-color: #d4edda;
+    }
+
+    50% {
+        background-color: #c3e6cb;
+    }
+
+    100% {
+        background-color: #d4edda;
+    }
+}
+
+/* Copy button improvements */
+.button.copied {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: white !important;
+}
+
+/* Progress bars for token generation */
+.token-progress {
+    width: 100%;
+    height: 4px;
+    background: #f1f1f1;
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.token-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #007cba, #00a0d2);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
 /* Campaign Selection Styles */
 .campaign-selection {
     background: #f9f9f9;

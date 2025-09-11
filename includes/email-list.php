@@ -174,21 +174,25 @@ $base_url = admin_url('admin.php?page=email-campaigns');
         <h3 style="margin-top: 0; color: #d63638; font-size: 1.1em;">🚫 Bulk Unsubscribe Email</h3>
         <p style="color: #666; margin-bottom: 15px;">Enter an email address to unsubscribe all records with that email from future campaigns.</p>
 
-        <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <input type="hidden" name="action" value="bulk_unsubscribe_email">
-            <?php wp_nonce_field('bulk_unsubscribe_nonce', 'bulk_unsubscribe_nonce'); ?>
+        <!-- Manual Email Unsubscribe -->
+        <div class="manual-unsubscribe" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+            <h4 style="margin-bottom: 10px; color: #666;">📧 Manual Email Unsubscribe</h4>
+            <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <input type="hidden" name="action" value="bulk_unsubscribe_email">
+                <?php wp_nonce_field('bulk_unsubscribe_nonce', 'bulk_unsubscribe_nonce'); ?>
 
-            <label for="unsubscribe_email" style="font-weight: 500;">Email to unsubscribe:</label>
-            <input type="email" name="unsubscribe_email" id="unsubscribe_email"
-                placeholder="example@domain.com" required
-                style="width: 250px; border: 1px solid #ddd; border-radius: 3px;">
+                <label for="unsubscribe_email" style="font-weight: 500;">Email to unsubscribe:</label>
+                <input type="email" name="unsubscribe_email" id="unsubscribe_email"
+                    placeholder="example@domain.com" required
+                    style="width: 250px; border: 1px solid #ddd; border-radius: 3px;">
 
-            <input type="submit" id="unsubscribe_submit" class="button button-secondary" value="Unsubscribe Email" disabled>
+                <input type="submit" id="unsubscribe_submit" class="button button-secondary" value="Unsubscribe Email" disabled>
 
-            <small style="color: #666; width: 100%; margin-top: 5px;">
-                ⚠️ This will mark ALL database records with this email as unsubscribed (is_unsubscribed = 1)
-            </small>
-        </form>
+                <small style="color: #666; width: 100%; margin-top: 5px;">
+                    ⚠️ This will mark ALL database records with this email as unsubscribed (is_unsubscribed = 1)
+                </small>
+            </form>
+        </div>
     </div>
 
     <div class="email-list-stats">

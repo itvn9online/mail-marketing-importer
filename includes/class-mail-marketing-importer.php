@@ -28,6 +28,21 @@ class Mail_Marketing_Importer
 
         // Bulk unsubscribe action
         add_action('admin_post_bulk_unsubscribe_email', array($this, 'handle_bulk_unsubscribe'));
+        add_action('wp_ajax_bulk_unsubscribe_email', array($this, 'handle_bulk_unsubscribe_ajax'));
+
+        // Zoho API actions
+        add_action('wp_ajax_mmi_save_zoho_config', array($this, 'handle_save_zoho_config'));
+        add_action('wp_ajax_mmi_save_zoho_scope', array($this, 'handle_save_zoho_scope'));
+        // add_action('wp_ajax_mmi_get_zoho_config', array($this, 'handle_get_zoho_config'));
+        add_action('wp_ajax_mmi_zoho_fetch_failed_emails', array($this, 'handle_zoho_fetch_failed_emails'));
+
+        // Zoho token cache management
+        add_action('wp_ajax_mmi_clear_zoho_token_cache', array($this, 'clear_zoho_token_cache'));
+        add_action('wp_ajax_mmi_get_zoho_token_cache_info', array($this, 'get_zoho_token_cache_info'));
+
+        // Zoho OAuth callback (no priv needed for OAuth callback)
+        add_action('wp_ajax_nopriv_mmi_zoho_callback', array($this, 'handle_zoho_callback'));
+        add_action('wp_ajax_mmi_zoho_callback', array($this, 'handle_zoho_callback'));
     }
 
     /**
@@ -71,7 +86,8 @@ class Mail_Marketing_Importer
 
         wp_localize_script('mmi-admin-js', 'mmi_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('mmi_import_nonce')
+            'nonce' => wp_create_nonce('mmi_import_nonce'),
+            'home_url' => home_url()
         ));
     }
 
@@ -403,9 +419,11 @@ class Mail_Marketing_Importer
             <div>
                 <a href="<?php echo admin_url('tools.php?page=email-campaigns'); ?>" class="button button-secondary">Existing campaign</a>
 
-                <a href="<?php echo admin_url('tools.php?page=email-campaigns&list=true'); ?>" class="button button-secondary">Email list</a>
+                <a href="<?php echo admin_url('tools.php?page=email-campaigns&list=true'); ?>" class="button button-secondary <?php echo (isset($_GET['list']) || isset($_GET['filter'])) ? 'bold redcolor' : ''; ?>">Email list</a>
 
-                <a href="<?php echo admin_url('tools.php?page=email-campaigns&add=true'); ?>" class="button button-primary">Add new campaign</a>
+                <a href="<?php echo admin_url('tools.php?page=email-campaigns&add=true'); ?>" class="button button-primary <?php echo isset($_GET['add']) ? 'bold' : ''; ?>">Add new campaign</a>
+
+                <a href="<?php echo admin_url('tools.php?page=email-campaigns&zoho-api=true'); ?>" class="button button-secondary <?php echo isset($_GET['zoho-api']) ? 'bold redcolor' : ''; ?>">Zoho API</a>
             </div>
 
             <div class="campaign-container">
@@ -414,6 +432,8 @@ class Mail_Marketing_Importer
                     include __DIR__ . '/create-edit-campaign.php';
                 } else if (isset($_GET['details'])) {
                     include __DIR__ . '/email-details.php';
+                } else if (isset($_GET['zoho-api'])) {
+                    include __DIR__ . '/zoho-api.php';
                 } else if (isset($_GET['list']) || isset($_GET['filter'])) {
                     include __DIR__ . '/email-list.php';
                 } else {
@@ -661,11 +681,11 @@ class Mail_Marketing_Importer
         global $wpdb;
 
         if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized access');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         if (!wp_verify_nonce($_POST['mmi_nonce'], 'mmi_upload_nonce')) {
-            wp_die('Security check failed');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         if (empty($_FILES['import_file']['tmp_name'])) {
@@ -759,11 +779,11 @@ class Mail_Marketing_Importer
     {
         // Security check
         if (!wp_verify_nonce($_POST['nonce'], 'mmi_import_nonce')) {
-            wp_send_json_error('Security check failed');
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
         }
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Unauthorized access');
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
         }
 
         if (empty($_FILES['file']['tmp_name'])) {
@@ -942,7 +962,7 @@ class Mail_Marketing_Importer
     public function handle_import_ajax()
     {
         if (!wp_verify_nonce($_POST['nonce'], 'mmi_import_nonce')) {
-            wp_die('Security check failed');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         // This can be used for progress updates during large imports
@@ -1096,7 +1116,7 @@ class Mail_Marketing_Importer
     public function handle_create_campaign()
     {
         if (!current_user_can('manage_options') || !wp_verify_nonce($_POST['campaign_nonce'], 'campaign_action')) {
-            wp_die('Unauthorized access');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         global $wpdb;
@@ -1148,7 +1168,7 @@ class Mail_Marketing_Importer
     public function handle_update_campaign()
     {
         if (!current_user_can('manage_options') || !wp_verify_nonce($_POST['campaign_nonce'], 'campaign_action')) {
-            wp_die('Unauthorized access');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         global $wpdb;
@@ -1215,12 +1235,12 @@ class Mail_Marketing_Importer
     public function handle_delete_campaign()
     {
         if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized access');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         $campaign_id = intval($_GET['campaign_id']);
         if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_campaign_' . $campaign_id)) {
-            wp_die('Security check failed');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         global $wpdb;
@@ -1271,11 +1291,11 @@ class Mail_Marketing_Importer
     {
         // Security check
         if (!wp_verify_nonce($_POST['nonce'], 'mmi_import_nonce')) {
-            wp_send_json_error('Security check failed');
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
         }
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Unauthorized access');
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
         }
 
         $email_id = intval($_POST['email_id']);
@@ -1338,11 +1358,11 @@ class Mail_Marketing_Importer
 
         // Security checks
         if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized access');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         if (!wp_verify_nonce($_POST['bulk_unsubscribe_nonce'], 'bulk_unsubscribe_nonce')) {
-            wp_die('Security check failed');
+            wp_die('Security check failed ' . __FUNCTION__);
         }
 
         // Validate email input
@@ -1350,7 +1370,7 @@ class Mail_Marketing_Importer
         $emails = explode(',', $emails);
         foreach ($emails as $email) {
             if (empty($email) || !is_email($email)) {
-                wp_redirect(admin_url('admin.php?page=email-campaigns&list=true&error=invalid_email&message=' . urlencode('Please enter a valid email address')));
+                wp_redirect(admin_url('admin.php?page=email-campaigns&list=true&error=invalid_email&message=' . urlencode('Please enter a valid email address ' . $email)));
                 exit;
             }
 
@@ -1372,5 +1392,391 @@ class Mail_Marketing_Importer
         }
 
         exit;
+    }
+
+    /**
+     * Handle bulk unsubscribe via AJAX
+     */
+    public function handle_bulk_unsubscribe_ajax()
+    {
+        global $wpdb;
+
+        // Security checks
+        if (!current_user_can('manage_options')) {
+            wp_die(json_encode(['success' => false, 'message' => 'Permission denied']));
+        }
+
+        if (!wp_verify_nonce($_POST['bulk_unsubscribe_nonce'] ?? '', 'bulk_unsubscribe_nonce')) {
+            wp_die(json_encode(['success' => false, 'message' => 'Security check failed']));
+        }
+
+        // Validate email input
+        $emails_input = sanitize_email($_POST['unsubscribe_email'] ?? '');
+        if (empty($emails_input)) {
+            wp_die(json_encode(['success' => false, 'message' => 'Email is required']));
+        }
+
+        $emails = explode(',', $emails_input);
+        $total_affected = 0;
+        $processed_emails = [];
+        $errors = [];
+
+        foreach ($emails as $email) {
+            $email = trim($email);
+            if (empty($email) || !is_email($email)) {
+                $errors[] = "Invalid email: $email";
+                continue;
+            }
+
+            // Update all records with this email
+            $result = $wpdb->update(
+                $wpdb->prefix . 'mail_marketing',
+                array('is_unsubscribed' => 1, 'updated_at' => current_time('mysql')),
+                array('email' => $email),
+                array('%d', '%s'),
+                array('%s')
+            );
+
+            if ($result !== false) {
+                $affected_rows = $wpdb->rows_affected;
+                $total_affected += $affected_rows;
+                $processed_emails[] = $email;
+            } else {
+                $errors[] = "Failed to unsubscribe: $email";
+            }
+        }
+
+        wp_die(json_encode([
+            'success' => true,
+            'message' => 'Bulk unsubscribe completed',
+            'affected_rows' => $total_affected,
+            'processed_emails' => $processed_emails,
+            'errors' => $errors
+        ]));
+    }
+
+    /**
+     * Handle saving Zoho API configuration
+     */
+    public function handle_save_zoho_config()
+    {
+        // Sử dụng cùng nonce với JavaScript
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        // Lấy config hiện tại để merge với dữ liệu mới
+        $existing_config = get_option('mmi_zoho_config', array(
+            'client_id' => '',
+            'client_secret' => '',
+            'refresh_token' => '',
+            'account_id' => '',
+        ));
+
+        // Chỉ cập nhật các trường có dữ liệu, giữ nguyên trường trống
+        $new_config = array();
+
+        $client_id = sanitize_text_field($_POST['client_id'] ?? '');
+        $client_secret = sanitize_text_field($_POST['client_secret'] ?? '');
+        // Bỏ account_id từ save config thủ công - sẽ được lưu tự động từ OAuth callback
+        // Bỏ refresh_token từ save config thủ công - chỉ được lưu từ OAuth callback
+
+        // Merge dữ liệu: nếu có dữ liệu mới thì dùng, không thì giữ dữ liệu cũ
+        $new_config['client_id'] = !empty($client_id) ? $client_id : $existing_config['client_id'];
+        $new_config['client_secret'] = !empty($client_secret) ? $client_secret : $existing_config['client_secret'];
+        $new_config['refresh_token'] = $existing_config['refresh_token']; // Luôn giữ nguyên từ config cũ
+        $new_config['account_id'] = $existing_config['account_id']; // Luôn giữ nguyên từ config cũ (được lưu từ OAuth)
+
+        $result = update_option('mmi_zoho_config', $new_config);
+
+        // Đếm số trường đã được lưu
+        $saved_fields = array_filter($new_config, function ($value) {
+            return !empty($value);
+        });
+
+        $total_fields = count($new_config);
+        $filled_fields = count($saved_fields);
+
+        if ($result !== false) {
+            wp_send_json_success(array(
+                'message' => "Configuration saved successfully! ({$filled_fields}/{$total_fields} fields filled)",
+                'config' => $new_config,
+                'progress' => round(($filled_fields / $total_fields) * 100)
+            ));
+        } else {
+            wp_send_json_error('Failed to save configuration');
+        }
+    }
+
+    /**
+     * Handle saving selected Zoho OAuth scope
+     */
+    public function handle_save_zoho_scope()
+    {
+        // Verify nonce for security
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        $scope = sanitize_text_field($_POST['scope']) ?: 'ZohoMail.messages.READ';
+
+        // Validate scope (must be one of the allowed values)
+        $allowed_scopes = [
+            'ZohoMail.messages.READ',
+            'ZohoMail.messages.ALL',
+            'ZohoMail.accounts.READ',
+            'ZohoMail.accounts.ALL'
+        ];
+
+        if (!in_array($scope, $allowed_scopes)) {
+            $scope = 'ZohoMail.messages.READ'; // Fallback to default
+        }
+
+        // Save scope in transient for 10 minutes (enough time for OAuth flow)
+        set_transient('mmi_zoho_selected_scope', $scope, 600);
+
+        wp_send_json_success(array(
+            'message' => 'Scope saved for OAuth flow',
+            'scope' => $scope
+        ));
+    }
+
+    /**
+     * Get cached Zoho access token or fetch new one if expired
+     */
+    private function get_zoho_access_token()
+    {
+        // Lấy cấu hình từ database
+        $zoho_config = get_option('mmi_zoho_config', array());
+
+        $client_id = $zoho_config['client_id'] ?? '';
+        $client_secret = $zoho_config['client_secret'] ?? '';
+        $refresh_token = $zoho_config['refresh_token'] ?? '';
+
+        if (empty($client_id) || empty($client_secret) || empty($refresh_token)) {
+            return array(
+                'success' => false,
+                'error' => 'Không có cấu hình Zoho Mail được lưu hoặc cấu hình không đầy đủ'
+            );
+        }
+
+        // Kiểm tra cache hiện có
+        $cached_token = get_transient('mmi_zoho_access_token');
+
+        if ($cached_token && !empty($cached_token)) {
+            return array(
+                'success' => true,
+                'access_token' => $cached_token,
+                'from_cache' => true
+            );
+        }
+
+        // Nếu không có cache hoặc đã hết hạn, lấy token mới
+        $token_response = wp_remote_post('https://accounts.zoho.com/oauth/v2/token', array(
+            'body' => array(
+                'grant_type' => 'refresh_token',
+                'client_id' => $client_id,
+                'client_secret' => $client_secret,
+                'refresh_token' => $refresh_token
+            ),
+            'timeout' => 30
+        ));
+
+        if (is_wp_error($token_response)) {
+            return array(
+                'success' => false,
+                'error' => 'Lỗi khi lấy access token: ' . $token_response->get_error_message()
+            );
+        }
+
+        $token_body = wp_remote_retrieve_body($token_response);
+        $token_data = json_decode($token_body, true);
+
+        if (!isset($token_data['access_token'])) {
+            return array(
+                'success' => false,
+                'error' => 'Không thể lấy access token từ Zoho API'
+            );
+        }
+
+        // Lưu token vào cache với thời gian hết hạn
+        $access_token = $token_data['access_token'];
+        $expires_in = $token_data['expires_in'] ?? 3600; // Default 1 hour if not provided
+
+        // Lưu cache với thời gian hết hạn trước 5 phút để đảm bảo an toàn
+        $cache_duration = max(300, $expires_in - 300); // Tối thiểu 5 phút, trừ 5 phút từ thời gian hết hạn thực
+        set_transient('mmi_zoho_access_token', $access_token, $cache_duration);
+
+        return array(
+            'success' => true,
+            'access_token' => $access_token,
+            'expires_in' => $expires_in,
+            'cache_duration' => $cache_duration,
+            'from_cache' => false
+        );
+    }
+
+    /**
+     * Clear cached Zoho access token
+     */
+    public function clear_zoho_token_cache()
+    {
+        // Security check
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        delete_transient('mmi_zoho_access_token');
+
+        wp_send_json_success(array(
+            'message' => 'Zoho access token cache cleared successfully'
+        ));
+    }
+
+    /**
+     * Get Zoho token cache info
+     */
+    public function get_zoho_token_cache_info()
+    {
+        // Security check
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        $cached_token = get_transient('mmi_zoho_access_token');
+        $cache_exists = !empty($cached_token);
+
+        // Get remaining cache time
+        $cache_timeout = 0;
+        if ($cache_exists) {
+            // WordPress không cung cấp cách trực tiếp để lấy thời gian còn lại của transient
+            // Nên chúng ta chỉ có thể biết token có tồn tại trong cache hay không
+            $cache_timeout = 'Unknown (exists in cache)';
+        }
+
+        wp_send_json_success(array(
+            'cache_exists' => $cache_exists,
+            'cache_timeout' => $cache_timeout,
+            'token_preview' => $cache_exists ? $cached_token : ''
+        ));
+    }
+
+    /**
+     * Handle fetching failed emails from Zoho
+     * https://www.zoho.com/mail/help/api/get-search-emails.html
+     */
+    public function handle_zoho_fetch_failed_emails()
+    {
+        // Sử dụng cùng nonce với JavaScript
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        // Lấy cấu hình từ database
+        $zoho_config = get_option('mmi_zoho_config', array());
+        $account_id = $zoho_config['account_id'] ?? '';
+
+        if (empty($account_id)) {
+            wp_send_json_error('Không có Account ID được lưu trong cấu hình');
+            return;
+        }
+
+        // Lấy access token từ cache hoặc API
+        $token_result = $this->get_zoho_access_token();
+
+        if (!$token_result['success']) {
+            wp_send_json_error($token_result['error']);
+            return;
+        }
+
+        $access_token = $token_result['access_token'];
+
+        // Search for failed delivery emails
+        // $search_query = 'subject:("Delivery Status Notification" OR "Undelivered Mail" OR "Mail Delivery Failed" OR "returned mail")';
+        // To search for new emails, provide the searchKey as newMails
+        $search_query = 'newMails';
+
+        $response = wp_remote_get('https://mail.zoho.com/api/accounts/' . $account_id . '/messages/search?' . http_build_query(array(
+            'searchKey' => $search_query,
+            // receivedTime (long): Specifies the time before which emails were received. It allows users to filter emails based on their received timestamp. Format: Unix timestamp in milliseconds
+            'receivedTime' => ((time() - 7 * DAY_IN_SECONDS) * 1000),
+            // start (int): Specifies the starting sequence number of the emails to be retrieved. The default value is 1.
+            'start' => 1,
+            // limit (int): Allowed values : Min. value: 1 and max. value: 200. The default value is 10.
+            'limit' => 200,
+        )), array(
+            'headers' => array(
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Zoho-oauthtoken ' . $access_token
+            ),
+            'timeout' => 30
+        ));
+        // die(print_r($response));
+
+        if (is_wp_error($response)) {
+            wp_send_json_error('API request failed: ' . $response->get_error_message());
+            return;
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        if (isset($data['status']) && $data['status']['code'] === 200) {
+            $messages = $data['data'] ?? array();
+
+            // Thêm thông tin cache vào response
+            $response_data = array(
+                'messages' => $messages,
+                'token_info' => array(
+                    'from_cache' => $token_result['from_cache'],
+                    'expires_in' => $token_result['expires_in'] ?? null,
+                    'cache_duration' => $token_result['cache_duration'] ?? null
+                )
+            );
+
+            wp_send_json_success($response_data);
+        } else {
+            $error_msg = isset($data['status']) ? $data['status']['description'] : 'Unknown error';
+            wp_send_json_error('API error: ' . $error_msg);
+        }
+    }
+
+    /**
+     * Handle Zoho OAuth callback
+     */
+    public function handle_zoho_callback()
+    {
+        include_once __DIR__ . '/zoho_callback.php';
     }
 }

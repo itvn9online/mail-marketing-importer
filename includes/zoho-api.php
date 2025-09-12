@@ -2,6 +2,15 @@
 
 /**
  * Tương tác với API Zoho
+ * 
+ * API dùng để lấy access token và refresh token từ Zoho Mail qua OAuth 2.0
+ * https://www.zoho.com/mail/help/api/using-oauth-2.html
+ * 
+ * API lấy accountId:
+ * https://www.zoho.com/mail/help/api/get-all-users-accounts.html
+ * 
+ * https://www.zoho.com/mail/help/api/get-search-emails.html
+ * 
  */
 
 // Prevent direct access
@@ -100,7 +109,7 @@ $zoho_config = get_option('mmi_zoho_config', array(
         <!-- Failed Emails List -->
         <div id="failed-emails-container" style="display: none; margin-bottom: 20px;">
             <h5 style="margin-bottom: 10px; color: #d63638;">🚨 Failed Delivery Emails Found:</h5>
-            <div id="failed-emails-list" style="max-height: 555px; overflow-y: auto; background: #fefefe; border: 1px solid #ddd; border-radius: 3px; padding: 10px; margin-bottom: 10px; max-width: 88%;">
+            <div id="failed-emails-list" style="max-height: 333px; overflow-y: auto; background: #fefefe; border: 1px solid #ddd; border-radius: 3px; padding: 10px; margin: 0 auto 10px auto; max-width: 88%;">
                 <!-- Failed emails will be populated here -->
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -127,9 +136,9 @@ $zoho_config = get_option('mmi_zoho_config', array(
                 <label for="zoho_scope" style="display: block; font-size: 12px; margin-bottom: 3px; color: #856404;">Chọn Scope:</label>
                 <select id="zoho_scope" style="width: 100%; max-width: 555px; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: #fff;">
                     <option value="ZohoMail.messages.READ" selected>ZohoMail.messages.READ (dùng để lấy access_token và refresh_token)</option>
-                    <option value="ZohoMail.messages.ALL">ZohoMail.messages.ALL (không nên dùng)</option>
+                    <option value="ZohoMail.messages.ALL">ZohoMail.messages.ALL (hạn chế sử dụng)</option>
                     <option value="ZohoMail.accounts.READ">ZohoMail.accounts.READ (dùng để lấy accountId)</option>
-                    <option value="ZohoMail.accounts.ALL">ZohoMail.accounts.ALL (không nên dùng)</option>
+                    <option value="ZohoMail.accounts.ALL">ZohoMail.accounts.ALL (hạn chế sử dụng)</option>
                 </select>
                 <p style="font-size: 11px; color: #856404; margin: 3px 0 0 0;">
                     💡 <strong>Khuyến nghị:</strong> Sử dụng scope nhỏ nhất cần thiết để bảo mật tốt hơn.

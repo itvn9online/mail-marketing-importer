@@ -41,7 +41,7 @@ class Mail_Marketing_Importer
         add_action('wp_ajax_mmi_get_zoho_token_cache_info', array($this, 'get_zoho_token_cache_info'));
 
         // Zoho OAuth callback (no priv needed for OAuth callback)
-        add_action('wp_ajax_nopriv_mmi_zoho_callback', array($this, 'handle_zoho_callback'));
+        // add_action('wp_ajax_nopriv_mmi_zoho_callback', array($this, 'handle_zoho_callback'));
         add_action('wp_ajax_mmi_zoho_callback', array($this, 'handle_zoho_callback'));
     }
 
@@ -1377,10 +1377,16 @@ class Mail_Marketing_Importer
             // Update all records with this email
             $result = $wpdb->update(
                 $wpdb->prefix . 'mail_marketing',
-                array('is_unsubscribed' => 1, 'updated_at' => current_time('mysql')),
-                array('email' => $email),
+                array(
+                    'is_unsubscribed' => '1',
+                    'updated_at' => current_time('mysql')
+                ),
+                array(
+                    'is_unsubscribed' => '0',
+                    'email' => $email,
+                ),
                 array('%d', '%s'),
-                array('%s')
+                array('%d', '%s')
             );
         }
 
@@ -1431,21 +1437,30 @@ class Mail_Marketing_Importer
             // Update all records with this email
             $result = $wpdb->update(
                 $wpdb->prefix . 'mail_marketing',
-                array('is_unsubscribed' => 1, 'updated_at' => current_time('mysql')),
-                array('email' => $email),
+                array(
+                    'is_unsubscribed' => '1',
+                    'updated_at' => current_time('mysql')
+                ),
+                array(
+                    'is_unsubscribed' => '0',
+                    'email' => $email,
+                ),
                 array('%d', '%s'),
-                array('%s')
+                array('%d', '%s')
             );
 
             if ($result !== false) {
                 $affected_rows = $wpdb->rows_affected;
                 $total_affected += $affected_rows;
                 $processed_emails[] = $email;
+                // $processed_emails[] = $result;
             } else {
                 $errors[] = "Failed to unsubscribe: $email";
             }
         }
 
+        // Return JSON response
+        header('Content-Type: application/json');
         wp_die(json_encode([
             'success' => true,
             'message' => 'Bulk unsubscribe completed',
@@ -1583,16 +1598,28 @@ class Mail_Marketing_Importer
             );
         }
 
+        // Khởi tạo mảng chứa dữ liệu token
+        $token_data = [
+            'grant_type' => 'refresh_token',
+            'client_id' => $client_id,
+            'client_secret' => $client_secret,
+            'refresh_token' => $refresh_token,
+            // Scope không cần thiết khi dùng refresh_token
+            'scope' => 'ZohoMail.messages.READ',
+        ];
+
+        // Khởi tạo URI cho yêu cầu
+        $uri = 'https://accounts.zoho.com/oauth/v2/token';
+        $uri = add_query_arg($token_data, $uri);
+        // die($uri);
+
         // Nếu không có cache hoặc đã hết hạn, lấy token mới
-        $token_response = wp_remote_post('https://accounts.zoho.com/oauth/v2/token', array(
-            'body' => array(
-                'grant_type' => 'refresh_token',
-                'client_id' => $client_id,
-                'client_secret' => $client_secret,
-                'refresh_token' => $refresh_token
-            ),
+        $token_response = wp_remote_post($uri, array(
+            // 'body' => $token_data,
+            'body' => [],
             'timeout' => 30
         ));
+        // die(print_r($token_response));
 
         if (is_wp_error($token_response)) {
             return array(
@@ -1610,6 +1637,7 @@ class Mail_Marketing_Importer
                 'error' => 'Không thể lấy access token từ Zoho API'
             );
         }
+        // die(print_r($token_data));
 
         // Lưu token vào cache với thời gian hết hạn
         $access_token = $token_data['access_token'];
@@ -1618,6 +1646,7 @@ class Mail_Marketing_Importer
         // Lưu cache với thời gian hết hạn trước 5 phút để đảm bảo an toàn
         $cache_duration = max(300, $expires_in - 300); // Tối thiểu 5 phút, trừ 5 phút từ thời gian hết hạn thực
         set_transient('mmi_zoho_access_token', $access_token, $cache_duration);
+        sleep(1); // Đợi 1 giây để đảm bảo token được lưu trước khi sử dụng
 
         return array(
             'success' => true,
@@ -1767,7 +1796,7 @@ class Mail_Marketing_Importer
 
             wp_send_json_success($response_data);
         } else {
-            $error_msg = isset($data['status']) ? $data['status']['description'] : 'Unknown error';
+            $error_msg = json_encode($data);
             wp_send_json_error('API error: ' . $error_msg);
         }
     }

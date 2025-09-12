@@ -1,4 +1,31 @@
 jQuery(document).ready(function ($) {
+	function my_warning(message) {
+		return my_notice(message, "warning");
+	}
+
+	function my_error(message) {
+		return my_notice(message, "error");
+	}
+
+	function my_notice(message, type) {
+		if ($("#parent-notice").length < 1) {
+			$("body").append('<div id="parent-notice"></div>');
+		}
+
+		//
+		var notice = $('<div class="my-notice"></div>');
+		notice.addClass(
+			"my-notice-" + (typeof type == "undefined" ? "success" : type)
+		);
+		notice.text(message);
+		$("#parent-notice").append(notice);
+		setTimeout(function () {
+			notice.fadeOut(300, function () {
+				$(this).remove();
+			});
+		}, 9000);
+	}
+
 	// Handle campaign selection radio buttons
 	$('input[name="campaign_option"]').on("change", function () {
 		if ($(this).val() === "existing") {
@@ -32,7 +59,7 @@ jQuery(document).ready(function ($) {
 			var selectedCampaign = $("#existing_campaign").val();
 			if (!selectedCampaign) {
 				e.preventDefault();
-				alert("Please select an existing campaign.");
+				my_warning("Please select an existing campaign.");
 				$("#existing_campaign").focus();
 				return false;
 			}
@@ -40,13 +67,13 @@ jQuery(document).ready(function ($) {
 			var campaignName = $("#new_campaign_name").val().trim();
 			if (!campaignName) {
 				e.preventDefault();
-				alert("Please enter a campaign name.");
+				my_warning("Please enter a campaign name.");
 				$("#new_campaign_name").focus();
 				return false;
 			}
 			if (campaignName.length > 255) {
 				e.preventDefault();
-				alert("Campaign name is too long. Maximum 255 characters.");
+				my_warning("Campaign name is too long. Maximum 255 characters.");
 				$("#new_campaign_name").focus();
 				return false;
 			}
@@ -56,7 +83,7 @@ jQuery(document).ready(function ($) {
 		var fileInput = $("#import_file")[0];
 		if (!fileInput.files.length) {
 			e.preventDefault();
-			alert("Please select a file to import.");
+			my_warning("Please select a file to import.");
 			$("#import_file").focus();
 			return false;
 		}
@@ -65,7 +92,7 @@ jQuery(document).ready(function ($) {
 		var emailColumn = $("#email_column").val();
 		if (!emailColumn) {
 			e.preventDefault();
-			alert("Please map the email column. This field is required.");
+			my_warning("Please map the email column. This field is required.");
 			$("#email_column").focus();
 			return false;
 		}
@@ -212,7 +239,7 @@ jQuery(document).ready(function ($) {
 		var file = fileInput[0].files[0];
 
 		if (!file) {
-			alert("Please select a file to import.");
+			my_warning("Please select a file to import.");
 			e.preventDefault();
 			return false;
 		}
@@ -222,7 +249,7 @@ jQuery(document).ready(function ($) {
 		if (campaignOption === "existing") {
 			var existingCampaign = $("#existing_campaign").val();
 			if (!existingCampaign) {
-				alert("Please select an existing campaign.");
+				my_warning("Please select an existing campaign.");
 				e.preventDefault();
 				$("#existing_campaign").focus();
 				return false;
@@ -230,7 +257,7 @@ jQuery(document).ready(function ($) {
 		} else {
 			var newCampaignName = $("#new_campaign_name").val().trim();
 			if (!newCampaignName) {
-				alert("Please enter a name for the new campaign.");
+				my_warning("Please enter a name for the new campaign.");
 				e.preventDefault();
 				$("#new_campaign_name").focus();
 				return false;
@@ -241,14 +268,14 @@ jQuery(document).ready(function ($) {
 		var emailColumn = $("#email_column").val();
 		if (!emailColumn) {
 			e.preventDefault();
-			alert("Please select an Email column. This field is required.");
+			my_warning("Please select an Email column. This field is required.");
 			$("#email_column").focus();
 			return false;
 		}
 
 		// Validate file size (max 10MB)
 		if (file.size > 10 * 1024 * 1024) {
-			alert("File size must be less than 10MB.");
+			my_warning("File size must be less than 10MB.");
 			e.preventDefault();
 			return false;
 		}
@@ -258,7 +285,7 @@ jQuery(document).ready(function ($) {
 		var fileExtension = file.name.split(".").pop().toLowerCase();
 
 		if (allowedExtensions.indexOf(fileExtension) === -1) {
-			alert("Please select a valid file format (.xlsx, .xls, .csv).");
+			my_warning("Please select a valid file format (.xlsx, .xls, .csv).");
 			e.preventDefault();
 			return false;
 		}
@@ -401,14 +428,14 @@ jQuery(document).ready(function ($) {
 			var emailSubject = $('input[name="email_subject"]').val().trim();
 
 			if (!campaignName) {
-				alert("Please enter a campaign name.");
+				my_warning("Please enter a campaign name.");
 				$('input[name="campaign_name"]').focus();
 				e.preventDefault();
 				return false;
 			}
 
 			if (!emailSubject) {
-				alert("Please enter an email subject.");
+				my_warning("Please enter an email subject.");
 				$('input[name="email_subject"]').focus();
 				e.preventDefault();
 				return false;
@@ -527,12 +554,12 @@ jQuery(document).ready(function ($) {
 					$this.removeClass("email-" + field + "-" + currentValue);
 					$this.addClass("email-" + field + "-" + response.data.new_value);
 				} else {
-					alert("Error: " + response.data);
+					my_error("Error: " + response.data);
 					$this.text(originalText);
 				}
 			},
 			error: function () {
-				alert("Failed to update status. Please try again.");
+				my_error("Failed to update status. Please try again.");
 				$this.text(originalText);
 			},
 			complete: function () {
@@ -715,7 +742,7 @@ jQuery(document).ready(function ($) {
 		var currentUrl = emailUrlInput.val().trim();
 
 		if (!currentUrl) {
-			alert("Vui lòng nhập URL trước khi thêm UTM parameters.");
+			my_warning("Vui lòng nhập URL trước khi thêm UTM parameters.");
 			emailUrlInput.focus();
 			return;
 		}
@@ -754,7 +781,7 @@ jQuery(document).ready(function ($) {
 			// Update input field
 			emailUrlInput.val(newUrl);
 		} catch (error) {
-			alert("URL không hợp lệ. Vui lòng kiểm tra lại format URL.");
+			my_error("URL không hợp lệ. Vui lòng kiểm tra lại format URL.");
 			emailUrlInput.focus();
 		}
 	});
@@ -772,7 +799,9 @@ jQuery(document).ready(function ($) {
 			} else {
 				$("#zoho_client_secret").focus();
 			}
-			alert("Vui lòng nhập Client ID và Client Secret vào form chính trước.");
+			my_warning(
+				"Vui lòng nhập Client ID và Client Secret vào form chính trước."
+			);
 			return;
 		}
 
@@ -961,9 +990,23 @@ jQuery(document).ready(function ($) {
 			},
 			function (response) {
 				if (response.success && response.data) {
+					//
+					var cacheEmailShift = localStorage.getItem("last_unsubscribed_email");
+
+					// Display failed emails and get count
 					let len = displayFailedEmails(
-						response.data.messages || response.data
+						response.data.messages || response.data,
+						cacheEmailShift
 					);
+
+					//
+					if (cacheEmailShift !== null) {
+						$(
+							"." + cacheEmailShift.replace(/[^a-zA-Z0-9]/g, "_") + ""
+						).addClass("orgcolor");
+					}
+
+					//
 					var tokenInfo = response.data.token_info;
 					if (tokenInfo) {
 						updateTokenCacheInfo(tokenInfo);
@@ -987,7 +1030,7 @@ jQuery(document).ready(function ($) {
 	});
 
 	// Display failed emails
-	function displayFailedEmails(messages) {
+	function displayFailedEmails(messages, cacheEmailShift) {
 		var container = $("#failed-emails-container");
 		var list = $("#failed-emails-list");
 		var count = $("#failed-emails-count");
@@ -999,6 +1042,7 @@ jQuery(document).ready(function ($) {
 
 		list.empty();
 		var failedEmails = [];
+		var checkboxChecked = " checked";
 
 		messages.forEach(function (message, index) {
 			// Extract failed email from message content or subject
@@ -1011,20 +1055,31 @@ jQuery(document).ready(function ($) {
 			) {
 				failedEmails.push(failedEmail);
 
+				// từ đoạn email đã unsubscribe gần nhất thì thôi không check nữa
+				if (failedEmail === cacheEmailShift) {
+					checkboxChecked = "";
+				}
+
 				var item = $(
 					'<div class="failed-email-item" style="padding: 5px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 8px;"></div>'
 				);
 				var checkbox = $(
 					'<input type="checkbox" class="failed-email-checkbox" value="' +
 						failedEmail +
-						'" checked>'
+						'"' +
+						checkboxChecked +
+						">"
 				);
 				var emailSpan = $(
-					'<span class="' +
+					'<a href="https://' +
+						window.location.hostname +
+						"/wp-admin/tools.php?page=email-campaigns&filter=1&search_email=" +
+						encodeURIComponent(failedEmail) +
+						'" target="_blank" class="' +
 						failedEmail.replace(/[^a-zA-Z0-9]/g, "_") +
 						'" style="font-family: monospace; font-size: 12px;">' +
 						failedEmail +
-						"</span>"
+						"</a>"
 				);
 				var subject = $(
 					'<small class="' +
@@ -1082,13 +1137,25 @@ jQuery(document).ready(function ($) {
 
 	// Bulk unsubscribe failed emails
 	$("#bulk-unsubscribe-failed").on("click", function () {
+		//
+		let is_processing = $(this).attr("data-processing") || "";
+		if (is_processing != "") {
+			if (confirm("Bạn có chắc chắn muốn hủy bỏ quá trình không?")) {
+				$("#bulk-unsubscribe-failed")
+					.removeAttr("data-processing")
+					.text("Bulk Unsubscribe Selected");
+			}
+			return;
+		}
+
+		// Collect selected emails
 		var selectedEmails = [];
 		$(".failed-email-checkbox:checked").each(function () {
 			selectedEmails.push($(this).val());
 		});
 
 		if (selectedEmails.length === 0) {
-			alert("Vui lòng chọn ít nhất 1 email để unsubscribe.");
+			my_warning("Vui lòng chọn ít nhất 1 email để unsubscribe.");
 			return;
 		}
 
@@ -1102,6 +1169,10 @@ jQuery(document).ready(function ($) {
 			return;
 		}
 		console.log("Unsubscribing emails:", selectedEmails);
+
+		// Set processing state
+		$(this).attr("data-processing", "1").text("Processing...");
+
 		// chuyển về div #failed-emails-list
 		$("html, body").animate(
 			{
@@ -1111,19 +1182,45 @@ jQuery(document).ready(function ($) {
 		);
 		// return;
 
-		var button = $(this);
-		button.prop("disabled", true).text("Processing...");
-
 		// Process each email
 		var processed = 0;
 		var errors = [];
+		var prevEmailShift = null;
+
+		function afterUnsubscribe(email, cl) {
+			processed++;
+
+			$("." + email.replace(/[^a-zA-Z0-9]/g, "_") + "").addClass(
+				typeof cl == "undefined" ? "greencolor" : cl
+			);
+
+			$('input.failed-email-checkbox[value="' + email + '"]').prop(
+				"checked",
+				false
+			);
+
+			selectedSendEmails();
+		}
 
 		function selectedSendEmails() {
-			// lấy email đầu tiên trong mảng và gửi ajax
+			// Kiểm tra nếu đã xử lý xong tất cả email
 			if (selectedEmails.length === 0) {
-				alert("✅ Hoàn thành! Đã unsubscribe " + processed + " emails.");
+				$("#bulk-unsubscribe-failed")
+					.removeAttr("data-processing")
+					.text("Bulk Unsubscribe Selected");
+				my_notice("✅ Hoàn thành! Đã unsubscribe " + processed + " emails.");
 				return;
 			}
+			// Kiểm tra trạng thái xử lý
+			let is_processing =
+				$("#bulk-unsubscribe-failed").attr("data-processing") || "";
+			if (is_processing == "") {
+				my_warning(
+					"Quá trình đã bị hủy bỏ. Đã unsubscribe " + processed + " emails."
+				);
+				return;
+			}
+			// lấy email đầu tiên trong mảng và gửi ajax
 			var email = selectedEmails.shift();
 
 			// Gửi ajax để unsubscribe email
@@ -1139,23 +1236,30 @@ jQuery(document).ready(function ($) {
 				},
 				success: function (response) {
 					console.log("Unsubscribe response for", email, ":", response);
-					processed++;
-					selectedSendEmails();
-					$("." + email.replace(/[^a-zA-Z0-9]/g, "_") + "").addClass(
-						"greencolor"
+					afterUnsubscribe(
+						email,
+						typeof response.affected_rows != "undefined" &&
+							response.affected_rows > 0
+							? "greencolor"
+							: "orgcolor"
 					);
+
+					// lưu vào localstorage email đầu tiên xử lý thành công
+					if (prevEmailShift === null) {
+						localStorage.setItem("last_unsubscribed_email", email);
+						prevEmailShift = email;
+						console.log("Cached last unsubscribed email:", email);
+					}
 				},
 				error: function (xhr, status, error) {
 					errors.push(email + ": " + error);
-					processed++;
-					selectedSendEmails();
-					$("." + email.replace(/[^a-zA-Z0-9]/g, "_") + "").addClass(
-						"redcolor"
-					);
+					afterUnsubscribe(email, "redcolor");
 				},
 			});
 		}
-		selectedSendEmails();
+		setTimeout(() => {
+			selectedSendEmails();
+		}, 200);
 	});
 
 	// Zoho Token Cache Management

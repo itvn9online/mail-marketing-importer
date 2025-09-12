@@ -843,6 +843,36 @@ span[style*="color: red"] {
     text-align: center;
 }
 
+#parent-notice {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 50%;
+    font-size: 16px;
+}
+
+.my-notice {
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    border: 1px #ccc solid;
+    border-left: 4px solid #00a0d2;
+    background: #fff;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+.my-notice.my-notice-warning {
+    border-left-color: #ffc107;
+}
+
+.my-notice.my-notice-error {
+    border-left-color: #dc3545;
+}
+
+.my-notice.my-notice-success {
+    border-left-color: #28a745;
+}
+
 /* Responsive design for URL list */
 @media (max-width: 768px) {
     #detected-urls-list div[style*="background: #fff"] {

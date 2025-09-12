@@ -53,6 +53,11 @@ if (!defined('ABSPATH')) {
                         }
                         ?> Use the above placeholders
                     </p>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li>Ngắn gọn, không spammy (tránh: “MIỄN PHÍ!!!”, “CLICK NGAY”).</li>
+                        <li>Cá nhân hóa (VD: “Anh Nam, ưu đãi dành riêng cho anh”).</li>
+                        <li>Thêm giá trị (VD: “Nhận ưu đãi 20% cho đơn hàng tiếp theo của bạn”).</li>
+                    </ul>
                 </td>
             </tr>
             <tr>
@@ -142,6 +147,14 @@ if (!defined('ABSPATH')) {
                         ?>
                     </div>
 
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li>Link trong mail: Dùng domain của chính bạn, không rút gọn link (bit.ly, tinyurl dễ bị đánh spam).</li>
+                        <li>Không sử dụng link đến các trang đen, vi phạm bản quyền.</li>
+                        <li>SSL (https) càng tốt.</li>
+                        <li>Không copy/paste từ Word → gây lỗi định dạng.</li>
+                        <li>Không chèn quá nhiều từ khóa spam.</li>
+                    </ul>
+
                     <!-- URL Detection Section -->
                     <div class="email-url-detection" style="margin-top: 15px; padding: 10px; background-color: #f0f8ff; border-left: 4px solid #0073aa; border-radius: 3px;">
                         <strong>🔗 URLs detected in email content:</strong><br>
@@ -158,6 +171,10 @@ if (!defined('ABSPATH')) {
                     <input type="datetime-local" name="start_date" class="regular-text"
                         value="<?php echo $edit_campaign && $edit_campaign->start_date ? date_i18n('Y-m-d\TH:i', strtotime($edit_campaign->start_date)) : ''; ?>">
                     <p class="description">Thời gian bắt đầu gửi email (để trống sẽ gửi ngay lập tức)</p>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li>Warm-up: Gửi từ ít → tăng dần theo ngày/tuần.</li>
+                        <li>Giờ gửi hợp lý: thường là sáng sớm (7-9h) hoặc sau giờ làm (19-21h).</li>
+                    </ul>
                 </td>
             </tr>
             <?php if ($edit_campaign): ?>

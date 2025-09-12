@@ -333,6 +333,11 @@ if (!empty($refresh_token) && ($selected_scope == 'ZohoMail.messages.READ' || $s
                 }, 2000);
             });
         }
+
+        // tự động đóng cửa sổ sau 5 phút
+        setTimeout(function() {
+            window.close();
+        }, 5 * 60 * 1000);
     </script>
 </body>
 

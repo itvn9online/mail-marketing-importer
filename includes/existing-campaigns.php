@@ -15,11 +15,11 @@ if (!defined('ABSPATH')) {
                 <tr>
                     <th>Campaign Name</th>
                     <th>Email title</th>
-                    <th>Status</th>
-                    <th>Contacts</th>
-                    <th>Ngày bắt đầu</th>
-                    <th>Created</th>
-                    <th>Actions</th>
+                    <th style="width: 110px;">Status</th>
+                    <th style="width: 110px;">Contacts</th>
+                    <th style="width: 168px;">Ngày bắt đầu</th>
+                    <th style="width: 168px;">Created</th>
+                    <th style="width: 220px;">Actions</th>
                 </tr>
             </thead>
             <tbody>

@@ -131,6 +131,7 @@ if (!defined('ABSPATH')) {
                             [
                                 '{SITE_NAME}',
                                 '{USER_EMAIL}',
+                                '{USER_PHONE}',
                                 '{USER_NAME}',
                                 '{FIRST_NAME}',
                                 '{LAST_NAME}',

@@ -1599,7 +1599,7 @@ class Mail_Marketing_Importer
         }
 
         // Khởi tạo mảng chứa dữ liệu token
-        $token_data = [
+        $token_query = [
             'grant_type' => 'refresh_token',
             'client_id' => $client_id,
             'client_secret' => $client_secret,
@@ -1610,12 +1610,12 @@ class Mail_Marketing_Importer
 
         // Khởi tạo URI cho yêu cầu
         $uri = 'https://accounts.zoho.com/oauth/v2/token';
-        $uri = add_query_arg($token_data, $uri);
+        $uri = add_query_arg($token_query, $uri);
         // die($uri);
 
         // Nếu không có cache hoặc đã hết hạn, lấy token mới
         $token_response = wp_remote_post($uri, array(
-            // 'body' => $token_data,
+            // 'body' => $token_query,
             'body' => [],
             'timeout' => 30
         ));
@@ -1653,6 +1653,7 @@ class Mail_Marketing_Importer
             'access_token' => $access_token,
             'expires_in' => $expires_in,
             'cache_duration' => $cache_duration,
+            'scope' => $token_data['scope'] ?? null,
             'from_cache' => false
         );
     }

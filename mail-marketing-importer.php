@@ -38,7 +38,7 @@ if (strpos($_SERVER['REQUEST_URI'], '/plugins.php') !== false) {
 }
 function mail_marketing_importer_settings_link($links)
 {
-    $settings_link = '<a href="' . admin_url('admin.php?page=mail-marketing-importer') . '">' . __('Settings') . '</a>';
+    $settings_link = '<a href="' . admin_url('tools.php?page=mail-marketing-importer') . '">' . __('Settings') . '</a>';
     array_unshift($links, $settings_link);
     return $links;
 }
@@ -177,7 +177,7 @@ function mail_marketing_importer_force_db_update()
 {
     if (current_user_can('manage_options')) {
         mail_marketing_importer_update_database();
-        wp_redirect(admin_url('admin.php?page=mail-marketing-importer&db_updated=1'));
+        wp_redirect(admin_url('tools.php?page=mail-marketing-importer&db_updated=1'));
         exit;
     }
 }

@@ -32,13 +32,13 @@ class Mail_Marketing_Importer
 
         // Zoho API actions
         add_action('wp_ajax_mmi_save_zoho_config', array($this, 'handle_save_zoho_config'));
-        add_action('wp_ajax_mmi_save_zoho_scope', array($this, 'handle_save_zoho_scope'));
         // add_action('wp_ajax_mmi_get_zoho_config', array($this, 'handle_get_zoho_config'));
         add_action('wp_ajax_mmi_zoho_fetch_failed_emails', array($this, 'handle_zoho_fetch_failed_emails'));
 
         // Zoho token cache management
         add_action('wp_ajax_mmi_clear_zoho_token_cache', array($this, 'clear_zoho_token_cache'));
         add_action('wp_ajax_mmi_get_zoho_token_cache_info', array($this, 'get_zoho_token_cache_info'));
+        add_action('wp_ajax_mmi_clear_zoho_account_id', array($this, 'clear_zoho_account_id'));
 
         // Zoho OAuth callback (no priv needed for OAuth callback)
         // add_action('wp_ajax_nopriv_mmi_zoho_callback', array($this, 'handle_zoho_callback'));
@@ -360,21 +360,49 @@ class Mail_Marketing_Importer
             $campaign_id = 0;
         }
 
-        // Get all campaigns
+        // Pagination setup
+        $campaigns_per_page = 20;
+        $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($current_page - 1) * $campaigns_per_page;
+
+        // Status filter - default to 'active'
+        $status_filter = isset($_GET['campaign_status']) ? sanitize_text_field($_GET['campaign_status']) : 'active';
+
+        // Build WHERE clause for status filter
+        $where_clause = '';
+        $count_where_clause = '';
+        if ($status_filter !== 'all') {
+            $where_clause = $wpdb->prepare(" WHERE c.status = %s", $status_filter);
+            $count_where_clause = $wpdb->prepare(" WHERE status = %s", $status_filter);
+        }
+
+        // Get total count for pagination
+        $total_campaigns_query = "SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing_campaigns" . $count_where_clause;
+        $total_campaigns = $wpdb->get_var($total_campaigns_query);
+        $total_pages = ceil($total_campaigns / $campaigns_per_page);
+
+        // Get campaigns with pagination and status filter
         $campaigns = $wpdb->get_results("
             SELECT c.*, 
                    COUNT(m.id) as contact_count
             FROM {$wpdb->prefix}mail_marketing_campaigns c
             LEFT JOIN {$wpdb->prefix}mail_marketing m ON c.id = m.campaign_id
+            {$where_clause}
             GROUP BY c.id
             ORDER BY c.created_at DESC
+            LIMIT {$campaigns_per_page} OFFSET {$offset}
         ");
 
-        // Get campaign stats
-        $total_campaigns = count($campaigns);
-        $active_campaigns = count(array_filter($campaigns, function ($c) {
-            return $c->status === 'active';
-        }));
+        // Get campaign stats for all campaigns (not filtered)
+        $all_campaigns_stats = $wpdb->get_results("SELECT status, COUNT(id) as count FROM {$wpdb->prefix}mail_marketing_campaigns GROUP BY status");
+        $active_campaigns = 0;
+        $total_all_campaigns = 0;
+        foreach ($all_campaigns_stats as $stat) {
+            $total_all_campaigns += $stat->count;
+            if ($stat->status === 'active') {
+                $active_campaigns = $stat->count;
+            }
+        }
 
         if (function_exists('get_email_content_settings')) {
             $email_content_settings = get_email_content_settings($campaign_id);
@@ -389,12 +417,20 @@ class Mail_Marketing_Importer
             <!-- Campaign Stats -->
             <div class="campaign-stats-overview">
                 <div class="campaign-stat-box">
-                    <div class="campaign-stat-number"><?php echo number_format($total_campaigns); ?></div>
+                    <div class="campaign-stat-number"><?php echo number_format($total_all_campaigns); ?></div>
                     <div class="campaign-stat-label">Total Campaigns</div>
                 </div>
                 <div class="campaign-stat-box">
                     <div class="campaign-stat-number"><?php echo number_format($active_campaigns); ?></div>
                     <div class="campaign-stat-label">Active Campaigns</div>
+                </div>
+                <div class="campaign-stat-box">
+                    <div class="campaign-stat-number"><?php echo number_format(count($campaigns)); ?></div>
+                    <div class="campaign-stat-label">Showing (<?php echo ucfirst($status_filter); ?>)</div>
+                </div>
+                <div class="campaign-stat-box">
+                    <div class="campaign-stat-number"><?php echo $current_page; ?>/<?php echo $total_pages; ?></div>
+                    <div class="campaign-stat-label">Page</div>
                 </div>
                 <?php if (isset($_GET['edit'])): ?>
                     <div class="campaign-stat-box">
@@ -462,14 +498,11 @@ class Mail_Marketing_Importer
         foreach ($campaigns as $campaign) {
             $status_label = '';
             switch ($campaign->status) {
-                case 'draft':
-                    $status_label = ' (Draft)';
-                    break;
                 case 'active':
                     $status_label = ' (Active)';
                     break;
-                case 'paused':
-                    $status_label = ' (Paused)';
+                case 'inactive':
+                    $status_label = ' (Inactive)';
                     break;
                 case 'completed':
                     $status_label = ' (Completed)';
@@ -761,7 +794,7 @@ class Mail_Marketing_Importer
             if ($result['success']) {
                 $imported = isset($result['imported']) ? $result['imported'] : 0;
                 $skipped = isset($result['skipped']) ? $result['skipped'] : 0;
-                wp_redirect(admin_url('admin.php?page=email-campaigns&edit=' . $campaign_id . '&success=1&imported=' . $imported . '&skipped=' . $skipped . '&new_campaign=1'));
+                wp_redirect(admin_url('tools.php?page=email-campaigns&edit=' . $campaign_id . '&success=1&imported=' . $imported . '&skipped=' . $skipped . '&new_campaign=1'));
             } else {
                 wp_redirect(admin_url('tools.php?page=mail-marketing-importer&error=import_failed&message=' . urlencode($result['message'])));
             }
@@ -1124,7 +1157,14 @@ class Mail_Marketing_Importer
         $description = sanitize_textarea_field($_POST['campaign_description']);
         $email_subject = sanitize_text_field($_POST['email_subject']);
         $email_url = esc_url_raw($_POST['email_url'] ?? '');
-        $email_content = wp_kses_post($_POST['email_content']);
+        // Fix for magic quotes issue - remove auto-added backslashes before processing
+        $email_content_raw = isset($_POST['email_content']) ? $_POST['email_content'] : '';
+        // Handle magic quotes properly - WordPress may add slashes automatically
+        if (function_exists('wp_unslash')) {
+            $email_content = wp_kses_post(wp_unslash($email_content_raw));
+        } else {
+            $email_content = wp_kses_post(stripslashes($email_content_raw));
+        }
         $email_template = sanitize_text_field($_POST['email_template'] ?? 'default.html');
         $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
 
@@ -1155,9 +1195,9 @@ class Mail_Marketing_Importer
         }
 
         if ($result) {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&edit=' . $wpdb->insert_id . '&campaign_created=1'));
+            wp_redirect(admin_url('tools.php?page=email-campaigns&edit=' . $wpdb->insert_id . '&campaign_created=1'));
         } else {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&error=create_failed'));
+            wp_redirect(admin_url('tools.php?page=email-campaigns&error=create_failed'));
         }
         exit;
     }
@@ -1177,7 +1217,14 @@ class Mail_Marketing_Importer
         $description = sanitize_textarea_field($_POST['campaign_description']);
         $email_subject = sanitize_text_field($_POST['email_subject']);
         $email_url = esc_url_raw($_POST['email_url'] ?? '');
-        $email_content = wp_kses_post($_POST['email_content']);
+        // Fix for magic quotes issue - remove auto-added backslashes before processing
+        $email_content_raw = isset($_POST['email_content']) ? $_POST['email_content'] : '';
+        // Handle magic quotes properly - WordPress may add slashes automatically
+        if (function_exists('wp_unslash')) {
+            $email_content = wp_kses_post(wp_unslash($email_content_raw));
+        } else {
+            $email_content = wp_kses_post(stripslashes($email_content_raw));
+        }
         $email_template = sanitize_text_field($_POST['email_template'] ?? 'default.html');
         $status = sanitize_text_field($_POST['campaign_status']);
         $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
@@ -1222,9 +1269,9 @@ class Mail_Marketing_Importer
         );
 
         if ($result !== false) {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&edit=' . $campaign_id . '&campaign_updated=1'));
+            wp_redirect(admin_url('tools.php?page=email-campaigns&edit=' . $campaign_id . '&campaign_updated=1'));
         } else {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&edit=' . $campaign_id . '&error=update_failed'));
+            wp_redirect(admin_url('tools.php?page=email-campaigns&edit=' . $campaign_id . '&error=update_failed'));
         }
         exit;
     }
@@ -1270,16 +1317,38 @@ class Mail_Marketing_Importer
                     'status' => 'inactive',
                     'updated_at' => current_time('mysql')
                 ),
-                array('id' => $campaign_id),
+                array(
+                    'id' => $campaign_id,
+                    'status' => 'active',
+                ),
                 array('%s', '%s'),
-                array('%d')
+                array('%d', '%s')
             );
         }
 
-        if ($result) {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&deleted=1'));
+        // Build URL filter for redirection
+        if (isset($_GET['redirect_to'])) {
+            $redirect_to = urldecode(sanitize_text_field($_GET['redirect_to']));
+            // xem đấy có phải url hợp lệ không
+            if (strpos($redirect_to, $_SERVER['HTTP_HOST']) === false) {
+                $redirect_to = admin_url('tools.php?page=email-campaigns');
+            } else {
+                // echo $redirect_to . '<br>' . PHP_EOL;
+                // xóa tham số deleted nếu có
+                $redirect_to = remove_query_arg('deleted', $redirect_to);
+                // xóa tham số error nếu có
+                $redirect_to = remove_query_arg('error', $redirect_to);
+            }
+            // die($redirect_to);
         } else {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&error=delete_failed'));
+            $redirect_to = admin_url('tools.php?page=email-campaigns');
+        }
+
+        // Redirect back with status
+        if ($result) {
+            wp_redirect($redirect_to . '&deleted=1');
+        } else {
+            wp_redirect($redirect_to . '&error=delete_failed');
         }
         exit;
     }
@@ -1370,7 +1439,7 @@ class Mail_Marketing_Importer
         $emails = explode(',', $emails);
         foreach ($emails as $email) {
             if (empty($email) || !is_email($email)) {
-                wp_redirect(admin_url('admin.php?page=email-campaigns&list=true&error=invalid_email&message=' . urlencode('Please enter a valid email address ' . $email)));
+                wp_redirect(admin_url('tools.php?page=email-campaigns&list=true&error=invalid_email&message=' . urlencode('Please enter a valid email address ' . $email)));
                 exit;
             }
 
@@ -1392,9 +1461,9 @@ class Mail_Marketing_Importer
 
         if ($result !== false) {
             $affected_rows = $wpdb->rows_affected;
-            wp_redirect(admin_url('admin.php?page=email-campaigns&list=true&bulk_unsubscribed=1&email_unsubscribed=1&affected_rows=' . $affected_rows . '&email=' . urlencode($email)));
+            wp_redirect(admin_url('tools.php?page=email-campaigns&list=true&bulk_unsubscribed=1&email_unsubscribed=1&affected_rows=' . $affected_rows . '&email=' . urlencode($email)));
         } else {
-            wp_redirect(admin_url('admin.php?page=email-campaigns&list=true&error=unsubscribe_failed&message=' . urlencode('Failed to update database')));
+            wp_redirect(admin_url('tools.php?page=email-campaigns&list=true&error=unsubscribe_failed&message=' . urlencode('Failed to update database')));
         }
 
         exit;
@@ -1530,45 +1599,6 @@ class Mail_Marketing_Importer
     }
 
     /**
-     * Handle saving selected Zoho OAuth scope
-     */
-    public function handle_save_zoho_scope()
-    {
-        // Verify nonce for security
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
-            wp_send_json_error('Security check failed ' . __FUNCTION__);
-            return;
-        }
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('Security check failed ' . __FUNCTION__);
-            return;
-        }
-
-        $scope = sanitize_text_field($_POST['scope']) ?: 'ZohoMail.messages.READ';
-
-        // Validate scope (must be one of the allowed values)
-        $allowed_scopes = [
-            'ZohoMail.messages.READ',
-            'ZohoMail.messages.ALL',
-            'ZohoMail.accounts.READ',
-            'ZohoMail.accounts.ALL'
-        ];
-
-        if (!in_array($scope, $allowed_scopes)) {
-            $scope = 'ZohoMail.messages.READ'; // Fallback to default
-        }
-
-        // Save scope in transient for 10 minutes (enough time for OAuth flow)
-        set_transient('mmi_zoho_selected_scope', $scope, 600);
-
-        wp_send_json_success(array(
-            'message' => 'Scope saved for OAuth flow',
-            'scope' => $scope
-        ));
-    }
-
-    /**
      * Get cached Zoho access token or fetch new one if expired
      */
     private function get_zoho_access_token()
@@ -1605,7 +1635,7 @@ class Mail_Marketing_Importer
             'client_secret' => $client_secret,
             'refresh_token' => $refresh_token,
             // Scope không cần thiết khi dùng refresh_token
-            'scope' => 'ZohoMail.messages.READ',
+            // 'scope' => 'ZohoMail.messages.READ',
         ];
 
         // Khởi tạo URI cho yêu cầu
@@ -1634,7 +1664,7 @@ class Mail_Marketing_Importer
         if (!isset($token_data['access_token'])) {
             return array(
                 'success' => false,
-                'error' => 'Không thể lấy access token từ Zoho API'
+                'error' => 'Không thể lấy access token từ Zoho API. Response: ' . json_encode($token_data)
             );
         }
         // die(print_r($token_data));
@@ -1716,6 +1746,40 @@ class Mail_Marketing_Importer
     }
 
     /**
+     * Clear stored Zoho Account ID
+     */
+    public function clear_zoho_account_id()
+    {
+        // Security check
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        // Get current config
+        $zoho_config = get_option('mmi_zoho_config', array());
+
+        // Clear account_id but keep other settings
+        $zoho_config['account_id'] = '';
+
+        // Update the option
+        $result = update_option('mmi_zoho_config', $zoho_config);
+
+        if ($result !== false) {
+            wp_send_json_success(array(
+                'message' => 'Account ID cleared successfully. You can now authorize with a different Zoho account.'
+            ));
+        } else {
+            wp_send_json_error('Failed to clear Account ID');
+        }
+    }
+
+    /**
      * Handle fetching failed emails from Zoho
      * https://www.zoho.com/mail/help/api/get-search-emails.html
      */
@@ -1751,10 +1815,28 @@ class Mail_Marketing_Importer
 
         $access_token = $token_result['access_token'];
 
-        // Search for failed delivery emails
-        // $search_query = 'subject:("Delivery Status Notification" OR "Undelivered Mail" OR "Mail Delivery Failed" OR "returned mail")';
-        // To search for new emails, provide the searchKey as newMails
-        $search_query = 'newMails';
+        // Get search query from frontend, default to 'subject:Delivery'
+        $search_query = sanitize_text_field($_POST['search_query'] ?? 'subject:Delivery');
+
+        // Validate search query format
+        $allowed_prefixes = ['subject:', 'from:', 'newMails'];
+        $is_valid_query = false;
+
+        if ($search_query === 'newMails') {
+            $is_valid_query = true;
+        } else {
+            foreach ($allowed_prefixes as $prefix) {
+                if (strpos($search_query, $prefix) === 0 && strlen($search_query) > strlen($prefix)) {
+                    $is_valid_query = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$is_valid_query) {
+            wp_send_json_error('Invalid search query format. Allowed formats: subject:text, from:email, or newMails');
+            return;
+        }
 
         $response = wp_remote_get('https://mail.zoho.com/api/accounts/' . $account_id . '/messages/search?' . http_build_query(array(
             'searchKey' => $search_query,

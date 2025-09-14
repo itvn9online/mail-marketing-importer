@@ -66,36 +66,55 @@ $zoho_config = get_option('mmi_zoho_config', array(
                 </div>
                 <div>
                     <label for="zoho_client_secret" style="display: block; font-size: 12px; margin-bottom: 3px;">Zoho Client Secret:</label>
-                    <input type="password" name="zoho_client_secret" id="zoho_client_secret" placeholder="Enter Client Secret"
-                        value="<?php echo esc_attr($zoho_config['client_secret']); ?>"
+                    <input type="text" name="zoho_client_secret" id="zoho_client_secret" placeholder="Enter Client Secret"
+                        value="<?php echo esc_attr($zoho_config['client_secret']); ?>" class="is-token-hidden"
                         style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
                 </div>
                 <div>
                     <label for="zoho_refresh_token" style="display: block; font-size: 12px; margin-bottom: 3px;">Refresh Token:</label>
-                    <input type="password" name="zoho_refresh_token" id="zoho_refresh_token" placeholder="Enter Refresh Token"
-                        value="<?php echo esc_attr($zoho_config['refresh_token']); ?>"
+                    <input type="text" name="zoho_refresh_token" id="zoho_refresh_token" placeholder="Enter Refresh Token"
+                        value="<?php echo esc_attr($zoho_config['refresh_token']); ?>" class="is-token-hidden"
                         style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;" readonly>
                 </div>
                 <div>
                     <label for="zoho_account_id" style="display: block; font-size: 12px; margin-bottom: 3px;">Account ID:</label>
                     <input type="text" name="zoho_account_id" id="zoho_account_id" placeholder="Auto-filled from OAuth"
                         value="<?php echo esc_attr($zoho_config['account_id']); ?>"
-                        style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: #f9f9f9;" readonly>
+                        style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;" readonly>
                 </div>
             </div>
+            <ul>
+                <li>Refresh Token: sẽ tự động lưu trong quá trình `Refresh Token Generator`.</li>
+                <li>Account ID: sẽ tự động lưu khi `Chọn Scope` là `ZohoMail.accounts.READ` hoặc `ZohoMail.accounts.ALL`.</li>
+            </ul>
 
             <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <button type="button" id="save-zoho-config" class="button button-primary" style="font-size: 12px;">
                     Save Config
                 </button>
-                <button type="button" id="fetch-failed-emails" class="button button-primary" style="font-size: 12px;">
-                    Fetch Failed Delivery Emails
-                </button> last 7 days: <?php echo ((time() - 7 * DAY_IN_SECONDS) * 1000); ?>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <select id="zoho-search-type" style="border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+                        <option value="subject:Delivery">Subject: Delivery</option>
+                        <option value="subject:Failure">Subject: Failure</option>
+                        <option value="newMails">New Mails</option>
+                        <option value="from">From Email</option>
+                    </select>
+                    <button type="button" id="fetch-failed-emails" class="button button-primary" style="font-size: 12px;">
+                        Fetch Failed Delivery Emails
+                    </button>
+                </div>
+                <span style="font-size: 11px; color: #666;">last 7 days: <?php echo ((time() - 7 * DAY_IN_SECONDS) * 1000); ?></span>
                 <button type="button" id="check-token-cache" class="button button-secondary" style="font-size: 12px;">
                     Check Token Cache
                 </button>
                 <button type="button" id="clear-token-cache" class="button button-secondary" style="font-size: 12px; color: #d63638;">
                     Clear Token Cache
+                </button>
+                <button type="button" id="show-secret-token" class="button button-secondary" style="font-size: 12px;">
+                    Show Secret Token
+                </button>
+                <button type="button" id="clear-account-id" class="button button-secondary" style="font-size: 12px; color: #d63638;">
+                    Clear Account ID
                 </button>
                 <div id="zoho-status" style="font-size: 12px; color: #666;"></div>
             </div>
@@ -130,20 +149,8 @@ $zoho_config = get_option('mmi_zoho_config', array(
             <p style="color: #856404; font-size: 13px; margin-bottom: 10px;">
                 Nếu chưa có Refresh Token, hãy sử dụng công cụ này để tạo bằng dữ liệu Client ID và Client Secret đã cấu hình ở trên.
                 <strong>Quá trình sẽ được tự động xử lý sau khi authorization!</strong>
+                <br><small style="color: #28a745;">✅ Scope mặc định: ZohoMail.messages.READ,ZohoMail.accounts.READ</small>
             </p>
-
-            <div style="margin-bottom: 15px;">
-                <label for="zoho_scope" style="display: block; font-size: 12px; margin-bottom: 3px; color: #856404;">Chọn Scope:</label>
-                <select id="zoho_scope" style="width: 100%; max-width: 555px; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: #fff;">
-                    <option value="ZohoMail.messages.READ" selected>ZohoMail.messages.READ (dùng để lấy access_token và refresh_token)</option>
-                    <option value="ZohoMail.messages.ALL">ZohoMail.messages.ALL (hạn chế sử dụng)</option>
-                    <option value="ZohoMail.accounts.READ">ZohoMail.accounts.READ (dùng để lấy accountId)</option>
-                    <option value="ZohoMail.accounts.ALL">ZohoMail.accounts.ALL (hạn chế sử dụng)</option>
-                </select>
-                <p style="font-size: 11px; color: #856404; margin: 3px 0 0 0;">
-                    💡 <strong>Khuyến nghị:</strong> Sử dụng scope nhỏ nhất cần thiết để bảo mật tốt hơn.
-                </p>
-            </div>
 
             <div style="display: flex; gap: 10px; justify-content: flex-start; align-items: center; margin-bottom: 10px;">
                 <button type="button" id="generate-auth-url" class="button button-secondary" style="font-size: 12px;">

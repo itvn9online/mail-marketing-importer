@@ -196,7 +196,7 @@ if (!defined('ABSPATH')) {
         <p class="text-center">
             <input type="submit" class="button-primary" value="<?php echo isset($_GET['edit']) ? 'Update Campaign' : 'Create Campaign'; ?>">
             <?php if (isset($_GET['edit'])): ?>
-                <a href="<?php echo admin_url('admin.php?page=email-campaigns'); ?>" class="button button-secondary">Cancel</a>
+                <a href="<?php echo admin_url('tools.php?page=email-campaigns'); ?>" class="button button-secondary">Cancel</a>
             <?php endif; ?>
         </p>
     </form>

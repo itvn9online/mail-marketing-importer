@@ -51,6 +51,63 @@ jQuery(document).ready(function ($) {
 		$("#new-campaign-group").show();
 	}
 
+	// Zoho Search Type Management
+	function initZohoSearchType() {
+		// Load saved search type from localStorage
+		var savedSearchType = localStorage.getItem("zoho_search_type");
+		if (savedSearchType) {
+			$("#zoho-search-type").val(savedSearchType);
+		}
+
+		// Handle search type change
+		$("#zoho-search-type").on("change", function () {
+			var searchType = $(this).val();
+			localStorage.setItem("zoho_search_type", searchType);
+
+			// If "from" is selected, prompt for email
+			if (searchType === "from") {
+				var savedFromEmail = localStorage.getItem("zoho_from_email") || "";
+				var fromEmail = prompt(
+					"Nhập email người gửi để tìm kiếm:",
+					savedFromEmail
+				);
+
+				if (fromEmail && fromEmail.trim() !== "") {
+					localStorage.setItem("zoho_from_email", fromEmail.trim());
+				} else if (fromEmail === null) {
+					// User cancelled, revert to previous selection
+					var previousType =
+						localStorage.getItem("zoho_search_type_previous") ||
+						"subject:Delivery";
+					$(this).val(previousType);
+					localStorage.setItem("zoho_search_type", previousType);
+					return;
+				} else {
+					// Empty email, show error
+					alert("Email người gửi không được để trống!");
+					var previousType =
+						localStorage.getItem("zoho_search_type_previous") ||
+						"subject:Delivery";
+					$(this).val(previousType);
+					localStorage.setItem("zoho_search_type", previousType);
+					return;
+				}
+			}
+
+			// Save previous selection for fallback
+			localStorage.setItem("zoho_search_type_previous", searchType);
+		});
+
+		// Save previous selection initially
+		localStorage.setItem(
+			"zoho_search_type_previous",
+			$("#zoho-search-type").val()
+		);
+	}
+
+	// Initialize Zoho search type when page loads
+	initZohoSearchType();
+
 	// Form validation before submit
 	$("#mmi-upload-form").on("submit", function (e) {
 		var campaignOption = $('input[name="campaign_option"]:checked').val();
@@ -805,15 +862,8 @@ jQuery(document).ready(function ($) {
 			return;
 		}
 
-		// Generate authorization URL
-		var scope = $("#zoho_scope").val() || "ZohoMail.messages.READ"; // Get selected scope
-
-		// Save selected scope for callback use
-		$.post(mmi_ajax.ajax_url, {
-			action: "mmi_save_zoho_scope",
-			security: mmi_ajax.nonce,
-			scope: scope,
-		});
+		// Generate authorization URL with default scope
+		var scope = "ZohoMail.messages.READ,ZohoMail.accounts.READ"; // Fixed default scope
 
 		// Use WordPress home URL for redirect URI
 		var redirectUri =
@@ -978,14 +1028,35 @@ jQuery(document).ready(function ($) {
 		var button = $(this);
 		var status = $("#zoho-status");
 
+		// Get search query from select
+		var searchType = $("#zoho-search-type").val();
+		var searchQuery = searchType;
+
+		// If "from" type, get email from localStorage or prompt
+		if (searchType === "from") {
+			var fromEmail = localStorage.getItem("zoho_from_email");
+			if (!fromEmail) {
+				fromEmail = prompt("Nhập email người gửi để tìm kiếm:");
+				if (!fromEmail || fromEmail.trim() === "") {
+					alert("Email người gửi không được để trống!");
+					return;
+				}
+				localStorage.setItem("zoho_from_email", fromEmail.trim());
+			}
+			searchQuery = "from:" + fromEmail.trim();
+		}
+
 		button.prop("disabled", true).text("Fetching...");
-		status.text("Đang tìm kiếm email failed delivery...").css("color", "#666");
+		status
+			.text("Đang tìm kiếm email với query: " + searchQuery + "...")
+			.css("color", "#666");
 
 		$.post(
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_zoho_fetch_failed_emails",
 				security: mmi_ajax.nonce,
+				search_query: searchQuery,
 				// No need to send account_id - server will use saved config
 			},
 			function (response) {
@@ -1012,11 +1083,12 @@ jQuery(document).ready(function ($) {
 						updateTokenCacheInfo(tokenInfo);
 					}
 					status
-						.text("✅ Tìm thấy " + len + " email failed delivery.")
+						.text("✅ Tìm thấy " + len + " email với query: " + searchQuery)
 						.css("color", "#46b450");
 				} else {
 					var errorMsg =
-						response.data || "Không tìm thấy email failed delivery nào.";
+						response.data ||
+						"Không tìm thấy email nào với query: " + searchQuery;
 					status.text("❌ " + errorMsg).css("color", "#dc3232");
 				}
 			}
@@ -1037,7 +1109,7 @@ jQuery(document).ready(function ($) {
 
 		if (messages.length === 0) {
 			container.hide();
-			return;
+			return 0;
 		}
 
 		list.empty();
@@ -1155,7 +1227,7 @@ jQuery(document).ready(function ($) {
 		});
 
 		if (selectedEmails.length === 0) {
-			my_warning("Vui lòng chọn ít nhất 1 email để unsubscribe.");
+			my_error("Vui lòng chọn ít nhất 1 email để unsubscribe.");
 			return;
 		}
 
@@ -1296,6 +1368,12 @@ jQuery(document).ready(function ($) {
 
 	// Clear token cache
 	$("#clear-token-cache").on("click", function () {
+		// Confirm before clearing cache
+		if (!confirm("Bạn có chắc chắn muốn xóa token cache?")) {
+			return;
+		}
+
+		// Clear token cache via AJAX
 		var button = $(this);
 		var status = $("#zoho-status");
 
@@ -1326,6 +1404,21 @@ jQuery(document).ready(function ($) {
 			.always(function () {
 				button.prop("disabled", false).text("Clear Token Cache");
 			});
+	});
+
+	// Show secret token
+	$("#show-secret-token").on("click", function () {
+		var is_hidden = $("#zoho_client_secret").hasClass("is-token-hidden");
+		if (is_hidden) {
+			$("#zoho_client_secret, #zoho_refresh_token").removeClass(
+				"is-token-hidden"
+			);
+		} else {
+			$("#zoho_client_secret, #zoho_refresh_token").addClass("is-token-hidden");
+		}
+
+		// Show/hide password
+		$(this).text(is_hidden ? "Hide Secret Token" : "Show Secret Token");
 	});
 
 	// Get token cache info
@@ -1371,6 +1464,58 @@ jQuery(document).ready(function ($) {
 			})
 			.always(function () {
 				button.prop("disabled", false).text("Check Token Cache");
+			});
+	});
+
+	// Clear Zoho Account ID
+	$("#clear-account-id").on("click", function () {
+		// Confirm before clearing
+		if (
+			!confirm(
+				"Bạn có chắc chắn muốn xóa Account ID? Điều này sẽ cho phép bạn kết nối với một tài khoản Zoho khác."
+			)
+		) {
+			return;
+		}
+
+		var button = $(this);
+		var status = $("#zoho-status");
+
+		button.prop("disabled", true).text("Clearing...");
+		status.text("Đang xóa Account ID...").css("color", "#666");
+
+		$.post(
+			mmi_ajax.ajax_url,
+			{
+				action: "mmi_clear_zoho_account_id",
+				security: mmi_ajax.nonce,
+			},
+			function (response) {
+				if (response.success) {
+					status.text("✅ " + response.data.message).css("color", "#46b450");
+
+					// Clear the account ID input field
+					$("#zoho_account_id").val("");
+
+					// Show success message with next steps
+					setTimeout(function () {
+						status
+							.html(
+								"✅ Account ID đã được xóa!<br><small style='color: #666;'>Bây giờ bạn có thể tạo Auth URL mới để kết nối với tài khoản Zoho khác.</small>"
+							)
+							.css("color", "#46b450");
+					}, 1000);
+				} else {
+					var errorMsg = response.data || "Không thể xóa Account ID.";
+					status.text("❌ " + errorMsg).css("color", "#dc3232");
+				}
+			}
+		)
+			.fail(function () {
+				status.text("❌ Lỗi kết nối server.").css("color", "#dc3232");
+			})
+			.always(function () {
+				button.prop("disabled", false).text("Clear Account ID");
 			});
 	});
 });

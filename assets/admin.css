@@ -637,6 +637,7 @@ span[style*="color: red"] {
 
 .filter-row select {
     min-width: 120px;
+    max-width: 250px;
 }
 
 .filter-row input[type="text"] {
@@ -856,7 +857,7 @@ span[style*="color: red"] {
     margin-bottom: 20px;
     padding: 10px 15px;
     border: 1px #ccc solid;
-    border-left: 4px solid #00a0d2;
+    border-left: 5px solid #00a0d2;
     background: #fff;
     box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
 }
@@ -871,6 +872,10 @@ span[style*="color: red"] {
 
 .my-notice.my-notice-success {
     border-left-color: #28a745;
+}
+
+.is-token-hidden {
+    color: transparent !important;
 }
 
 /* Responsive design for URL list */

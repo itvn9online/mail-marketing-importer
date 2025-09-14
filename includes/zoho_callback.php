@@ -42,24 +42,21 @@ if (empty($client_id) || empty($client_secret)) {
 // Exchange authorization code for tokens
 $redirect_uri = home_url('/wp-admin/admin-ajax.php?action=mmi_zoho_callback');
 
-// Get selected scope from transient (saved during auth URL generation)
-$selected_scope = get_transient('mmi_zoho_selected_scope');
-if (!$selected_scope) {
-    $selected_scope = 'ZohoMail.messages.READ'; // Fallback to default
-}
+// Use fixed scope instead of dynamic scope from transient
+$selected_scope = 'ZohoMail.messages.READ,ZohoMail.accounts.READ';
 
-$token_data = array(
+$token_query = array(
     'grant_type' => 'authorization_code',
     'client_id' => $client_id,
     'client_secret' => $client_secret,
     'redirect_uri' => $redirect_uri,
     'code' => $auth_code,
-    'scope' => $selected_scope
+    'scope' => $selected_scope,
 );
-// echo '<pre>' . print_r($token_data, JSON_PRETTY_PRINT) . '</pre>';
+// echo '<pre>' . print_r($token_query, JSON_PRETTY_PRINT) . '</pre>';
 
 $response = wp_remote_post('https://accounts.zoho.com/oauth/v2/token', array(
-    'body' => $token_data,
+    'body' => $token_query,
     'timeout' => 30,
     'headers' => array(
         'Content-Type' => 'application/x-www-form-urlencoded'
@@ -93,7 +90,7 @@ if (empty($refresh_token) && empty($access_token)) {
 // Cache the access token for immediate use
 if (!empty($access_token)) {
     // If scope includes accounts access, get account information
-    if ($selected_scope == 'ZohoMail.accounts.READ' || $selected_scope == 'ZohoMail.accounts.ALL') {
+    if (empty($zoho_config['account_id']) && strpos($selected_scope, 'ZohoMail.accounts.') !== false) {
         // Call Get All Accounts API
         $accounts_response = wp_remote_get('https://mail.zoho.com/api/accounts', array(
             'timeout' => 30,
@@ -137,7 +134,10 @@ if (!empty($access_token)) {
             // Store API error for display
             $accounts_api_error = 'Failed to connect to Zoho Accounts API: ' . $accounts_response->get_error_message();
         }
-    } else {
+    }
+
+    // Only cache access token if scope includes messages access
+    if (strpos($selected_scope, 'ZohoMail.messages.') !== false) {
         // Lưu cache với thời gian hết hạn trước 5 phút để đảm bảo an toàn
         $cache_duration = max(300, $expires_in - 300); // Tối thiểu 5 phút, trừ 5 phút từ thời gian hết hạn thực
         set_transient('mmi_zoho_access_token', $access_token, $cache_duration);
@@ -145,7 +145,7 @@ if (!empty($access_token)) {
 }
 
 // Update configuration with refresh token - only for messages scopes
-if (!empty($refresh_token) && ($selected_scope == 'ZohoMail.messages.READ' || $selected_scope == 'ZohoMail.messages.ALL')) {
+if (!empty($refresh_token) && strpos($selected_scope, 'ZohoMail.messages.') !== false) {
     $zoho_config['refresh_token'] = $refresh_token;
     update_option('mmi_zoho_config', $zoho_config);
 }
@@ -228,6 +228,8 @@ if (!empty($refresh_token) && ($selected_scope == 'ZohoMail.messages.READ' || $s
 
     <h3>📋 Token Information:</h3>
 
+    <pre><?php echo print_r($token_response, JSON_PRETTY_PRINT); ?></pre>
+
     <div class="token-box">
         <strong>Access Token:</strong>
         <div class="token-value" id="access-token"><?php echo esc_html($access_token); ?></div>
@@ -235,30 +237,27 @@ if (!empty($refresh_token) && ($selected_scope == 'ZohoMail.messages.READ' || $s
         <small style="color: #666;">⚠️ Expires in <?php echo esc_html($expires_in); ?> seconds | 📦 Cached for <?php echo esc_html(round(($expires_in - 300) / 60)); ?> minutes</small>
     </div>
 
-    <?php if (!empty($refresh_token) && ($selected_scope == 'ZohoMail.messages.READ' || $selected_scope == 'ZohoMail.messages.ALL')): ?>
-        <div class="token-box">
+    <div class="token-box">
+        <?php if (!empty($refresh_token)): ?>
             <strong>Refresh Token:</strong>
             <div class="token-value" id="refresh-token"><?php echo esc_html($refresh_token); ?></div>
             <button class="copy-btn button" onclick="copyToClipboard('refresh-token')">Copy Refresh Token</button>
-            <small style="color: #666;">✅ Already saved to WordPress configuration</small>
-        </div>
-    <?php elseif (!empty($refresh_token) && ($selected_scope == 'ZohoMail.accounts.READ' || $selected_scope == 'ZohoMail.accounts.ALL')): ?>
-        <div class="token-box" style="background: #fff3cd; border-color: #ffc107; color: #856404;">
-            <strong>Refresh Token (Not Saved):</strong>
-            <div class="token-value" id="refresh-token"><?php echo esc_html($refresh_token); ?></div>
-            <button class="copy-btn button" onclick="copyToClipboard('refresh-token')">Copy Refresh Token</button>
-            <small style="color: #856404;">⚠️ Refresh token not saved to configuration (accounts scope only)</small>
-        </div>
-    <?php endif; ?>
+            <?php if (strpos($selected_scope, 'ZohoMail.messages.') !== false): ?>
+                <p style="color: #666;">✅ Already saved to WordPress configuration</p>
+            <?php elseif (strpos($selected_scope, 'ZohoMail.accounts.') !== false): ?>
+                <div class="token-box" style="background: #fff3cd; border-color: #ffc107; color: #856404;">
+                    <p style="color: #856404;">⚠️ Refresh token not saved to configuration (accounts scope only)</p>
+                </div>
+            <?php endif; ?>
+        <?php else: ?>
+            <p style="color: #856404;">⚠️ Refresh token not available</p>
+        <?php endif; ?>
+    </div>
 
     <div class="token-box">
         <strong>Token Type:</strong> <?php echo esc_html($token_type); ?><br>
         <strong>Expires In:</strong> <?php echo esc_html($expires_in); ?> seconds<br>
         <strong>Scope Used:</strong> <code style="background: #f0f0f0; padding: 2px 4px; border-radius: 2px;"><?php echo esc_html($selected_scope); ?></code>
-        <?php
-        // Clean up the transient after successful use
-        delete_transient('mmi_zoho_selected_scope');
-        ?>
     </div>
 
     <?php if (isset($all_accounts) && is_array($all_accounts) && count($all_accounts) > 0): ?>
@@ -289,7 +288,7 @@ if (!empty($refresh_token) && ($selected_scope == 'ZohoMail.messages.READ' || $s
             <strong>Error:</strong> <?php echo esc_html($accounts_api_error); ?><br>
             <small>Note: This doesn't affect your OAuth tokens, but Account ID was not automatically retrieved.</small>
         </div>
-    <?php elseif (($selected_scope == 'ZohoMail.accounts.READ' || $selected_scope == 'ZohoMail.accounts.ALL') && !isset($accounts_api_success)): ?>
+    <?php elseif (strpos($selected_scope, 'ZohoMail.accounts.') !== false && !isset($accounts_api_success)): ?>
         <h3>📧 Account Information:</h3>
         <div class="token-box" style="background: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
             <strong>Info:</strong> Accounts scope was selected but no account information was retrieved.<br>
@@ -299,11 +298,11 @@ if (!empty($refresh_token) && ($selected_scope == 'ZohoMail.messages.READ' || $s
 
     <h3>🚀 Next Steps:</h3>
 
-    <?php if ($selected_scope == 'ZohoMail.messages.READ' || $selected_scope == 'ZohoMail.messages.ALL'): ?>
+    <?php if (strpos($selected_scope, 'ZohoMail.messages.') !== false): ?>
         <div class="token-box" style="background: #fff3cd; border-color: #ffc107; color: #856404; margin-bottom: 15px;">
             <strong>💡 Important:</strong> With the <code><?php echo esc_html($selected_scope); ?></code> scope, you may need to manually enter your Account ID in the Zoho API settings to use the "Fetch Failed Delivery Emails" feature.
         </div>
-    <?php elseif ($selected_scope == 'ZohoMail.accounts.READ' || $selected_scope == 'ZohoMail.accounts.ALL'): ?>
+    <?php elseif (strpos($selected_scope, 'ZohoMail.accounts.') !== false): ?>
         <div class="token-box" style="background: #d1ecf1; border-color: #bee5eb; color: #0c5460; margin-bottom: 15px;">
             <strong>📋 Note:</strong> With the <code><?php echo esc_html($selected_scope); ?></code> scope, the refresh token is not automatically saved to configuration. This scope is primarily for retrieving account information. For ongoing email operations, consider using a messages scope.
         </div>

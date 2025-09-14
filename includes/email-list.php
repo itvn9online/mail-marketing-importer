@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 /**
  * Render email list with filters
  */
-$base_url = admin_url('admin.php?page=email-campaigns');
+$base_url = admin_url('tools.php?page=email-campaigns');
 
 ?>
 <!-- Email List Section - Show when not editing -->

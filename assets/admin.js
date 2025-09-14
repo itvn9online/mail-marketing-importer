@@ -1065,7 +1065,7 @@ jQuery(document).ready(function ($) {
 					var cacheEmailShift = localStorage.getItem("last_unsubscribed_email");
 
 					// Display failed emails and get count
-					let len = displayFailedEmails(
+					let lens = displayFailedEmails(
 						response.data.messages || response.data,
 						cacheEmailShift
 					);
@@ -1083,7 +1083,15 @@ jQuery(document).ready(function ($) {
 						updateTokenCacheInfo(tokenInfo);
 					}
 					status
-						.text("✅ Tìm thấy " + len + " email với query: " + searchQuery)
+						.text(
+							"✅ Tìm thấy " +
+								lens.len +
+								" email với query: " +
+								searchQuery +
+								". Đã chọn " +
+								lens.checked +
+								" email để hủy đăng ký."
+						)
 						.css("color", "#46b450");
 				} else {
 					var errorMsg =
@@ -1115,6 +1123,7 @@ jQuery(document).ready(function ($) {
 		list.empty();
 		var failedEmails = [];
 		var checkboxChecked = " checked";
+		var checkedLen = 0;
 
 		messages.forEach(function (message, index) {
 			// Extract failed email from message content or subject
@@ -1130,6 +1139,9 @@ jQuery(document).ready(function ($) {
 				// từ đoạn email đã unsubscribe gần nhất thì thôi không check nữa
 				if (failedEmail === cacheEmailShift) {
 					checkboxChecked = "";
+				}
+				if (checkboxChecked != "") {
+					checkedLen++;
 				}
 
 				var item = $(
@@ -1172,7 +1184,10 @@ jQuery(document).ready(function ($) {
 
 		count.text("(" + failedEmails.length + " emails)");
 		container.show();
-		return failedEmails.length;
+		return {
+			len: failedEmails.length,
+			checked: checkedLen,
+		};
 	}
 
 	// Extract failed email from message

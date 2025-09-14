@@ -37,7 +37,10 @@ $zoho_config = get_option('mmi_zoho_config', array(
                 <strong>Khi tạo Zoho API App, hãy sử dụng Redirect URI sau:</strong>
             </p>
             <ul style="margin: 5px 0 5px 20px; font-size: 12px; color: #856404;">
-                <li><code style="background: #f4f4f4; padding: 2px 4px; border-radius: 2px; color: #333;"><?php echo home_url('/wp-admin/admin-ajax.php?action=mmi_zoho_callback'); ?></code> <span style="color: #28a745;">(Khuyến nghị - WordPress Callback)</span></li>
+                <li>
+                    <input type="text" readonly style="width: 100%; padding: 2px 4px; border: 1px solid #ddd; border-radius: 2px; font-size: 12px; background: #f4f4f4; color: #333; max-width: 555px;" value="<?php echo home_url('/wp-admin/admin-ajax.php?action=mmi_zoho_callback'); ?>">
+                    <span style="color: #28a745;">(Khuyến nghị - WordPress Callback)</span>
+                </li>
                 <li>Hoặc tự tạo redirect URI tùy chỉnh</li>
             </ul>
             <p style="margin: 5px 0 0 0; font-size: 12px; color: #856404;">

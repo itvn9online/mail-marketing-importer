@@ -114,7 +114,7 @@ $current_url = home_url($_SERVER['REQUEST_URI']);
         var currentUrl = window.location.href;
         var baseUrl = '<?php echo admin_url('tools.php?page=email-campaigns'); ?>';
 
-        if (status === 'active') {
+        if (status == 'active') {
             // Default to active, no need for status parameter
             window.location.href = baseUrl;
         } else {

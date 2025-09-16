@@ -344,6 +344,18 @@ class Mail_Marketing_Importer
                     $campaign_id
                 ));
 
+                // cập nhật trạng thái sang completed nếu việc gửi đã hoàn tất
+                if ($edit_campaign->status == 'active' && $total_contacts > 0 && $total_sent >= $total_contacts) {
+                    $wpdb->update(
+                        $wpdb->prefix . 'mail_marketing_campaigns',
+                        array('status' => 'completed'),
+                        array('id' => $campaign_id),
+                        array('%s'),
+                        array('%d')
+                    );
+                    $edit_campaign->status = 'completed'; // Cập nhật trạng thái trong biến để hiển thị ngay
+                }
+
                 // Get total unsubscribed for this campaign
                 $total_unsubscribed = $wpdb->get_var($wpdb->prepare(
                     "SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing WHERE campaign_id = %d AND is_unsubscribed = '1'",
@@ -399,7 +411,7 @@ class Mail_Marketing_Importer
         $total_all_campaigns = 0;
         foreach ($all_campaigns_stats as $stat) {
             $total_all_campaigns += $stat->count;
-            if ($stat->status === 'active') {
+            if ($stat->status == 'active') {
                 $active_campaigns = $stat->count;
             }
         }

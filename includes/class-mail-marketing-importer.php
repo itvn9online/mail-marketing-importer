@@ -43,6 +43,17 @@ class Mail_Marketing_Importer
         // Zoho OAuth callback (no priv needed for OAuth callback)
         // add_action('wp_ajax_nopriv_mmi_zoho_callback', array($this, 'handle_zoho_callback'));
         add_action('wp_ajax_mmi_zoho_callback', array($this, 'handle_zoho_callback'));
+
+        // Google Workspace API actions
+        add_action('wp_ajax_mmi_save_google_config', array($this, 'handle_save_google_config'));
+        add_action('wp_ajax_mmi_google_fetch_failed_emails', array($this, 'handle_google_fetch_failed_emails'));
+
+        // Google token cache management
+        add_action('wp_ajax_mmi_clear_google_token_cache', array($this, 'clear_google_token_cache'));
+        add_action('wp_ajax_mmi_get_google_token_cache_info', array($this, 'get_google_token_cache_info'));
+
+        // Google OAuth callback
+        add_action('wp_ajax_mmi_google_callback', array($this, 'handle_google_callback'));
     }
 
     /**
@@ -82,6 +93,9 @@ class Mail_Marketing_Importer
 
         wp_enqueue_script('jquery');
         wp_enqueue_script('mmi-admin-js', MMI_PLUGIN_URL . 'assets/admin.js', array('jquery'), filemtime(MMI_PLUGIN_PATH . 'assets/admin.js'), true);
+        if (isset($_GET['google-workspace'])) {
+            wp_enqueue_script('mmi-admin-google-workspace-js', MMI_PLUGIN_URL . 'assets/admin-google-workspace.js', array('jquery'), filemtime(MMI_PLUGIN_PATH . 'assets/admin-google-workspace.js'), true);
+        }
         wp_enqueue_style('mmi-admin-css', MMI_PLUGIN_URL . 'assets/admin.css', array(), filemtime(MMI_PLUGIN_PATH . 'assets/admin.css'));
 
         wp_localize_script('mmi-admin-js', 'mmi_ajax', array(
@@ -472,6 +486,8 @@ class Mail_Marketing_Importer
                 <a href="<?php echo admin_url('tools.php?page=email-campaigns&add=true'); ?>" class="button button-primary <?php echo isset($_GET['add']) ? 'bold' : ''; ?>">Add new campaign</a>
 
                 <a href="<?php echo admin_url('tools.php?page=email-campaigns&zoho-api=true'); ?>" class="button button-secondary <?php echo isset($_GET['zoho-api']) ? 'bold redcolor' : ''; ?>">Zoho API</a>
+
+                <a href="<?php echo admin_url('tools.php?page=email-campaigns&google-workspace=true'); ?>" class="button button-secondary <?php echo isset($_GET['google-workspace']) ? 'bold redcolor' : ''; ?>">Google Workspace</a>
             </div>
 
             <div class="campaign-container">
@@ -482,6 +498,8 @@ class Mail_Marketing_Importer
                     include __DIR__ . '/email-details.php';
                 } else if (isset($_GET['zoho-api'])) {
                     include __DIR__ . '/zoho-api.php';
+                } else if (isset($_GET['google-workspace'])) {
+                    include __DIR__ . '/google-workspace-api.php';
                 } else if (isset($_GET['list']) || isset($_GET['filter'])) {
                     include __DIR__ . '/email-list.php';
                 } else {
@@ -1902,5 +1920,317 @@ class Mail_Marketing_Importer
     public function handle_zoho_callback()
     {
         include_once __DIR__ . '/zoho_callback.php';
+    }
+
+    /**
+     * Handle saving Google Workspace API configuration
+     */
+    public function handle_save_google_config()
+    {
+        // Sử dụng cùng nonce với JavaScript
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        // Lấy config hiện tại để merge với dữ liệu mới
+        $existing_config = get_option('mmi_google_config', array(
+            'client_id' => '',
+            'client_secret' => '',
+            'refresh_token' => '',
+            'user_email' => '',
+        ));
+
+        // Chỉ cập nhật các trường có dữ liệu, giữ nguyên trường trống
+        $new_config = array();
+
+        $client_id = sanitize_text_field($_POST['client_id'] ?? '');
+        $client_secret = sanitize_text_field($_POST['client_secret'] ?? '');
+        $user_email = sanitize_email($_POST['user_email'] ?? '');
+
+        // Merge dữ liệu: nếu có dữ liệu mới thì dùng, không thì giữ dữ liệu cũ
+        $new_config['client_id'] = !empty($client_id) ? $client_id : $existing_config['client_id'];
+        $new_config['client_secret'] = !empty($client_secret) ? $client_secret : $existing_config['client_secret'];
+        $new_config['user_email'] = !empty($user_email) ? $user_email : $existing_config['user_email'];
+        $new_config['refresh_token'] = $existing_config['refresh_token']; // Luôn giữ nguyên từ config cũ
+
+        $result = update_option('mmi_google_config', $new_config);
+
+        // Đếm số trường đã được lưu
+        $saved_fields = array_filter($new_config, function ($value) {
+            return !empty($value);
+        });
+
+        $total_fields = count($new_config);
+        $filled_fields = count($saved_fields);
+
+        if ($result !== false) {
+            wp_send_json_success(array(
+                'message' => "Google Config saved successfully! ({$filled_fields}/{$total_fields} fields filled)",
+                'config' => $new_config,
+                'progress' => round(($filled_fields / $total_fields) * 100)
+            ));
+        } else {
+            wp_send_json_error('Failed to save Google configuration');
+        }
+    }
+
+    /**
+     * Get cached Google access token or fetch new one if expired
+     */
+    private function get_google_access_token()
+    {
+        // Lấy cấu hình từ database
+        $google_config = get_option('mmi_google_config', array());
+
+        $client_id = $google_config['client_id'] ?? '';
+        $client_secret = $google_config['client_secret'] ?? '';
+        $refresh_token = $google_config['refresh_token'] ?? '';
+
+        if (empty($client_id) || empty($client_secret) || empty($refresh_token)) {
+            return array(
+                'success' => false,
+                'error' => 'Không có cấu hình Google Workspace được lưu hoặc cấu hình không đầy đủ'
+            );
+        }
+
+        // Kiểm tra cache hiện có
+        $cached_token = get_transient('mmi_google_access_token');
+
+        if ($cached_token && !empty($cached_token)) {
+            return array(
+                'success' => true,
+                'access_token' => $cached_token,
+                'from_cache' => true
+            );
+        }
+
+        // Khởi tạo mảng chứa dữ liệu token
+        $token_data = array(
+            'grant_type' => 'refresh_token',
+            'client_id' => $client_id,
+            'client_secret' => $client_secret,
+            'refresh_token' => $refresh_token,
+        );
+
+        // Nếu không có cache hoặc đã hết hạn, lấy token mới
+        $token_response = wp_remote_post('https://oauth2.googleapis.com/token', array(
+            'body' => $token_data,
+            'timeout' => 30
+        ));
+
+        if (is_wp_error($token_response)) {
+            return array(
+                'success' => false,
+                'error' => 'Lỗi khi lấy access token: ' . $token_response->get_error_message()
+            );
+        }
+
+        $token_body = wp_remote_retrieve_body($token_response);
+        $token_data = json_decode($token_body, true);
+
+        if (!isset($token_data['access_token'])) {
+            return array(
+                'success' => false,
+                'error' => 'Không thể lấy access token từ Google API. Response: ' . json_encode($token_data)
+            );
+        }
+
+        // Lưu token vào cache với thời gian hết hạn
+        $access_token = $token_data['access_token'];
+        $expires_in = $token_data['expires_in'] ?? 3600; // Default 1 hour if not provided
+
+        // Lưu cache với thời gian hết hạn trước 5 phút để đảm bảo an toàn
+        $cache_duration = max(300, $expires_in - 300); // Tối thiểu 5 phút, trừ 5 phút từ thời gian hết hạn thực
+        set_transient('mmi_google_access_token', $access_token, $cache_duration);
+        sleep(1); // Đợi 1 giây để đảm bảo token được lưu trước khi sử dụng
+
+        return array(
+            'success' => true,
+            'access_token' => $access_token,
+            'expires_in' => $expires_in,
+            'cache_duration' => $cache_duration,
+            'scope' => $token_data['scope'] ?? null,
+            'from_cache' => false
+        );
+    }
+
+    /**
+     * Handle fetching failed emails from Google Gmail API
+     * https://developers.google.com/gmail/api/reference/rest/v1/users.messages/list
+     */
+    public function handle_google_fetch_failed_emails()
+    {
+        // Sử dụng cùng nonce với JavaScript
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        // Lấy cấu hình từ database
+        $google_config = get_option('mmi_google_config', array());
+        $user_email = $google_config['user_email'] ?? '';
+
+        if (empty($user_email)) {
+            wp_send_json_error('Không có User Email được lưu trong cấu hình');
+            return;
+        }
+
+        // Lấy access token từ cache hoặc API
+        $token_result = $this->get_google_access_token();
+
+        if (!$token_result['success']) {
+            wp_send_json_error($token_result['error']);
+            return;
+        }
+
+        $access_token = $token_result['access_token'];
+
+        // Get search query from frontend
+        $search_query = sanitize_text_field($_POST['search_query'] ?? 'subject:Delivery');
+
+        // Build Gmail API search URL
+        $api_url = 'https://gmail.googleapis.com/gmail/v1/users/' . urlencode($user_email) . '/messages';
+
+        // Gmail search parameters
+        $query_params = array(
+            'q' => $search_query,
+            'maxResults' => 50, // Gmail API max is 500, but we'll use 50 for reasonable response time
+        );
+
+        // Add date filter for last 7 days
+        $after_date = date('Y/m/d', time() - (7 * 24 * 3600));
+        $query_params['q'] .= ' after:' . $after_date;
+
+        $api_url .= '?' . http_build_query($query_params);
+
+        $response = wp_remote_get($api_url, array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $access_token,
+                'Accept' => 'application/json',
+            ),
+            'timeout' => 30
+        ));
+
+        if (is_wp_error($response)) {
+            wp_send_json_error('API request failed: ' . $response->get_error_message());
+            return;
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        if (isset($data['error'])) {
+            wp_send_json_error('Gmail API error: ' . json_encode($data['error']));
+            return;
+        }
+
+        $messages = $data['messages'] ?? array();
+
+        // Get detailed message info for each message
+        $detailed_messages = array();
+        foreach (array_slice($messages, 0, 20) as $message) { // Limit to 20 detailed messages
+            $message_id = $message['id'];
+            $detail_url = 'https://gmail.googleapis.com/gmail/v1/users/' . urlencode($user_email) . '/messages/' . $message_id;
+
+            $detail_response = wp_remote_get($detail_url, array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $access_token,
+                    'Accept' => 'application/json',
+                ),
+                'timeout' => 15
+            ));
+
+            if (!is_wp_error($detail_response)) {
+                $detail_body = wp_remote_retrieve_body($detail_response);
+                $detail_data = json_decode($detail_body, true);
+
+                if (!isset($detail_data['error'])) {
+                    $detailed_messages[] = $detail_data;
+                }
+            }
+        }
+
+        // Thêm thông tin cache vào response
+        $response_data = array(
+            'messages' => $detailed_messages,
+            'total_found' => count($messages),
+            'search_query' => $search_query,
+            'user_email' => $user_email,
+            'token_info' => array(
+                'from_cache' => $token_result['from_cache'],
+                'expires_in' => $token_result['expires_in'] ?? null,
+                'cache_duration' => $token_result['cache_duration'] ?? null
+            )
+        );
+
+        wp_send_json_success($response_data);
+    }
+
+    /**
+     * Clear cached Google access token
+     */
+    public function clear_google_token_cache()
+    {
+        // Security check
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        delete_transient('mmi_google_access_token');
+
+        wp_send_json_success(array(
+            'message' => 'Google access token cache cleared successfully'
+        ));
+    }
+
+    /**
+     * Get Google token cache info
+     */
+    public function get_google_token_cache_info()
+    {
+        // Security check
+        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Security check failed ' . __FUNCTION__);
+            return;
+        }
+
+        $cached_token = get_transient('mmi_google_access_token');
+        $cache_exists = !empty($cached_token);
+
+        wp_send_json_success(array(
+            'cache_exists' => $cache_exists,
+            'cache_timeout' => $cache_exists ? 'Exists in cache' : 'No cache',
+            'token_preview' => $cache_exists ? substr($cached_token, 0, 20) . '...' : ''
+        ));
+    }
+
+    /**
+     * Handle Google OAuth callback
+     */
+    public function handle_google_callback()
+    {
+        include_once __DIR__ . '/google_callback.php';
     }
 }

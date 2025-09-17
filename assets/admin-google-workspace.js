@@ -152,8 +152,29 @@ jQuery(document).ready(function ($) {
 					resultDiv.html('<div id="google-emails-container"></div>');
 
 					if (messages.length > 0) {
-						displayGoogleFailedEmails(messages, data);
+						// displayGoogleFailedEmails(messages, data);
 
+						// chạy vòng lặp để lấy chi tiết từng email, vì API trả về rất ít thông tin
+						$.each(messages, function (index, message) {
+							$.post(
+								mmi_ajax.ajax_url,
+								{
+									action: "mmi_google_fetch_failed_emails",
+									security: mmi_ajax.nonce,
+									message_id: message.id,
+								},
+								function (response) {
+									console.log(response);
+									if (response.success && response.data) {
+										var detailed_messages = data.detailed_messages || [];
+									} else {
+										// hiển thị lỗi nếu có
+									}
+								}
+							);
+						});
+
+						//
 						var statusMsg =
 							"✅ Tìm thấy " +
 							data.total_found +
@@ -276,208 +297,212 @@ jQuery(document).ready(function ($) {
 				button.prop("disabled", false).text("Token Cache Info");
 			});
 	});
-});
 
-// Helper functions for Google Workspace API
+	// Helper functions for Google Workspace API
 
-function displayGoogleFailedEmails(messages, data) {
-	var container = $("#google-emails-container");
-	if (messages.length === 0) {
-		container.html("<p>No failed emails found.</p>");
-		return;
-	}
+	function displayGoogleFailedEmails(messages, data) {
+		// var $ = jQuery;
+		var container = $("#google-emails-container");
+		if (messages.length === 0) {
+			container.html("<p>No failed emails found.</p>");
+			return;
+		}
 
-	var html = '<div style="margin: 15px 0;">';
-	html +=
-		"<h4>📧 Failed Delivery Emails from Gmail (" + data.user_email + ")</h4>";
-	html +=
-		'<div style="background: #f9f9f9; padding: 10px; border-radius: 4px; margin-bottom: 15px;">';
-	html += "<strong>Search Query:</strong> " + data.search_query + "<br>";
-	html +=
-		"<strong>Total Found:</strong> " +
-		data.total_found +
-		" (showing " +
-		messages.length +
-		" detailed)<br>";
-	html += "<strong>Gmail Account:</strong> " + data.user_email;
-	html += "</div>";
+		var html = '<div style="margin: 15px 0;">';
+		html +=
+			"<h4>📧 Failed Delivery Emails from Gmail (" + data.user_email + ")</h4>";
+		html +=
+			'<div style="background: #f9f9f9; padding: 10px; border-radius: 4px; margin-bottom: 15px;">';
+		html += "<strong>Search Query:</strong> " + data.search_query + "<br>";
+		html +=
+			"<strong>Total Found:</strong> " +
+			data.total_found +
+			" (showing " +
+			messages.length +
+			" detailed)<br>";
+		html += "<strong>Gmail Account:</strong> " + data.user_email;
+		html += "</div>";
 
-	var failedEmails = [];
-	var emailsHtml =
-		'<div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">';
+		var failedEmails = [];
+		var emailsHtml =
+			'<div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">';
 
-	messages.forEach(function (message, index) {
-		try {
-			var headers = message.payload.headers || [];
-			var subject = "";
-			var from = "";
-			var to = "";
+		messages.forEach(function (message, index) {
+			try {
+				var headers = message.payload.headers || [];
+				var subject = "";
+				var from = "";
+				var to = "";
 
-			headers.forEach(function (header) {
-				if (header.name.toLowerCase() === "subject") {
-					subject = header.value;
-				} else if (header.name.toLowerCase() === "from") {
-					from = header.value;
-				} else if (header.name.toLowerCase() === "to") {
-					to = header.value;
-				}
-			});
+				headers.forEach(function (header) {
+					if (header.name.toLowerCase() === "subject") {
+						subject = header.value;
+					} else if (header.name.toLowerCase() === "from") {
+						from = header.value;
+					} else if (header.name.toLowerCase() === "to") {
+						to = header.value;
+					}
+				});
 
-			// Extract failed email addresses from subject or body
-			var failedEmail = extractEmailFromGmailMessage(subject, to, from);
-			if (failedEmail) {
-				failedEmails.push(failedEmail);
-			}
-
-			emailsHtml +=
-				'<div style="padding: 10px; border-bottom: 1px solid #eee; ' +
-				(index % 2 === 0 ? "background: #fafafa;" : "") +
-				'">';
-			emailsHtml += "<strong>Subject:</strong> " + escapeHtml(subject) + "<br>";
-			emailsHtml += "<strong>From:</strong> " + escapeHtml(from) + "<br>";
-			emailsHtml += "<strong>To:</strong> " + escapeHtml(to) + "<br>";
-			if (failedEmail) {
 				emailsHtml +=
-					'<strong style="color: #dc3232;">Failed Email:</strong> ' +
-					escapeHtml(failedEmail) +
-					"<br>";
-			}
-			emailsHtml +=
-				'<small style="color: #666;">ID: ' + message.id + "</small>";
-			emailsHtml += "</div>";
-		} catch (e) {
-			console.error("Error processing Gmail message:", e, message);
-		}
-	});
+					'<div style="padding: 10px; border-bottom: 1px solid #eee; ' +
+					(index % 2 === 0 ? "background: #fafafa;" : "") +
+					'">';
+				emailsHtml +=
+					"<strong>Subject:</strong> " + escapeHtml(subject) + "<br>";
+				emailsHtml += "<strong>From:</strong> " + escapeHtml(from) + "<br>";
+				emailsHtml += "<strong>To:</strong> " + escapeHtml(to) + "<br>";
+				if (typeof message.snippet != "undefined") {
+					// Extract failed email addresses from subject or body
+					var failedEmail = extractEmailFromGmailMessage(message.snippet);
+					if (failedEmail) {
+						failedEmails.push(failedEmail);
 
-	emailsHtml += "</div>";
-	html += emailsHtml;
+						emailsHtml +=
+							'<strong style="color: #dc3232;">Failed Email:</strong> ' +
+							escapeHtml(failedEmail) +
+							"<br>";
+					}
 
-	// Add bulk unsubscribe section
-	if (failedEmails.length > 0) {
-		var uniqueEmails = [...new Set(failedEmails)];
-		html +=
-			'<div style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107;">';
-		html +=
-			"<h4>📋 Bulk Unsubscribe (" +
-			uniqueEmails.length +
-			" unique failed emails)</h4>";
-		html +=
-			'<textarea id="google-failed-emails-list" rows="5" style="width: 100%; margin-bottom: 10px;" readonly>';
-		html += uniqueEmails.join(",");
-		html += "</textarea>";
-		html += "<div>";
-		html +=
-			'<button type="button" class="button button-secondary" onclick="copyToClipboard($(\'#google-failed-emails-list\').val(), $(this))">📋 Copy Emails</button> ';
-		html +=
-			'<button type="button" class="button button-primary" onclick="bulkUnsubscribeGoogleEmails()">🚫 Bulk Unsubscribe</button>';
-		html += "</div>";
-		html += "</div>";
-	}
-
-	html += "</div>";
-	container.html(html);
-}
-
-function extractEmailFromGmailMessage(subject, to, from) {
-	// Try to extract email from subject line (common in bounce messages)
-	var emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-	var matches;
-
-	// Check subject first
-	matches = subject.match(emailRegex);
-	if (matches) {
-		return matches[0];
-	}
-
-	// Check 'to' field if it contains the failed email
-	matches = to.match(emailRegex);
-	if (matches) {
-		return matches[0];
-	}
-
-	return null;
-}
-
-function bulkUnsubscribeGoogleEmails() {
-	var emails = $("#google-failed-emails-list").val().trim();
-	if (!emails) {
-		alert("No emails to unsubscribe!");
-		return;
-	}
-
-	if (
-		!confirm(
-			"Are you sure you want to unsubscribe " +
-				emails.split(",").length +
-				" email addresses?"
-		)
-	) {
-		return;
-	}
-
-	// Use existing bulk unsubscribe functionality
-	$.post(
-		mmi_ajax.ajax_url,
-		{
-			action: "bulk_unsubscribe_email",
-			bulk_unsubscribe_nonce: mmi_ajax.nonce,
-			unsubscribe_email: emails,
-		},
-		function (response) {
-			if (response.success) {
-				var data = response.data;
-				alert(
-					"✅ Bulk unsubscribe completed!\nProcessed: " +
-						data.processed_emails.length +
-						" emails\nAffected rows: " +
-						data.affected_rows
-				);
-
-				if (data.errors.length > 0) {
-					console.warn("Unsubscribe errors:", data.errors);
+					emailsHtml +=
+						"<strong>Snippet:</strong> " + escapeHtml(message.snippet) + "<br>";
 				}
-			} else {
-				alert("❌ Bulk unsubscribe failed: " + response.data.message);
+				emailsHtml +=
+					'<small style="color: #666;">ID: ' + message.id + "</small>";
+				emailsHtml += "</div>";
+			} catch (e) {
+				console.error("Error processing Gmail message:", e, message);
 			}
+		});
+
+		emailsHtml += "</div>";
+		html += emailsHtml;
+
+		// Add bulk unsubscribe section
+		if (failedEmails.length > 0) {
+			var uniqueEmails = [...new Set(failedEmails)];
+			html +=
+				'<div style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107;">';
+			html +=
+				"<h4>📋 Bulk Unsubscribe (" +
+				uniqueEmails.length +
+				" unique failed emails)</h4>";
+			html +=
+				'<textarea id="google-failed-emails-list" rows="5" style="width: 100%; margin-bottom: 10px;" readonly>';
+			html += uniqueEmails.join(",");
+			html += "</textarea>";
+			html += "<div>";
+			html +=
+				'<button type="button" class="button button-secondary" onclick="copyToClipboard($(\'#google-failed-emails-list\').val(), $(this))">📋 Copy Emails</button> ';
+			html +=
+				'<button type="button" class="button button-primary" onclick="bulkUnsubscribeGoogleEmails()">🚫 Bulk Unsubscribe</button>';
+			html += "</div>";
+			html += "</div>";
 		}
-	).fail(function () {
-		alert("❌ Connection error during bulk unsubscribe");
-	});
-}
 
-function updateGoogleTokenCacheInfo(tokenInfo) {
-	var status = $("#google-token-status");
-
-	if (tokenInfo.from_cache) {
-		status
-			.html(
-				"🟢 Using cached token (expires in " +
-					(tokenInfo.expires_in || "unknown") +
-					" seconds)"
-			)
-			.css("color", "#46b450");
-	} else {
-		status
-			.html(
-				"🔄 New token obtained (cached for " +
-					(tokenInfo.cache_duration || "unknown") +
-					" seconds)"
-			)
-			.css("color", "#0073aa");
+		html += "</div>";
+		container.html(html);
 	}
-}
 
-function escapeHtml(text) {
-	var map = {
-		"&": "&amp;",
-		"<": "&lt;",
-		">": "&gt;",
-		'"': "&quot;",
-		"'": "&#039;",
-	};
+	function extractEmailFromGmailMessage(subject) {
+		if (subject == "") {
+			return null;
+		}
+		// Remove string `Reporting-MTA` in subject if any
+		subject = subject.split("Reporting-MTA")[0];
+		var emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+		var matches = subject.match(emailRegex);
 
-	return text.replace(/[&<>"']/g, function (m) {
-		return map[m];
-	});
-}
+		if (matches && matches.length > 0) {
+			return matches[0];
+		}
+
+		// If no email in subject, try to get from sender (this would need message details)
+		// For now, return null if no email found in subject
+		return null;
+	}
+
+	function bulkUnsubscribeGoogleEmails() {
+		var emails = $("#google-failed-emails-list").val().trim();
+		if (!emails) {
+			alert("No emails to unsubscribe!");
+			return;
+		}
+
+		if (
+			!confirm(
+				"Are you sure you want to unsubscribe " +
+					emails.split(",").length +
+					" email addresses?"
+			)
+		) {
+			return;
+		}
+
+		// Use existing bulk unsubscribe functionality
+		$.post(
+			mmi_ajax.ajax_url,
+			{
+				action: "bulk_unsubscribe_email",
+				bulk_unsubscribe_nonce: mmi_ajax.nonce,
+				unsubscribe_email: emails,
+			},
+			function (response) {
+				if (response.success) {
+					var data = response.data;
+					alert(
+						"✅ Bulk unsubscribe completed!\nProcessed: " +
+							data.processed_emails.length +
+							" emails\nAffected rows: " +
+							data.affected_rows
+					);
+
+					if (data.errors.length > 0) {
+						console.warn("Unsubscribe errors:", data.errors);
+					}
+				} else {
+					alert("❌ Bulk unsubscribe failed: " + response.data.message);
+				}
+			}
+		).fail(function () {
+			alert("❌ Connection error during bulk unsubscribe");
+		});
+	}
+
+	function updateGoogleTokenCacheInfo(tokenInfo) {
+		// var $ = jQuery;
+		var status = $("#google-token-status");
+
+		if (tokenInfo.from_cache) {
+			status
+				.html(
+					"🟢 Using cached token (expires in " +
+						(tokenInfo.expires_in || "unknown") +
+						" seconds)"
+				)
+				.css("color", "#46b450");
+		} else {
+			status
+				.html(
+					"🔄 New token obtained (cached for " +
+						(tokenInfo.cache_duration || "unknown") +
+						" seconds)"
+				)
+				.css("color", "#0073aa");
+		}
+	}
+
+	function escapeHtml(text) {
+		var map = {
+			"&": "&amp;",
+			"<": "&lt;",
+			">": "&gt;",
+			'"': "&quot;",
+			"'": "&#039;",
+		};
+
+		return text.replace(/[&<>"']/g, function (m) {
+			return map[m];
+		});
+	}
+});

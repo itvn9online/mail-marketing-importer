@@ -95,14 +95,18 @@ class Mail_Marketing_Importer
         wp_enqueue_script('mmi-admin-js', MMI_PLUGIN_URL . 'assets/admin.js', array('jquery'), filemtime(MMI_PLUGIN_PATH . 'assets/admin.js'), true);
         if (isset($_GET['google-workspace'])) {
             wp_enqueue_script('mmi-admin-google-workspace-js', MMI_PLUGIN_URL . 'assets/admin-google-workspace.js', array('jquery'), filemtime(MMI_PLUGIN_PATH . 'assets/admin-google-workspace.js'), true);
+        } else if (isset($_GET['zoho-api'])) {
+            wp_enqueue_script('mmi-admin-zoho-api-js', MMI_PLUGIN_URL . 'assets/admin-zoho-api.js', array('jquery'), filemtime(MMI_PLUGIN_PATH . 'assets/admin-zoho-api.js'), true);
         }
         wp_enqueue_style('mmi-admin-css', MMI_PLUGIN_URL . 'assets/admin.css', array(), filemtime(MMI_PLUGIN_PATH . 'assets/admin.css'));
 
-        wp_localize_script('mmi-admin-js', 'mmi_ajax', array(
+        // Localize script for both admin scripts
+        $script_data = array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('mmi_import_nonce'),
             'home_url' => home_url()
-        ));
+        );
+        wp_localize_script('mmi-admin-js', 'mmi_ajax', $script_data);
     }
 
     /**
@@ -2096,51 +2100,11 @@ class Mail_Marketing_Importer
 
         $access_token = $token_result['access_token'];
 
-        // Get search query from frontend
-        $search_query = sanitize_text_field($_POST['search_query'] ?? 'subject:Delivery');
-
-        // Build Gmail API search URL
-        $api_url = 'https://gmail.googleapis.com/gmail/v1/users/' . urlencode($user_email) . '/messages';
-
-        // Gmail search parameters
-        $query_params = array(
-            'q' => $search_query,
-            'maxResults' => 50, // Gmail API max is 500, but we'll use 50 for reasonable response time
-        );
-
-        // Add date filter for last 7 days
-        $after_date = date('Y/m/d', time() - (7 * 24 * 3600));
-        $query_params['q'] .= ' after:' . $after_date;
-
-        $api_url .= '?' . http_build_query($query_params);
-
-        $response = wp_remote_get($api_url, array(
-            'headers' => array(
-                'Authorization' => 'Bearer ' . $access_token,
-                'Accept' => 'application/json',
-            ),
-            'timeout' => 30
-        ));
-
-        if (is_wp_error($response)) {
-            wp_send_json_error('API request failed: ' . $response->get_error_message());
-            return;
-        }
-
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
-
-        if (isset($data['error'])) {
-            wp_send_json_error('Gmail API error: ' . json_encode($data['error']));
-            return;
-        }
-
-        $messages = $data['messages'] ?? array();
-
-        // Get detailed message info for each message
-        $detailed_messages = array();
-        foreach (array_slice($messages, 0, 20) as $message) { // Limit to 20 detailed messages
-            $message_id = $message['id'];
+        // 
+        $message_id = sanitize_text_field($_POST['message_id'] ?? '');
+        if (!empty($message_id) && is_numeric($message_id)) {
+            // Get detailed message info for each message
+            $detailed_messages = array();
             $detail_url = 'https://gmail.googleapis.com/gmail/v1/users/' . urlencode($user_email) . '/messages/' . $message_id;
 
             $detail_response = wp_remote_get($detail_url, array(
@@ -2159,22 +2123,67 @@ class Mail_Marketing_Importer
                     $detailed_messages[] = $detail_data;
                 }
             }
+
+            // Return detailed message info
+            wp_send_json_success(array(
+                'detailed_messages' => $detailed_messages
+            ));
+        } else {
+
+            // Get search query from frontend
+            $search_query = sanitize_text_field($_POST['search_query'] ?? 'subject:Delivery');
+
+            // Build Gmail API search URL
+            $api_url = 'https://gmail.googleapis.com/gmail/v1/users/' . urlencode($user_email) . '/messages';
+
+            // Gmail search parameters
+            $query_params = array(
+                'q' => $search_query,
+                'maxResults' => 50, // Gmail API max is 500, but we'll use 50 for reasonable response time
+            );
+
+            // Add date filter for last 7 days
+            $after_date = date('Y/m/d', time() - (7 * 24 * 3600));
+            $query_params['q'] .= ' after:' . $after_date;
+
+            $api_url .= '?' . http_build_query($query_params);
+
+            $response = wp_remote_get($api_url, array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $access_token,
+                    'Accept' => 'application/json',
+                ),
+                'timeout' => 30
+            ));
+
+            if (is_wp_error($response)) {
+                wp_send_json_error('API request failed: ' . $response->get_error_message());
+                return;
+            }
+
+            $body = wp_remote_retrieve_body($response);
+            $data = json_decode($body, true);
+
+            if (isset($data['error'])) {
+                wp_send_json_error('Gmail API error: ' . json_encode($data['error']));
+                return;
+            }
+
+            $messages = $data['messages'] ?? array();
+
+            // TEST
+            wp_send_json_success([
+                'messages' => $messages,
+                'total_found' => count($messages),
+                'search_query' => $search_query,
+                'user_email' => $user_email,
+                'token_info' => array(
+                    'from_cache' => $token_result['from_cache'],
+                    'expires_in' => $token_result['expires_in'] ?? null,
+                    'cache_duration' => $token_result['cache_duration'] ?? null
+                )
+            ]);
         }
-
-        // Thêm thông tin cache vào response
-        $response_data = array(
-            'messages' => $detailed_messages,
-            'total_found' => count($messages),
-            'search_query' => $search_query,
-            'user_email' => $user_email,
-            'token_info' => array(
-                'from_cache' => $token_result['from_cache'],
-                'expires_in' => $token_result['expires_in'] ?? null,
-                'cache_duration' => $token_result['cache_duration'] ?? null
-            )
-        );
-
-        wp_send_json_success($response_data);
     }
 
     /**

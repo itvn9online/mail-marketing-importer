@@ -163,7 +163,7 @@ jQuery(document).ready(function ($) {
 							return a ? JSON.parse(a) : [];
 						})();
 
-						function selectedSendEmails() {
+						function selectedGoogleSendEmails() {
 							// Kiểm tra nếu đã xử lý xong tất cả email
 							if (selectedEmails.length < 1) {
 								alert(
@@ -198,38 +198,79 @@ jQuery(document).ready(function ($) {
 									$("#google-emails-container").append(html);
 								}
 
+								// Lưu cache vào localStorage
+								localStorage.setItem(
+									"cacheDetailedGoogleFailedEmails",
+									JSON.stringify(cacheDetailedGoogleFailedEmails)
+								);
+
+								//
 								return;
 							}
 							// lấy email đầu tiên trong mảng và gửi ajax
 							var email = selectedEmails.shift();
 
-							//
-							$.post(
-								mmi_ajax.ajax_url,
-								{
-									action: "mmi_google_fetch_failed_emails",
-									security: mmi_ajax.nonce,
-									message_id: email.id,
-								},
-								function (response) {
-									console.log(response);
-									if (response.success && response.data) {
-										displayDetailedGoogleFailedEmails(
-											response.data.detailed_messages || []
-										);
-
-										//
-										setTimeout(() => {
-											selectedSendEmails();
-										}, 200);
-									} else {
-										// hiển thị lỗi nếu có
-									}
-								}
+							// kiểm tra nếu có trong cache thì dùng cache
+							var cachedResponse = cacheDetailedGoogleFailedEmails.find(
+								(item) => item.id === email.id
 							);
+							if (cachedResponse) {
+								if (
+									displayDetailedGoogleFailedEmails(cachedResponse.messages) ===
+									true
+								) {
+									setTimeout(() => {
+										selectedGoogleSendEmails();
+									}, 200);
+								} else {
+									console.log(
+										"No detailed messages to display from cache for email ID:",
+										email.id
+									);
+								}
+								return;
+							} else {
+								// Nếu không có trong cache thì gửi ajax
+								$.post(
+									mmi_ajax.ajax_url,
+									{
+										action: "mmi_google_fetch_failed_emails",
+										security: mmi_ajax.nonce,
+										message_id: email.id,
+									},
+									function (response) {
+										console.log(response);
+										if (response.success && response.data) {
+											if (
+												displayDetailedGoogleFailedEmails(
+													response.data.detailed_messages || []
+												) === true
+											) {
+												// Lưu vào cache
+												cacheDetailedGoogleFailedEmails.push({
+													id: email.id,
+													messages: response.data.detailed_messages || [],
+												});
+
+												//
+												setTimeout(() => {
+													selectedGoogleSendEmails();
+												}, 200);
+											} else {
+												console.log(
+													"No detailed messages to display for email ID:",
+													email.id
+												);
+											}
+										} else {
+											// hiển thị lỗi nếu có
+										}
+									}
+								);
+							}
 						}
 						setTimeout(() => {
-							selectedSendEmails();
+							selectedGoogleSendEmails();
 						}, 200);
 
 						//
@@ -391,7 +432,7 @@ jQuery(document).ready(function ($) {
 
 	function displayDetailedGoogleFailedEmails(detailedMessages) {
 		if (detailedMessages.length < 1) {
-			return;
+			return false;
 		}
 
 		//
@@ -446,6 +487,8 @@ jQuery(document).ready(function ($) {
 		});
 
 		$("#google-details-email-container").append(emailsHtml);
+
+		return true;
 	}
 
 	function extractEmailFromGmailMessage(subject) {

@@ -2102,7 +2102,7 @@ class Mail_Marketing_Importer
 
         // 
         $message_id = sanitize_text_field($_POST['message_id'] ?? '');
-        if (!empty($message_id) && is_numeric($message_id)) {
+        if (!empty($message_id)) {
             // Get detailed message info for each message
             $detailed_messages = array();
             $detail_url = 'https://gmail.googleapis.com/gmail/v1/users/' . urlencode($user_email) . '/messages/' . $message_id;
@@ -2139,7 +2139,7 @@ class Mail_Marketing_Importer
             // Gmail search parameters
             $query_params = array(
                 'q' => $search_query,
-                'maxResults' => 50, // Gmail API max is 500, but we'll use 50 for reasonable response time
+                'maxResults' => 200, // Gmail API max is 500, but we'll use 200 for reasonable response time
             );
 
             // Add date filter for last 7 days

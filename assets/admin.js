@@ -674,7 +674,7 @@ jQuery(document).ready(function ($) {
 		const container = $("#detected-urls-list");
 		let html = "";
 
-		if (urls.length === 0 && emails.length === 0 && placeholders.length === 0) {
+		if (urls.length < 1 && emails.length < 1 && placeholders.length < 1) {
 			html = '<span class="detected-urls-empty">No URLs detected...</span>';
 		} else {
 			if (urls.length > 0) {

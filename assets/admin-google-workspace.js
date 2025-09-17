@@ -1,3 +1,5 @@
+var arrGoogleFailedEmails = [];
+
 jQuery(document).ready(function ($) {
 	// ===================
 	// Google Workspace API Handlers
@@ -22,7 +24,7 @@ jQuery(document).ready(function ($) {
 		if (clientSecret) fieldsToSave.push("Client Secret");
 		if (userEmail) fieldsToSave.push("User Email");
 
-		if (fieldsToSave.length === 0) {
+		if (fieldsToSave.length < 1) {
 			status.text("⚠️ Không có thông tin nào để lưu!").css("color", "#856404");
 			button.prop("disabled", false).text("Save Config");
 			return;
@@ -152,27 +154,83 @@ jQuery(document).ready(function ($) {
 					resultDiv.html('<div id="google-emails-container"></div>');
 
 					if (messages.length > 0) {
-						// displayGoogleFailedEmails(messages, data);
+						displayGoogleFailedEmails(messages, data);
 
-						// chạy vòng lặp để lấy chi tiết từng email, vì API trả về rất ít thông tin
-						$.each(messages, function (index, message) {
+						//
+						var selectedEmails = messages; // Lấy tất cả email id đã fetch được
+						let cacheDetailedGoogleFailedEmails = (function () {
+							let a = localStorage.getItem("cacheDetailedGoogleFailedEmails");
+							return a ? JSON.parse(a) : [];
+						})();
+
+						function selectedSendEmails() {
+							// Kiểm tra nếu đã xử lý xong tất cả email
+							if (selectedEmails.length < 1) {
+								alert(
+									"Hoàn thành! Đã unsubscribe " +
+										arrGoogleFailedEmails.length +
+										" emails."
+								);
+
+								// Add bulk unsubscribe section
+								if (arrGoogleFailedEmails.length > 0) {
+									var uniqueEmails = [...new Set(arrGoogleFailedEmails)];
+									let html = "";
+									html +=
+										'<div style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107;">';
+									html +=
+										"<h4>📋 Bulk Unsubscribe (" +
+										uniqueEmails.length +
+										" unique failed emails)</h4>";
+									html +=
+										'<textarea id="google-failed-emails-list" rows="5" style="width: 100%; margin-bottom: 10px;" readonly>';
+									html += uniqueEmails.join(",");
+									html += "</textarea>";
+									html += "<div>";
+									html +=
+										'<button type="button" class="button button-secondary" onclick="copyToClipboard($(\'#google-failed-emails-list\').val(), $(this))">📋 Copy Emails</button> ';
+									html +=
+										'<button type="button" class="button button-primary" onclick="bulkUnsubscribeGoogleEmails()">🚫 Bulk Unsubscribe</button>';
+									html += "</div>";
+									html += "</div>";
+
+									//
+									$("#google-emails-container").append(html);
+								}
+
+								return;
+							}
+							// lấy email đầu tiên trong mảng và gửi ajax
+							var email = selectedEmails.shift();
+
+							//
 							$.post(
 								mmi_ajax.ajax_url,
 								{
 									action: "mmi_google_fetch_failed_emails",
 									security: mmi_ajax.nonce,
-									message_id: message.id,
+									message_id: email.id,
 								},
 								function (response) {
 									console.log(response);
 									if (response.success && response.data) {
-										var detailed_messages = data.detailed_messages || [];
+										displayDetailedGoogleFailedEmails(
+											response.data.detailed_messages || []
+										);
+
+										//
+										setTimeout(() => {
+											selectedSendEmails();
+										}, 200);
 									} else {
 										// hiển thị lỗi nếu có
 									}
 								}
 							);
-						});
+						}
+						setTimeout(() => {
+							selectedSendEmails();
+						}, 200);
 
 						//
 						var statusMsg =
@@ -301,9 +359,8 @@ jQuery(document).ready(function ($) {
 	// Helper functions for Google Workspace API
 
 	function displayGoogleFailedEmails(messages, data) {
-		// var $ = jQuery;
 		var container = $("#google-emails-container");
-		if (messages.length === 0) {
+		if (messages.length < 1) {
 			container.html("<p>No failed emails found.</p>");
 			return;
 		}
@@ -323,11 +380,24 @@ jQuery(document).ready(function ($) {
 		html += "<strong>Gmail Account:</strong> " + data.user_email;
 		html += "</div>";
 
-		var failedEmails = [];
 		var emailsHtml =
-			'<div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">';
+			'<div id="google-details-email-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">' +
+			"</div>";
+		html += emailsHtml;
 
-		messages.forEach(function (message, index) {
+		html += "</div>";
+		container.html(html);
+	}
+
+	function displayDetailedGoogleFailedEmails(detailedMessages) {
+		if (detailedMessages.length < 1) {
+			return;
+		}
+
+		//
+		let emailsHtml = "";
+
+		detailedMessages.forEach(function (message, index) {
 			try {
 				var headers = message.payload.headers || [];
 				var subject = "";
@@ -356,7 +426,7 @@ jQuery(document).ready(function ($) {
 					// Extract failed email addresses from subject or body
 					var failedEmail = extractEmailFromGmailMessage(message.snippet);
 					if (failedEmail) {
-						failedEmails.push(failedEmail);
+						arrGoogleFailedEmails.push(failedEmail);
 
 						emailsHtml +=
 							'<strong style="color: #dc3232;">Failed Email:</strong> ' +
@@ -375,33 +445,7 @@ jQuery(document).ready(function ($) {
 			}
 		});
 
-		emailsHtml += "</div>";
-		html += emailsHtml;
-
-		// Add bulk unsubscribe section
-		if (failedEmails.length > 0) {
-			var uniqueEmails = [...new Set(failedEmails)];
-			html +=
-				'<div style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107;">';
-			html +=
-				"<h4>📋 Bulk Unsubscribe (" +
-				uniqueEmails.length +
-				" unique failed emails)</h4>";
-			html +=
-				'<textarea id="google-failed-emails-list" rows="5" style="width: 100%; margin-bottom: 10px;" readonly>';
-			html += uniqueEmails.join(",");
-			html += "</textarea>";
-			html += "<div>";
-			html +=
-				'<button type="button" class="button button-secondary" onclick="copyToClipboard($(\'#google-failed-emails-list\').val(), $(this))">📋 Copy Emails</button> ';
-			html +=
-				'<button type="button" class="button button-primary" onclick="bulkUnsubscribeGoogleEmails()">🚫 Bulk Unsubscribe</button>';
-			html += "</div>";
-			html += "</div>";
-		}
-
-		html += "</div>";
-		container.html(html);
+		$("#google-details-email-container").append(emailsHtml);
 	}
 
 	function extractEmailFromGmailMessage(subject) {
@@ -470,7 +514,6 @@ jQuery(document).ready(function ($) {
 	}
 
 	function updateGoogleTokenCacheInfo(tokenInfo) {
-		// var $ = jQuery;
 		var status = $("#google-token-status");
 
 		if (tokenInfo.from_cache) {

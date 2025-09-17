@@ -129,7 +129,7 @@ jQuery(document).ready(function ($) {
 		if (clientId) fieldsToSave.push("Client ID");
 		if (clientSecret) fieldsToSave.push("Client Secret");
 
-		if (fieldsToSave.length === 0) {
+		if (fieldsToSave.length < 1) {
 			status.text("⚠️ Không có thông tin nào để lưu!").css("color", "#856404");
 			button.prop("disabled", false).text("Save Config");
 			return;
@@ -271,7 +271,7 @@ jQuery(document).ready(function ($) {
 		var list = $("#failed-emails-list");
 		var count = $("#failed-emails-count");
 
-		if (messages.length === 0) {
+		if (messages.length < 1) {
 			container.hide();
 			return 0;
 		}
@@ -397,7 +397,7 @@ jQuery(document).ready(function ($) {
 			selectedEmails.push($(this).val());
 		});
 
-		if (selectedEmails.length === 0) {
+		if (selectedEmails.length < 1) {
 			my_error("Vui lòng chọn ít nhất 1 email để unsubscribe.");
 			return;
 		}
@@ -447,7 +447,7 @@ jQuery(document).ready(function ($) {
 
 		function selectedSendEmails() {
 			// Kiểm tra nếu đã xử lý xong tất cả email
-			if (selectedEmails.length === 0) {
+			if (selectedEmails.length < 1) {
 				$("#bulk-unsubscribe-failed")
 					.removeAttr("data-processing")
 					.text("Bulk Unsubscribe Selected");
@@ -508,7 +508,7 @@ jQuery(document).ready(function ($) {
 	// Zoho Token Cache Management
 	function updateTokenCacheInfo(tokenInfo) {
 		var cacheInfoDiv = $("#zoho-cache-info");
-		if (cacheInfoDiv.length === 0) {
+		if (cacheInfoDiv.length < 1) {
 			// Create cache info div if it doesn't exist
 			$("#zoho-status").after(
 				'<div id="zoho-cache-info" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;"></div>'

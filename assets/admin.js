@@ -1,31 +1,32 @@
+function my_warning(message) {
+	return my_notice(message, "warning");
+}
+
+function my_error(message) {
+	return my_notice(message, "error");
+}
+
+function my_notice(message, type) {
+	let $ = jQuery;
+	if ($("#parent-notice").length < 1) {
+		$("body").append('<div id="parent-notice"></div>');
+	}
+
+	//
+	var notice = $('<div class="my-notice"></div>');
+	notice.addClass(
+		"my-notice-" + (typeof type == "undefined" ? "success" : type)
+	);
+	notice.text(message);
+	$("#parent-notice").append(notice);
+	setTimeout(function () {
+		notice.fadeOut(300, function () {
+			$(this).remove();
+		});
+	}, 9000);
+}
+
 jQuery(document).ready(function ($) {
-	function my_warning(message) {
-		return my_notice(message, "warning");
-	}
-
-	function my_error(message) {
-		return my_notice(message, "error");
-	}
-
-	function my_notice(message, type) {
-		if ($("#parent-notice").length < 1) {
-			$("body").append('<div id="parent-notice"></div>');
-		}
-
-		//
-		var notice = $('<div class="my-notice"></div>');
-		notice.addClass(
-			"my-notice-" + (typeof type == "undefined" ? "success" : type)
-		);
-		notice.text(message);
-		$("#parent-notice").append(notice);
-		setTimeout(function () {
-			notice.fadeOut(300, function () {
-				$(this).remove();
-			});
-		}, 9000);
-	}
-
 	// Handle campaign selection radio buttons
 	$('input[name="campaign_option"]').on("change", function () {
 		if ($(this).val() === "existing") {

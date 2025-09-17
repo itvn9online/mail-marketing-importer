@@ -1510,19 +1510,31 @@ class Mail_Marketing_Importer
     {
         global $wpdb;
 
+        // Set JSON response header
+        header('Content-Type: application/json');
+
         // Security checks
         if (!current_user_can('manage_options')) {
-            wp_die(json_encode(['success' => false, 'message' => 'Permission denied']));
+            wp_die(json_encode([
+                'success' => false,
+                'message' => 'Permission denied ' . __FUNCTION__
+            ]));
         }
 
         if (!wp_verify_nonce($_POST['bulk_unsubscribe_nonce'] ?? '', 'bulk_unsubscribe_nonce')) {
-            wp_die(json_encode(['success' => false, 'message' => 'Security check failed']));
+            wp_die(json_encode([
+                'success' => false,
+                'message' => 'Security check failed ' . __FUNCTION__
+            ]));
         }
 
         // Validate email input
         $emails_input = sanitize_email($_POST['unsubscribe_email'] ?? '');
         if (empty($emails_input)) {
-            wp_die(json_encode(['success' => false, 'message' => 'Email is required']));
+            wp_die(json_encode([
+                'success' => false,
+                'message' => 'Email is required ' . __FUNCTION__
+            ]));
         }
 
         $emails = explode(',', $emails_input);
@@ -1563,7 +1575,6 @@ class Mail_Marketing_Importer
         }
 
         // Return JSON response
-        header('Content-Type: application/json');
         wp_die(json_encode([
             'success' => true,
             'message' => 'Bulk unsubscribe completed',

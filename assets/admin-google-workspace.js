@@ -1,5 +1,53 @@
 var arrGoogleFailedEmails = [];
 
+function bulkUnsubscribeGoogleEmails() {
+	let $ = jQuery;
+	var emails = $("#google-failed-emails-list").val().trim();
+	if (!emails) {
+		my_warning("No emails to unsubscribe!");
+		return;
+	}
+
+	if (
+		!confirm(
+			"Are you sure you want to unsubscribe " +
+				emails.split(",").length +
+				" email addresses?"
+		)
+	) {
+		return;
+	}
+
+	// Use existing bulk unsubscribe functionality
+	$.post(
+		mmi_ajax.ajax_url,
+		{
+			action: "bulk_unsubscribe_email",
+			bulk_unsubscribe_nonce: mmi_ajax.nonce,
+			unsubscribe_email: emails,
+		},
+		function (response) {
+			if (response.success) {
+				var data = response.data;
+				my_notice(
+					"✅ Bulk unsubscribe completed!\nProcessed: " +
+						data.processed_emails.length +
+						" emails\nAffected rows: " +
+						data.affected_rows
+				);
+
+				if (data.errors.length > 0) {
+					console.warn("Unsubscribe errors:", data.errors);
+				}
+			} else {
+				my_error("❌ Bulk unsubscribe failed: " + JSON.stringify(response));
+			}
+		}
+	).fail(function () {
+		my_error("❌ Connection error during bulk unsubscribe");
+	});
+}
+
 jQuery(document).ready(function ($) {
 	// ===================
 	// Google Workspace API Handlers
@@ -79,13 +127,13 @@ jQuery(document).ready(function ($) {
 		var userEmail = $("#google_user_email").val().trim();
 
 		if (!clientId) {
-			alert("Vui lòng nhập Google Client ID trước!");
+			my_warning("Vui lòng nhập Google Client ID trước!");
 			$("#google_client_id").focus();
 			return;
 		}
 
 		if (!userEmail) {
-			alert("Vui lòng nhập Gmail/Workspace Email trước!");
+			my_warning("Vui lòng nhập Gmail/Workspace Email trước!");
 			$("#google_user_email").focus();
 			return;
 		}
@@ -156,122 +204,8 @@ jQuery(document).ready(function ($) {
 					if (messages.length > 0) {
 						displayGoogleFailedEmails(messages, data);
 
-						//
-						var selectedEmails = messages; // Lấy tất cả email id đã fetch được
-						let cacheDetailedGoogleFailedEmails = (function () {
-							let a = localStorage.getItem("cacheDetailedGoogleFailedEmails");
-							return a ? JSON.parse(a) : [];
-						})();
-
-						function selectedGoogleSendEmails() {
-							// Kiểm tra nếu đã xử lý xong tất cả email
-							if (selectedEmails.length < 1) {
-								alert(
-									"Hoàn thành! Đã unsubscribe " +
-										arrGoogleFailedEmails.length +
-										" emails."
-								);
-
-								// Add bulk unsubscribe section
-								if (arrGoogleFailedEmails.length > 0) {
-									var uniqueEmails = [...new Set(arrGoogleFailedEmails)];
-									let html = "";
-									html +=
-										'<div style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107;">';
-									html +=
-										"<h4>📋 Bulk Unsubscribe (" +
-										uniqueEmails.length +
-										" unique failed emails)</h4>";
-									html +=
-										'<textarea id="google-failed-emails-list" rows="5" style="width: 100%; margin-bottom: 10px;" readonly>';
-									html += uniqueEmails.join(",");
-									html += "</textarea>";
-									html += "<div>";
-									html +=
-										'<button type="button" class="button button-secondary" onclick="copyToClipboard($(\'#google-failed-emails-list\').val(), $(this))">📋 Copy Emails</button> ';
-									html +=
-										'<button type="button" class="button button-primary" onclick="bulkUnsubscribeGoogleEmails()">🚫 Bulk Unsubscribe</button>';
-									html += "</div>";
-									html += "</div>";
-
-									//
-									$("#google-emails-container").append(html);
-								}
-
-								// Lưu cache vào localStorage
-								localStorage.setItem(
-									"cacheDetailedGoogleFailedEmails",
-									JSON.stringify(cacheDetailedGoogleFailedEmails)
-								);
-
-								//
-								return;
-							}
-							// lấy email đầu tiên trong mảng và gửi ajax
-							var email = selectedEmails.shift();
-
-							// kiểm tra nếu có trong cache thì dùng cache
-							var cachedResponse = cacheDetailedGoogleFailedEmails.find(
-								(item) => item.id === email.id
-							);
-							if (cachedResponse) {
-								if (
-									displayDetailedGoogleFailedEmails(cachedResponse.messages) ===
-									true
-								) {
-									setTimeout(() => {
-										selectedGoogleSendEmails();
-									}, 200);
-								} else {
-									console.log(
-										"No detailed messages to display from cache for email ID:",
-										email.id
-									);
-								}
-								return;
-							} else {
-								// Nếu không có trong cache thì gửi ajax
-								$.post(
-									mmi_ajax.ajax_url,
-									{
-										action: "mmi_google_fetch_failed_emails",
-										security: mmi_ajax.nonce,
-										message_id: email.id,
-									},
-									function (response) {
-										console.log(response);
-										if (response.success && response.data) {
-											if (
-												displayDetailedGoogleFailedEmails(
-													response.data.detailed_messages || []
-												) === true
-											) {
-												// Lưu vào cache
-												cacheDetailedGoogleFailedEmails.push({
-													id: email.id,
-													messages: response.data.detailed_messages || [],
-												});
-
-												//
-												setTimeout(() => {
-													selectedGoogleSendEmails();
-												}, 200);
-											} else {
-												console.log(
-													"No detailed messages to display for email ID:",
-													email.id
-												);
-											}
-										} else {
-											// hiển thị lỗi nếu có
-										}
-									}
-								);
-							}
-						}
-						setTimeout(() => {
-							selectedGoogleSendEmails();
-						}, 200);
+						// Process emails sequentially with caching
+						processGoogleEmailsSequentially(messages);
 
 						//
 						var statusMsg =
@@ -422,7 +356,7 @@ jQuery(document).ready(function ($) {
 		html += "</div>";
 
 		var emailsHtml =
-			'<div id="google-details-email-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">' +
+			'<div id="google-details-email-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; max-width: 90%; margin: 0 auto;">' +
 			"</div>";
 		html += emailsHtml;
 
@@ -509,53 +443,6 @@ jQuery(document).ready(function ($) {
 		return null;
 	}
 
-	function bulkUnsubscribeGoogleEmails() {
-		var emails = $("#google-failed-emails-list").val().trim();
-		if (!emails) {
-			alert("No emails to unsubscribe!");
-			return;
-		}
-
-		if (
-			!confirm(
-				"Are you sure you want to unsubscribe " +
-					emails.split(",").length +
-					" email addresses?"
-			)
-		) {
-			return;
-		}
-
-		// Use existing bulk unsubscribe functionality
-		$.post(
-			mmi_ajax.ajax_url,
-			{
-				action: "bulk_unsubscribe_email",
-				bulk_unsubscribe_nonce: mmi_ajax.nonce,
-				unsubscribe_email: emails,
-			},
-			function (response) {
-				if (response.success) {
-					var data = response.data;
-					alert(
-						"✅ Bulk unsubscribe completed!\nProcessed: " +
-							data.processed_emails.length +
-							" emails\nAffected rows: " +
-							data.affected_rows
-					);
-
-					if (data.errors.length > 0) {
-						console.warn("Unsubscribe errors:", data.errors);
-					}
-				} else {
-					alert("❌ Bulk unsubscribe failed: " + response.data.message);
-				}
-			}
-		).fail(function () {
-			alert("❌ Connection error during bulk unsubscribe");
-		});
-	}
-
 	function updateGoogleTokenCacheInfo(tokenInfo) {
 		var status = $("#google-token-status");
 
@@ -591,4 +478,197 @@ jQuery(document).ready(function ($) {
 			return map[m];
 		});
 	}
+
+	// ===================
+	// Cache Management Functions
+	// ===================
+
+	function getGoogleEmailCache() {
+		try {
+			const cacheData = localStorage.getItem("cacheDetailedGoogleFailedEmails");
+			if (!cacheData) return [];
+
+			const cache = JSON.parse(cacheData);
+			const now = Date.now();
+
+			// Filter out expired cache entries (older than 24 hours)
+			const validCache = cache.filter((item) => {
+				return item.timestamp && now - item.timestamp < 24 * 60 * 60 * 1000;
+			});
+
+			// Update localStorage if we filtered out expired items
+			if (validCache.length !== cache.length) {
+				saveGoogleEmailCache(validCache);
+			}
+
+			return validCache;
+		} catch (error) {
+			console.warn("Error reading Google email cache:", error);
+			return [];
+		}
+	}
+
+	function saveGoogleEmailCache(cache) {
+		try {
+			localStorage.setItem(
+				"cacheDetailedGoogleFailedEmails",
+				JSON.stringify(cache)
+			);
+		} catch (error) {
+			console.warn("Error saving Google email cache:", error);
+		}
+	}
+
+	function getCachedGoogleEmail(messageId) {
+		const cache = getGoogleEmailCache();
+		return cache.find((item) => item.id === messageId);
+	}
+
+	function addToGoogleEmailCache(messageId, messages) {
+		const cache = getGoogleEmailCache();
+		const existingIndex = cache.findIndex((item) => item.id === messageId);
+
+		const cacheItem = {
+			id: messageId,
+			messages: messages,
+			timestamp: Date.now(),
+		};
+
+		if (existingIndex >= 0) {
+			cache[existingIndex] = cacheItem;
+		} else {
+			cache.push(cacheItem);
+		}
+
+		// Limit cache size to prevent localStorage bloat (keep last 100 items)
+		if (cache.length > 100) {
+			cache.splice(0, cache.length - 100);
+		}
+
+		saveGoogleEmailCache(cache);
+	}
+
+	// ===================
+	// Sequential Email Processing
+	// ===================
+
+	function processGoogleEmailsSequentially(messages) {
+		let processedCount = 0;
+		let totalMessages = messages.length;
+		let selectedEmails = [...messages]; // Clone array to avoid mutation
+
+		// Show progress indicator
+		const progressDiv = $(
+			'<div id="google-email-progress" style="margin: 15px 0; padding: 10px; background: #f0f8ff; border-radius: 4px;"></div>'
+		);
+		$("#google-emails-container").prepend(progressDiv);
+
+		function updateProgress() {
+			const progress = Math.round((processedCount / totalMessages) * 100);
+			progressDiv.html(
+				`🔄 Processing emails: ${processedCount}/${totalMessages} (${progress}%)`
+			);
+		}
+
+		function processNextEmail() {
+			updateProgress();
+
+			if (selectedEmails.length === 0) {
+				// All emails processed - show completion
+				progressDiv.html(
+					`✅ Completed! Processed ${totalMessages} emails, found ${arrGoogleFailedEmails.length} failed addresses.`
+				);
+
+				if (arrGoogleFailedEmails.length > 0) {
+					showBulkUnsubscribeSection();
+				}
+
+				return;
+			}
+
+			const email = selectedEmails.shift();
+			processedCount++;
+
+			// Check cache first
+			const cachedData = getCachedGoogleEmail(email.id);
+			if (cachedData) {
+				console.log(`📋 Using cached data for email ID: ${email.id}`);
+				if (displayDetailedGoogleFailedEmails(cachedData.messages)) {
+					setTimeout(processNextEmail, 100); // Faster processing for cached items
+				} else {
+					setTimeout(processNextEmail, 100);
+				}
+				return;
+			}
+
+			// Fetch from server
+			$.post(
+				mmi_ajax.ajax_url,
+				{
+					action: "mmi_google_fetch_failed_emails",
+					security: mmi_ajax.nonce,
+					message_id: email.id,
+				},
+				function (response) {
+					if (response.success && response.data) {
+						const detailedMessages = response.data.detailed_messages || [];
+
+						// Save to cache
+						addToGoogleEmailCache(email.id, detailedMessages);
+
+						// Display messages
+						displayDetailedGoogleFailedEmails(detailedMessages);
+
+						console.log(`📥 Fetched and cached data for email ID: ${email.id}`);
+					} else {
+						console.warn(`❌ Failed to fetch email ID: ${email.id}`, response);
+					}
+				}
+			)
+				.fail(function (xhr, status, error) {
+					console.error(`❌ Network error for email ID: ${email.id}`, error);
+				})
+				.always(function () {
+					// Continue processing regardless of success/failure
+					setTimeout(processNextEmail, 300); // Delay between API calls to avoid rate limits
+				});
+		}
+
+		// Start processing
+		processNextEmail();
+	}
+
+	function showBulkUnsubscribeSection() {
+		if (arrGoogleFailedEmails.length === 0) return;
+
+		const uniqueEmails = [...new Set(arrGoogleFailedEmails)];
+
+		let html = "";
+		html +=
+			'<div style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107;">';
+		html += `<h4>📋 Bulk Unsubscribe (${uniqueEmails.length} unique failed emails)</h4>`;
+		html +=
+			'<textarea id="google-failed-emails-list" rows="5" style="width: 100%; margin-bottom: 10px;" readonly>';
+		html += uniqueEmails.join(",");
+		html += "</textarea>";
+		html += "<div>";
+		html +=
+			'<button type="button" class="button button-secondary" onclick="copyToClipboard($(\'#google-failed-emails-list\').val(), $(this))">📋 Copy Emails</button> ';
+		html +=
+			'<button type="button" class="button button-primary" onclick="bulkUnsubscribeGoogleEmails()">🚫 Bulk Unsubscribe</button>';
+		html +=
+			' <button type="button" class="button button-secondary" onclick="clearGoogleEmailCache()">🗑️ Clear Cache</button>';
+		html += "</div>";
+		html += "</div>";
+
+		$("#google-emails-container").append(html);
+	}
+
+	// Global function to clear cache (accessible from onclick)
+	window.clearGoogleEmailCache = function () {
+		if (confirm("Are you sure you want to clear the Google email cache?")) {
+			localStorage.removeItem("cacheDetailedGoogleFailedEmails");
+			my_notice("✅ Cache cleared successfully!");
+		}
+	};
 });

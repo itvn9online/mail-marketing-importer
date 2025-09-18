@@ -31,7 +31,7 @@ if (empty($auth_code)) {
 }
 
 // Get stored client credentials
-$zoho_config = get_option('mmi_zoho_config', array());
+$zoho_config = get_option(MMI_ZOHO_CONFIG, array());
 $client_id = $zoho_config['client_id'] ?? '';
 $client_secret = $zoho_config['client_secret'] ?? '';
 
@@ -113,7 +113,7 @@ if (!empty($access_token)) {
                 $first_account = $accounts_data['data'][0];
                 if (isset($first_account['accountId'])) {
                     $zoho_config['account_id'] = $first_account['accountId'];
-                    update_option('mmi_zoho_config', $zoho_config);
+                    update_option(MMI_ZOHO_CONFIG, $zoho_config);
 
                     // Store accounts info for display
                     $all_accounts = $accounts_data['data'];
@@ -147,7 +147,7 @@ if (!empty($access_token)) {
 // Update configuration with refresh token - only for messages scopes
 if (!empty($refresh_token) && strpos($selected_scope, 'ZohoMail.messages.') !== false) {
     $zoho_config['refresh_token'] = $refresh_token;
-    update_option('mmi_zoho_config', $zoho_config);
+    update_option(MMI_ZOHO_CONFIG, $zoho_config);
 }
 
 // Display success page with tokens

@@ -62,6 +62,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
         </div>
 
         <div class="google-api-settings" style="background: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+            <p>Config key: <?php echo MMI_GOOGLE_CONFIG; ?></p>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end;">
                 <div>
                     <label for="google_client_id" style="display: block; font-size: 12px; margin-bottom: 3px;">Google Client ID:</label>

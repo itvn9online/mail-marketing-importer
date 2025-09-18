@@ -408,6 +408,7 @@ class Mail_Marketing_Importer
         if ($status_filter == '') {
             $where_clause = " WHERE c.status IN ('active', 'completed')";
             $count_where_clause = " WHERE status IN ('active', 'completed')";
+            $status_filter = 'Active and Completed';
         } else if ($status_filter != 'all') {
             $where_clause = $wpdb->prepare(" WHERE c.status = %s", $status_filter);
             $count_where_clause = $wpdb->prepare(" WHERE status = %s", $status_filter);
@@ -1611,7 +1612,7 @@ class Mail_Marketing_Importer
         }
 
         // Lấy config hiện tại để merge với dữ liệu mới
-        $existing_config = get_option('mmi_zoho_config', array(
+        $existing_config = get_option(MMI_ZOHO_CONFIG, array(
             'client_id' => '',
             'client_secret' => '',
             'refresh_token' => '',
@@ -1632,7 +1633,7 @@ class Mail_Marketing_Importer
         $new_config['refresh_token'] = $existing_config['refresh_token']; // Luôn giữ nguyên từ config cũ
         $new_config['account_id'] = $existing_config['account_id']; // Luôn giữ nguyên từ config cũ (được lưu từ OAuth)
 
-        $result = update_option('mmi_zoho_config', $new_config);
+        $result = update_option(MMI_ZOHO_CONFIG, $new_config);
 
         // Đếm số trường đã được lưu
         $saved_fields = array_filter($new_config, function ($value) {
@@ -1659,7 +1660,7 @@ class Mail_Marketing_Importer
     private function get_zoho_access_token()
     {
         // Lấy cấu hình từ database
-        $zoho_config = get_option('mmi_zoho_config', array());
+        $zoho_config = get_option(MMI_ZOHO_CONFIG, array());
 
         $client_id = $zoho_config['client_id'] ?? '';
         $client_secret = $zoho_config['client_secret'] ?? '';
@@ -1817,13 +1818,13 @@ class Mail_Marketing_Importer
         }
 
         // Get current config
-        $zoho_config = get_option('mmi_zoho_config', array());
+        $zoho_config = get_option(MMI_ZOHO_CONFIG, array());
 
         // Clear account_id but keep other settings
         $zoho_config['account_id'] = '';
 
         // Update the option
-        $result = update_option('mmi_zoho_config', $zoho_config);
+        $result = update_option(MMI_ZOHO_CONFIG, $zoho_config);
 
         if ($result !== false) {
             wp_send_json_success(array(
@@ -1852,7 +1853,7 @@ class Mail_Marketing_Importer
         }
 
         // Lấy cấu hình từ database
-        $zoho_config = get_option('mmi_zoho_config', array());
+        $zoho_config = get_option(MMI_ZOHO_CONFIG, array());
         $account_id = $zoho_config['account_id'] ?? '';
 
         if (empty($account_id)) {

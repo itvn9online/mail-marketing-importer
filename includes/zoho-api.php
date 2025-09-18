@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Load saved config
-$zoho_config = get_option('mmi_zoho_config', array(
+$zoho_config = get_option(MMI_ZOHO_CONFIG, array(
     'client_id' => '',
     'client_secret' => '',
     'refresh_token' => '',
@@ -60,6 +60,7 @@ $zoho_config = get_option('mmi_zoho_config', array(
         </div>
 
         <div class="zoho-api-settings" style="background: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+            <p>Config key: <?php echo MMI_ZOHO_CONFIG; ?></p>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end;">
                 <div>
                     <label for="zoho_client_id" style="display: block; font-size: 12px; margin-bottom: 3px;">Zoho Client ID:</label>

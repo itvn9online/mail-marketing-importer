@@ -19,7 +19,28 @@ if (!defined('ABSPATH')) {
 define('MMI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MMI_PLUGIN_PATH', __DIR__ . '/');
 define('MMI_PLUGIN_VERSION', '1.2.4');
-define('MMI_GOOGLE_CONFIG', 'mmi_google_config_' . explode(':', $_SERVER['HTTP_HOST'])[0]);
+
+// Create domain-specific config key for multi-domain support
+function mmi_get_domain_config_key()
+{
+    // Get current domain safely
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    // Remove port number if present (e.g., localhost:8080 -> localhost)
+    $domain = str_replace([
+        '.',
+        '-',
+    ], '_', strtolower(explode(':', $host)[0]));
+
+    return $domain;
+}
+
+// Create domain-specific config key for multi-domain support
+$domain_config_key = mmi_get_domain_config_key();
+define('MMI_ZOHO_CONFIG', 'mmi_zoho_config_' . $domain_config_key);
+// echo 'MMI Domain Config Key: ' . MMI_ZOHO_CONFIG . '<br>';
+define('MMI_GOOGLE_CONFIG', 'mmi_google_config_' . $domain_config_key);
+// echo 'MMI Domain Config Key: ' . MMI_GOOGLE_CONFIG . '<br>';
 
 // Include required files
 require_once MMI_PLUGIN_PATH . 'includes/class-mail-marketing-importer.php';

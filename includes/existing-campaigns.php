@@ -15,6 +15,7 @@ $current_url = home_url($_SERVER['REQUEST_URI']);
     <div style="flex: 0 0 auto;">
         <label for="campaign-status-filter">Filter by status: </label>
         <select id="campaign-status-filter" onchange="filterCampaignsByStatus(this.value)">
+            <option value="">Active and Completed</option>
             <option value="active" <?php selected($status_filter, 'active'); ?>>Active</option>
             <option value="inactive" <?php selected($status_filter, 'inactive'); ?>>Inactive</option>
             <option value="completed" <?php selected($status_filter, 'completed'); ?>>Completed</option>
@@ -114,8 +115,7 @@ $current_url = home_url($_SERVER['REQUEST_URI']);
         var currentUrl = window.location.href;
         var baseUrl = '<?php echo admin_url('tools.php?page=email-campaigns'); ?>';
 
-        if (status == 'active') {
-            // Default to active, no need for status parameter
+        if (status == '') {
             window.location.href = baseUrl;
         } else {
             window.location.href = baseUrl + '&campaign_status=' + status;

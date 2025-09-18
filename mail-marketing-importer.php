@@ -19,6 +19,7 @@ if (!defined('ABSPATH')) {
 define('MMI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MMI_PLUGIN_PATH', __DIR__ . '/');
 define('MMI_PLUGIN_VERSION', '1.2.4');
+define('MMI_GOOGLE_CONFIG', 'mmi_google_config_' . explode(':', $_SERVER['HTTP_HOST'])[0]);
 
 // Include required files
 require_once MMI_PLUGIN_PATH . 'includes/class-mail-marketing-importer.php';

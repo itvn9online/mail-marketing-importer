@@ -17,7 +17,7 @@ if (isset($_GET['code'])) {
     $auth_code = sanitize_text_field($_GET['code']);
 
     // Get Google config
-    $google_config = get_option('mmi_google_config', array());
+    $google_config = get_option(MMI_GOOGLE_CONFIG, array());
     $client_id = $google_config['client_id'] ?? '';
     $client_secret = $google_config['client_secret'] ?? '';
 
@@ -62,7 +62,7 @@ if (isset($_GET['code'])) {
 
     // Save refresh token to WordPress options
     $google_config['refresh_token'] = $data['refresh_token'];
-    update_option('mmi_google_config', $google_config);
+    update_option(MMI_GOOGLE_CONFIG, $google_config);
 
     // Also save access token to transient for immediate use
     $expires_in = $data['expires_in'] ?? 3600;

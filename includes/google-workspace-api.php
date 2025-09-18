@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Load saved config
-$google_config = get_option('mmi_google_config', array(
+$google_config = get_option(MMI_GOOGLE_CONFIG, array(
     'client_id' => '',
     'client_secret' => '',
     'refresh_token' => '',
@@ -88,7 +88,7 @@ $google_config = get_option('mmi_google_config', array(
                         style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
                 </div>
             </div>
-            <ul style="font-size: 11px; color: #666; margin-top: 5px;">
+            <ul style="font-size: 12px; color: #666; margin-top: 5px;">
                 <li>Refresh Token: sẽ tự động lưu trong quá trình OAuth authorization.</li>
                 <li>User Email: Email Gmail/Workspace để truy cập mailbox (thường là admin email).</li>
                 <li>Scope cần thiết: https://www.googleapis.com/auth/gmail.readonly</li>
@@ -114,10 +114,13 @@ $google_config = get_option('mmi_google_config', array(
                     </button>
                 </div>
                 <div style="display: flex; gap: 5px; align-items: center;">
-                    <button type="button" id="clear-google-token-cache" class="button" style="font-size: 11px;">
+                    <button type="button" id="clear-google-token-cache" class="button" style="font-size: 12px; color: #d63638;">
                         Clear Token Cache
                     </button>
-                    <button type="button" id="google-token-cache-info" class="button" style="font-size: 11px;">
+                    <button type="button" id="show-secret-token" class="button button-secondary" style="font-size: 12px;">
+                        Show Secret Token
+                    </button>
+                    <button type="button" id="google-token-cache-info" class="button" style="font-size: 12px;">
                         Token Cache Info
                     </button>
                 </div>
@@ -146,11 +149,11 @@ $google_config = get_option('mmi_google_config', array(
                 <label style="display: block; font-size: 12px; margin-bottom: 3px;">Bước 1: Truy cập URL này để authorize (đăng nhập Google account cần cấp quyền trước):</label>
                 <div style="display: flex; gap: 5px; align-items: center;">
                     <input type="text" id="generated-google-auth-url" readonly
-                        style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px; background: #f9f9f9;">
-                    <button type="button" id="copy-google-auth-url" class="button" style="font-size: 11px;">Copy</button>
-                    <button type="button" id="open-google-auth-url" class="button" style="font-size: 11px;">Mở</button>
+                        style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: #f9f9f9;">
+                    <button type="button" id="copy-google-auth-url" class="button" style="font-size: 12px;">Copy</button>
+                    <button type="button" id="open-google-auth-url" class="button" style="font-size: 12px;">Mở</button>
                 </div>
-                <p style="font-size: 11px; color: #666; margin: 5px 0;">
+                <p style="font-size: 12px; color: #666; margin: 5px 0;">
                     💡 <strong>Hướng dẫn:</strong> Sau khi authorize, Google sẽ redirect đến URL có dạng:
                     <code style="background: #f4f4f4; padding: 1px 3px;"><?php echo home_url('/wp-admin/admin-ajax.php?action=mmi_google_callback&code=ABC123...'); ?></code>
                     - Sẽ tự động xử lý và hiển thị kết quả.

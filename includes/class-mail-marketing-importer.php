@@ -104,9 +104,13 @@ class Mail_Marketing_Importer
         $script_data = array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('mmi_import_nonce'),
+            'bulk_unsubscribe_nonce' => wp_create_nonce('bulk_unsubscribe_nonce'),
             'home_url' => home_url()
         );
         wp_localize_script('mmi-admin-js', 'mmi_ajax', $script_data);
+        if (isset($_GET['google-workspace'])) {
+            wp_localize_script('mmi-admin-google-workspace-js', 'mmi_ajax', $script_data);
+        }
     }
 
     /**
@@ -395,13 +399,16 @@ class Mail_Marketing_Importer
         $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
         $offset = ($current_page - 1) * $campaigns_per_page;
 
-        // Status filter - default to 'active'
-        $status_filter = isset($_GET['campaign_status']) ? sanitize_text_field($_GET['campaign_status']) : 'active';
+        // Status filter
+        $status_filter = isset($_GET['campaign_status']) ? sanitize_text_field($_GET['campaign_status']) : '';
 
         // Build WHERE clause for status filter
         $where_clause = '';
         $count_where_clause = '';
-        if ($status_filter !== 'all') {
+        if ($status_filter == '') {
+            $where_clause = " WHERE c.status IN ('active', 'completed')";
+            $count_where_clause = " WHERE status IN ('active', 'completed')";
+        } else if ($status_filter != 'all') {
             $where_clause = $wpdb->prepare(" WHERE c.status = %s", $status_filter);
             $count_where_clause = $wpdb->prepare(" WHERE status = %s", $status_filter);
         }
@@ -1469,9 +1476,11 @@ class Mail_Marketing_Importer
         }
 
         // Validate email input
-        $emails = sanitize_email($_POST['unsubscribe_email'] ?? '');
+        $emails = $_POST['unsubscribe_email'] ?? '';
         $emails = explode(',', $emails);
+        // wp_die(json_encode(['success' => false, 'emails' => $emails]));
         foreach ($emails as $email) {
+            $email = sanitize_email(trim($email));
             if (empty($email) || !is_email($email)) {
                 wp_redirect(admin_url('tools.php?page=email-campaigns&list=true&error=invalid_email&message=' . urlencode('Please enter a valid email address ' . $email)));
                 exit;
@@ -1529,7 +1538,7 @@ class Mail_Marketing_Importer
         }
 
         // Validate email input
-        $emails_input = sanitize_email($_POST['unsubscribe_email'] ?? '');
+        $emails_input = $_POST['unsubscribe_email'] ?? '';
         if (empty($emails_input)) {
             wp_die(json_encode([
                 'success' => false,
@@ -1538,12 +1547,13 @@ class Mail_Marketing_Importer
         }
 
         $emails = explode(',', $emails_input);
+        // wp_die(json_encode(['success' => false, 'emails' => $emails]));
         $total_affected = 0;
         $processed_emails = [];
         $errors = [];
 
         foreach ($emails as $email) {
-            $email = trim($email);
+            $email = sanitize_email(trim($email));
             if (empty($email) || !is_email($email)) {
                 $errors[] = "Invalid email: $email";
                 continue;
@@ -1954,7 +1964,7 @@ class Mail_Marketing_Importer
         }
 
         // Lấy config hiện tại để merge với dữ liệu mới
-        $existing_config = get_option('mmi_google_config', array(
+        $existing_config = get_option(MMI_GOOGLE_CONFIG, array(
             'client_id' => '',
             'client_secret' => '',
             'refresh_token' => '',
@@ -1974,7 +1984,7 @@ class Mail_Marketing_Importer
         $new_config['user_email'] = !empty($user_email) ? $user_email : $existing_config['user_email'];
         $new_config['refresh_token'] = $existing_config['refresh_token']; // Luôn giữ nguyên từ config cũ
 
-        $result = update_option('mmi_google_config', $new_config);
+        $result = update_option(MMI_GOOGLE_CONFIG, $new_config);
 
         // Đếm số trường đã được lưu
         $saved_fields = array_filter($new_config, function ($value) {
@@ -2001,7 +2011,7 @@ class Mail_Marketing_Importer
     private function get_google_access_token()
     {
         // Lấy cấu hình từ database
-        $google_config = get_option('mmi_google_config', array());
+        $google_config = get_option(MMI_GOOGLE_CONFIG, array());
 
         $client_id = $google_config['client_id'] ?? '';
         $client_secret = $google_config['client_secret'] ?? '';
@@ -2093,7 +2103,7 @@ class Mail_Marketing_Importer
         }
 
         // Lấy cấu hình từ database
-        $google_config = get_option('mmi_google_config', array());
+        $google_config = get_option(MMI_GOOGLE_CONFIG, array());
         $user_email = $google_config['user_email'] ?? '';
 
         if (empty($user_email)) {

@@ -23,21 +23,20 @@ function bulkUnsubscribeGoogleEmails() {
 		mmi_ajax.ajax_url,
 		{
 			action: "bulk_unsubscribe_email",
-			bulk_unsubscribe_nonce: mmi_ajax.nonce,
+			bulk_unsubscribe_nonce: mmi_ajax.bulk_unsubscribe_nonce,
 			unsubscribe_email: emails,
 		},
 		function (response) {
 			if (response.success) {
-				var data = response.data;
 				my_notice(
 					"✅ Bulk unsubscribe completed!\nProcessed: " +
-						data.processed_emails.length +
+						response.processed_emails.length +
 						" emails\nAffected rows: " +
-						data.affected_rows
+						response.affected_rows
 				);
 
-				if (data.errors.length > 0) {
-					console.warn("Unsubscribe errors:", data.errors);
+				if (response.errors.length > 0) {
+					console.warn("Unsubscribe errors:", response.errors);
 				}
 			} else {
 				my_error("❌ Bulk unsubscribe failed: " + JSON.stringify(response));
@@ -287,6 +286,23 @@ jQuery(document).ready(function ($) {
 			});
 	});
 
+	// Show secret token
+	$("#show-secret-token").on("click", function () {
+		var is_hidden = $("#google_client_secret").hasClass("is-token-hidden");
+		if (is_hidden) {
+			$("#google_client_secret, #google_refresh_token").removeClass(
+				"is-token-hidden"
+			);
+		} else {
+			$("#google_client_secret, #google_refresh_token").addClass(
+				"is-token-hidden"
+			);
+		}
+
+		// Show/hide password
+		$(this).text(is_hidden ? "Hide Secret Token" : "Show Secret Token");
+	});
+
 	// Get Google Token Cache Info
 	$("#google-token-cache-info").on("click", function () {
 		var button = $(this);
@@ -394,26 +410,42 @@ jQuery(document).ready(function ($) {
 					(index % 2 === 0 ? "background: #fafafa;" : "") +
 					'">';
 				emailsHtml +=
-					"<strong>Subject:</strong> " + escapeHtml(subject) + "<br>";
-				emailsHtml += "<strong>From:</strong> " + escapeHtml(from) + "<br>";
-				emailsHtml += "<strong>To:</strong> " + escapeHtml(to) + "<br>";
+					"<strong>Subject:</strong> " +
+					escapeHtml(subject) +
+					" - " +
+					"<strong>ID:</strong> " +
+					message.id +
+					"<br>";
+				emailsHtml +=
+					"<strong>From:</strong> " +
+					escapeHtml(from) +
+					" - " +
+					"<strong>To:</strong> " +
+					escapeHtml(to) +
+					"<br>";
 				if (typeof message.snippet != "undefined") {
+					emailsHtml +=
+						"<strong>Snippet:</strong> " + escapeHtml(message.snippet);
+
 					// Extract failed email addresses from subject or body
 					var failedEmail = extractEmailFromGmailMessage(message.snippet);
 					if (failedEmail) {
 						arrGoogleFailedEmails.push(failedEmail);
 
 						emailsHtml +=
+							"<br>" +
 							'<strong style="color: #dc3232;">Failed Email:</strong> ' +
+							'<a href="https://' +
+							window.location.hostname +
+							"/wp-admin/tools.php?page=email-campaigns&filter=1&search_email=" +
+							encodeURIComponent(failedEmail) +
+							'" target="_blank" class="' +
+							failedEmail.replace(/[^a-zA-Z0-9]/g, "_") +
+							'">' +
 							escapeHtml(failedEmail) +
-							"<br>";
+							"</a>";
 					}
-
-					emailsHtml +=
-						"<strong>Snippet:</strong> " + escapeHtml(message.snippet) + "<br>";
 				}
-				emailsHtml +=
-					'<small style="color: #666;">ID: ' + message.id + "</small>";
 				emailsHtml += "</div>";
 			} catch (e) {
 				console.error("Error processing Gmail message:", e, message);

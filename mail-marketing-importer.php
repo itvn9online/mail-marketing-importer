@@ -95,6 +95,7 @@ function mail_marketing_importer_update_database()
       `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
       `is_unsubscribed` tinyint(1) NOT NULL DEFAULT '0',
       `sended_at` datetime DEFAULT NULL,
+      `opened_at` datetime DEFAULT NULL,
       `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
       `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (`id`),
@@ -139,6 +140,7 @@ function mail_marketing_importer_update_database()
         'city' => "ALTER TABLE {$wpdb->prefix}mail_marketing ADD COLUMN city varchar(100) DEFAULT NULL",
         'state' => "ALTER TABLE {$wpdb->prefix}mail_marketing ADD COLUMN state varchar(50) DEFAULT NULL",
         'zip_code' => "ALTER TABLE {$wpdb->prefix}mail_marketing ADD COLUMN zip_code varchar(50) DEFAULT NULL",
+        'opened_at' => "ALTER TABLE {$wpdb->prefix}mail_marketing ADD COLUMN opened_at datetime DEFAULT NULL",
     );
 
     foreach ($columns_to_add as $column => $sql) {

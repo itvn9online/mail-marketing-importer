@@ -181,7 +181,7 @@ jQuery(document).ready(function ($) {
 
 		button.prop("disabled", true).text("Fetching...");
 		resultDiv.html(
-			'<p style="color: #666;">🔍 Đang tìm kiếm email với query: ' +
+			'<p style="color: #666;">Đang tìm kiếm email với query: ' +
 				searchQuery +
 				"...</p>"
 		);
@@ -201,6 +201,9 @@ jQuery(document).ready(function ($) {
 					resultDiv.html('<div id="google-emails-container"></div>');
 
 					if (messages.length > 0) {
+						arrGoogleFailedEmails = []; // Reset array
+
+						// Display summary
 						displayGoogleFailedEmails(messages, data);
 
 						// Process emails sequentially with caching
@@ -248,7 +251,7 @@ jQuery(document).ready(function ($) {
 				);
 			})
 			.always(function () {
-				button.prop("disabled", false).text("🔍 Fetch Failed Emails");
+				button.prop("disabled", false).text("Fetch Failed Emails");
 			});
 	});
 

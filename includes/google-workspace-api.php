@@ -110,8 +110,8 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
                         <option value="from:postmaster">From: Postmaster</option>
                         <option value="has:attachment subject:delivery">Has attachment + Delivery</option>
                     </select>
-                    <button type="button" id="fetch-google-failed-emails" class="button button-secondary" style="font-size: 12px;">
-                        🔍 Fetch Failed Emails
+                    <button type="button" id="fetch-google-failed-emails" class="button button-primary" style="font-size: 12px;">
+                        Fetch Failed Emails
                     </button>
                 </div>
                 <div style="display: flex; gap: 5px; align-items: center;">
@@ -206,7 +206,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
                 <h6 style="color: #0066cc; margin-top: 15px;">Bước 4: Test Functionality</h6>
                 <ul style="margin: 0; padding-left: 20px;">
                     <li>Chọn search type (ví dụ: "Subject: Delivery")</li>
-                    <li>Nhấn "🔍 Fetch Failed Emails"</li>
+                    <li>Nhấn "Fetch Failed Emails"</li>
                     <li>Xem danh sách email bounce/failed delivery</li>
                     <li>Bulk unsubscribe các email có vấn đề</li>
                 </ul>

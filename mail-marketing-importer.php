@@ -36,10 +36,10 @@ function mmi_get_domain_config_key()
 }
 
 // Create domain-specific config key for multi-domain support
-$domain_config_key = mmi_get_domain_config_key();
-define('MMI_ZOHO_CONFIG', 'mmi_zoho_config_' . $domain_config_key);
+define('MMI_DOMAIN_PREFIX', mmi_get_domain_config_key());
+define('MMI_ZOHO_CONFIG', 'mmi_zoho_config_' . MMI_DOMAIN_PREFIX);
 // echo 'MMI Domain Config Key: ' . MMI_ZOHO_CONFIG . '<br>';
-define('MMI_GOOGLE_CONFIG', 'mmi_google_config_' . $domain_config_key);
+define('MMI_GOOGLE_CONFIG', 'mmi_google_config_' . MMI_DOMAIN_PREFIX);
 // echo 'MMI Domain Config Key: ' . MMI_GOOGLE_CONFIG . '<br>';
 
 // Include required files
@@ -117,6 +117,7 @@ function mail_marketing_importer_update_database()
       `description` text DEFAULT NULL,
       `email_subject` varchar(255) DEFAULT NULL,
       `email_url` varchar(512) DEFAULT NULL,
+      `email2_url` varchar(512) DEFAULT NULL,
       `email_content` longtext DEFAULT NULL,
       `email_template` varchar(255) DEFAULT 'default.html',
       `start_date` datetime DEFAULT NULL,
@@ -154,6 +155,7 @@ function mail_marketing_importer_update_database()
     $campaign_columns_to_add = array(
         'email_subject' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_subject varchar(255) DEFAULT NULL",
         'email_url' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_url varchar(512) DEFAULT NULL",
+        'email2_url' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email2_url varchar(512) DEFAULT NULL",
         'email_content' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_content longtext DEFAULT NULL",
         'email_template' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN email_template varchar(255) DEFAULT 'default.html'",
         'start_date' => "ALTER TABLE {$wpdb->prefix}mail_marketing_campaigns ADD COLUMN start_date datetime DEFAULT NULL",

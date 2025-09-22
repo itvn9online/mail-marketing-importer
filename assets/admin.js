@@ -52,63 +52,6 @@ jQuery(document).ready(function ($) {
 		$("#new-campaign-group").show();
 	}
 
-	// Zoho Search Type Management
-	function initZohoSearchType() {
-		// Load saved search type from localStorage
-		var savedSearchType = localStorage.getItem("zoho_search_type");
-		if (savedSearchType) {
-			$("#zoho-search-type").val(savedSearchType);
-		}
-
-		// Handle search type change
-		$("#zoho-search-type").on("change", function () {
-			var searchType = $(this).val();
-			localStorage.setItem("zoho_search_type", searchType);
-
-			// If "from" is selected, prompt for email
-			if (searchType === "from") {
-				var savedFromEmail = localStorage.getItem("zoho_from_email") || "";
-				var fromEmail = prompt(
-					"Nhập email người gửi để tìm kiếm:",
-					savedFromEmail
-				);
-
-				if (fromEmail && fromEmail.trim() !== "") {
-					localStorage.setItem("zoho_from_email", fromEmail.trim());
-				} else if (fromEmail === null) {
-					// User cancelled, revert to previous selection
-					var previousType =
-						localStorage.getItem("zoho_search_type_previous") ||
-						"subject:Delivery";
-					$(this).val(previousType);
-					localStorage.setItem("zoho_search_type", previousType);
-					return;
-				} else {
-					// Empty email, show error
-					alert("Email người gửi không được để trống!");
-					var previousType =
-						localStorage.getItem("zoho_search_type_previous") ||
-						"subject:Delivery";
-					$(this).val(previousType);
-					localStorage.setItem("zoho_search_type", previousType);
-					return;
-				}
-			}
-
-			// Save previous selection for fallback
-			localStorage.setItem("zoho_search_type_previous", searchType);
-		});
-
-		// Save previous selection initially
-		localStorage.setItem(
-			"zoho_search_type_previous",
-			$("#zoho-search-type").val()
-		);
-	}
-
-	// Initialize Zoho search type when page loads
-	initZohoSearchType();
-
 	// Form validation before submit
 	$("#mmi-upload-form").on("submit", function (e) {
 		var campaignOption = $('input[name="campaign_option"]:checked').val();

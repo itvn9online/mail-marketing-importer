@@ -92,7 +92,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
             <ul style="font-size: 12px; color: #666; margin-top: 5px;">
                 <li>Refresh Token: sẽ tự động lưu trong quá trình OAuth authorization.</li>
                 <li>User Email: Email Gmail/Workspace để truy cập mailbox (thường là admin email).</li>
-                <li>Scope cần thiết: https://www.googleapis.com/auth/gmail.readonly</li>
+                <li>Scope cần thiết: https://www.googleapis.com/auth/gmail.modify</li>
             </ul>
 
             <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -137,7 +137,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
             <p style="color: #856404; font-size: 13px; margin-bottom: 10px;">
                 Nếu chưa có Refresh Token, hãy sử dụng công cụ này để tạo bằng Google Client ID và Client Secret đã cấu hình ở trên.
                 <strong>Quá trình sẽ được tự động xử lý sau khi authorization!</strong>
-                <br><small style="color: #28a745;">✅ Scope: https://www.googleapis.com/auth/gmail.readonly</small>
+                <br><small style="color: #28a745;">✅ Scope: https://www.googleapis.com/auth/gmail.modify</small>
             </p>
 
             <div style="display: flex; gap: 10px; justify-content: flex-start; align-items: center; margin-bottom: 10px;">
@@ -189,7 +189,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
                     <li>Vào "APIs & Services" → "OAuth consent screen"</li>
                     <li>Chọn "Internal" (cho Google Workspace) hoặc "External"</li>
                     <li>Điền thông tin cơ bản của app</li>
-                    <li>Thêm scope: <code style="background: #f4f4f4; padding: 2px 4px; border-radius: 2px;">https://www.googleapis.com/auth/gmail.readonly</code></li>
+                    <li>Thêm scope: <code style="background: #f4f4f4; padding: 2px 4px; border-radius: 2px;">https://www.googleapis.com/auth/gmail.modify</code></li>
                     <li>Thêm test users (email accounts cần truy cập)</li>
                 </ul>
 

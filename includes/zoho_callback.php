@@ -140,7 +140,7 @@ if (!empty($access_token)) {
     if (strpos($selected_scope, 'ZohoMail.messages.') !== false) {
         // Lưu cache với thời gian hết hạn trước 5 phút để đảm bảo an toàn
         $cache_duration = max(300, $expires_in - 300); // Tối thiểu 5 phút, trừ 5 phút từ thời gian hết hạn thực
-        set_transient('mmi_zoho_access_token', $access_token, $cache_duration);
+        set_transient(MMI_DOMAIN_PREFIX . 'mmi_zoho_access_token', $access_token, $cache_duration);
     }
 }
 

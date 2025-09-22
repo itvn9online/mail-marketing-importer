@@ -67,7 +67,7 @@ if (isset($_GET['code'])) {
     // Also save access token to transient for immediate use
     $expires_in = $data['expires_in'] ?? 3600;
     $cache_duration = max(300, $expires_in - 300); // 5 minutes before expiry
-    set_transient('mmi_google_access_token', $data['access_token'], $cache_duration);
+    set_transient(MMI_DOMAIN_PREFIX . 'mmi_google_access_token', $data['access_token'], $cache_duration);
 
     // Success page
 ?>
@@ -161,7 +161,7 @@ if (isset($_GET['code'])) {
                 <ul>
                     <li><strong>Refresh Token:</strong> Securely saved to WordPress database</li>
                     <li><strong>Access Token:</strong> Cached for immediate use (expires in <?php echo $expires_in; ?> seconds)</li>
-                    <li><strong>Scope:</strong> <?php echo esc_html($data['scope'] ?? 'gmail.readonly'); ?></li>
+                    <li><strong>Scope:</strong> <?php echo esc_html($data['scope'] ?? 'gmail.modify'); ?></li>
                 </ul>
             </div>
 
@@ -179,7 +179,7 @@ if (isset($_GET['code'])) {
                 <strong>Token Details (for debugging):</strong><br>
                 <strong>Token Type:</strong> <?php echo esc_html($data['token_type'] ?? 'Bearer'); ?><br>
                 <strong>Expires In:</strong> <?php echo esc_html($expires_in); ?> seconds<br>
-                <strong>Scope:</strong> <?php echo esc_html($data['scope'] ?? 'gmail.readonly'); ?><br>
+                <strong>Scope:</strong> <?php echo esc_html($data['scope'] ?? 'gmail.modify'); ?><br>
                 <strong>Access Token Preview:</strong> <?php echo esc_html(substr($data['access_token'], 0, 20)); ?>...<br>
                 <strong>Refresh Token Preview:</strong> <?php echo esc_html(substr($data['refresh_token'], 0, 20)); ?>...<br>
             </div>

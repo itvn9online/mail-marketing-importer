@@ -60,6 +60,7 @@ if (!defined('ABSPATH')) {
                     </ul>
                 </td>
             </tr>
+
             <tr>
                 <th scope="row">Email URL</th>
                 <td>
@@ -70,6 +71,18 @@ if (!defined('ABSPATH')) {
                     <p class="description">Main URL that this campaign directs to (landing page, product page, etc.)</p>
                 </td>
             </tr>
+
+            <tr>
+                <th scope="row">Email URL (2)</th>
+                <td>
+                    <input type="url" name="email2_url" id="email2_url" class="large-text"
+                        value="<?php echo $edit_campaign ? esc_attr($edit_campaign->email2_url ?? '') : ''; ?>"
+                        placeholder="https://example.com/landing-page" style="max-width: 80%;">
+                    <button type="button" id="add-utm2-params-btn" class="button button-secondary" style="margin-left: 10px;">Add UTM Parameters</button>
+                    <p class="description">Main URL that this campaign directs to (landing page, product page, etc.)</p>
+                </td>
+            </tr>
+
             <tr>
                 <th scope="row">Email Template</th>
                 <td>
@@ -139,6 +152,7 @@ if (!defined('ABSPATH')) {
                                 '{CITY}',
                                 '{CURRENT_DATE}',
                                 '{EMAIL_URL}',
+                                '{EMAIL2_URL}',
                             ] as $v
                         ) {
                         ?>

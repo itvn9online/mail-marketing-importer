@@ -666,9 +666,23 @@ class Mail_Marketing_Importer
     {
         global $wpdb;
 
-        $total = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing");
-        $active = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing WHERE status = 0 AND is_deleted = 0 AND is_unsubscribed = 0");
-        $sent = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing WHERE status = 1");
+        $statuss = [
+            'status0' => 0,
+            'status1' => 0,
+        ];
+        $total = 0;
+        // $total = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing");
+        // $active = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing WHERE status = 0");
+        // $sent = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing WHERE status = 1");
+        $status_rows = $wpdb->get_results("SELECT COUNT(id) AS count, status FROM {$wpdb->prefix}mail_marketing GROUP BY status");
+        // print_r($status_rows);
+        foreach ($status_rows as $status_row) {
+            $statuss['status' . $status_row->status] = intval($status_row->count);
+            $total += intval($status_row->count);
+        }
+        // print_r($statuss);
+
+        // 
         $delete = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing WHERE is_deleted = 1");
         $unsubscribed = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing WHERE is_unsubscribed = 1");
         $opened = $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mail_marketing WHERE opened_at IS NOT NULL");
@@ -677,8 +691,8 @@ class Mail_Marketing_Importer
         echo '<thead><tr><th>Status</th><th>Count</th></tr></thead>';
         echo '<tbody>';
         echo '<tr><td>Total Records</td><td>' . number_format($total) . '</td></tr>';
-        echo '<tr><td>Pending (Status 0)</td><td>' . number_format($active) . '</td></tr>';
-        echo '<tr><td>Sent (Status 1)</td><td>' . number_format($sent) . '</td></tr>';
+        echo '<tr><td>Pending (Status 0)</td><td>' . number_format($statuss['status0']) . '</td></tr>';
+        echo '<tr><td>Sent (Status 1)</td><td>' . number_format($statuss['status1']) . '</td></tr>';
         echo '<tr><td>Opened Emails</td><td>' . number_format($opened) . '</td></tr>';
         echo '<tr><td>Deleted (is_deleted = 1)</td><td>' . number_format($delete) . '</td></tr>';
         echo '<tr><td>Unsubscribed (is_unsubscribed = 1)</td><td>' . number_format($unsubscribed) . '</td></tr>';
@@ -1019,6 +1033,7 @@ class Mail_Marketing_Importer
             '{SITE_NAME}' => get_bloginfo('name'),
             '{SITE_URL}' => home_url(),
             '{EMAIL_URL}' => home_url(),
+            '{EMAIL2_URL}' => home_url(),
             '{UNSUBSCRIBE_URL}' => $data['unsubscribe_url'] ?? '#',
             '{CURRENT_DATE}' => date_i18n('F j, Y'),
             '{CURRENT_YEAR}' => date_i18n('Y')
@@ -1199,6 +1214,7 @@ class Mail_Marketing_Importer
         $description = sanitize_textarea_field($_POST['campaign_description']);
         $email_subject = sanitize_text_field($_POST['email_subject']);
         $email_url = esc_url_raw($_POST['email_url'] ?? '');
+        $email2_url = esc_url_raw($_POST['email2_url'] ?? '');
         // Fix for magic quotes issue - remove auto-added backslashes before processing
         $email_content_raw = isset($_POST['email_content']) ? $_POST['email_content'] : '';
         // Handle magic quotes properly - WordPress may add slashes automatically
@@ -1222,6 +1238,7 @@ class Mail_Marketing_Importer
                 'description' => $description,
                 'email_subject' => $email_subject,
                 'email_url' => $email_url,
+                'email2_url' => $email2_url,
                 'email_content' => $email_content,
                 'email_template' => $email_template,
                 'start_date' => $start_date,
@@ -1259,6 +1276,7 @@ class Mail_Marketing_Importer
         $description = sanitize_textarea_field($_POST['campaign_description']);
         $email_subject = sanitize_text_field($_POST['email_subject']);
         $email_url = esc_url_raw($_POST['email_url'] ?? '');
+        $email2_url = esc_url_raw($_POST['email2_url'] ?? '');
         // Fix for magic quotes issue - remove auto-added backslashes before processing
         $email_content_raw = isset($_POST['email_content']) ? $_POST['email_content'] : '';
         // Handle magic quotes properly - WordPress may add slashes automatically
@@ -1299,6 +1317,7 @@ class Mail_Marketing_Importer
                 'description' => $description,
                 'email_subject' => $email_subject,
                 'email_url' => $email_url,
+                'email2_url' => $email2_url,
                 'email_content' => $email_content,
                 'email_template' => $email_template,
                 'start_date' => $start_date,
@@ -1674,7 +1693,7 @@ class Mail_Marketing_Importer
         }
 
         // Kiểm tra cache hiện có
-        $cached_token = get_transient('mmi_zoho_access_token');
+        $cached_token = get_transient(MMI_DOMAIN_PREFIX . 'mmi_zoho_access_token');
 
         if ($cached_token && !empty($cached_token)) {
             return array(
@@ -1731,7 +1750,7 @@ class Mail_Marketing_Importer
 
         // Lưu cache với thời gian hết hạn trước 5 phút để đảm bảo an toàn
         $cache_duration = max(300, $expires_in - 300); // Tối thiểu 5 phút, trừ 5 phút từ thời gian hết hạn thực
-        set_transient('mmi_zoho_access_token', $access_token, $cache_duration);
+        set_transient(MMI_DOMAIN_PREFIX . 'mmi_zoho_access_token', $access_token, $cache_duration);
         sleep(1); // Đợi 1 giây để đảm bảo token được lưu trước khi sử dụng
 
         return array(
@@ -1760,7 +1779,7 @@ class Mail_Marketing_Importer
             return;
         }
 
-        delete_transient('mmi_zoho_access_token');
+        delete_transient(MMI_DOMAIN_PREFIX . 'mmi_zoho_access_token');
 
         wp_send_json_success(array(
             'message' => 'Zoho access token cache cleared successfully'
@@ -1783,7 +1802,7 @@ class Mail_Marketing_Importer
             return;
         }
 
-        $cached_token = get_transient('mmi_zoho_access_token');
+        $cached_token = get_transient(MMI_DOMAIN_PREFIX . 'mmi_zoho_access_token');
         $cache_exists = !empty($cached_token);
 
         // Get remaining cache time
@@ -2026,7 +2045,7 @@ class Mail_Marketing_Importer
         }
 
         // Kiểm tra cache hiện có
-        $cached_token = get_transient('mmi_google_access_token');
+        $cached_token = get_transient(MMI_DOMAIN_PREFIX . 'mmi_google_access_token');
 
         if ($cached_token && !empty($cached_token)) {
             return array(
@@ -2073,7 +2092,7 @@ class Mail_Marketing_Importer
 
         // Lưu cache với thời gian hết hạn trước 5 phút để đảm bảo an toàn
         $cache_duration = max(300, $expires_in - 300); // Tối thiểu 5 phút, trừ 5 phút từ thời gian hết hạn thực
-        set_transient('mmi_google_access_token', $access_token, $cache_duration);
+        set_transient(MMI_DOMAIN_PREFIX . 'mmi_google_access_token', $access_token, $cache_duration);
         sleep(1); // Đợi 1 giây để đảm bảo token được lưu trước khi sử dụng
 
         return array(
@@ -2187,6 +2206,7 @@ class Mail_Marketing_Importer
             $data = json_decode($body, true);
 
             if (isset($data['error'])) {
+                // wp_send_json_error('Gmail API error: ' . MMI_GOOGLE_CONFIG . json_encode($google_config));
                 wp_send_json_error('Gmail API error: ' . json_encode($data['error']));
                 return;
             }
@@ -2224,7 +2244,7 @@ class Mail_Marketing_Importer
             return;
         }
 
-        delete_transient('mmi_google_access_token');
+        delete_transient(MMI_DOMAIN_PREFIX . 'mmi_google_access_token');
 
         wp_send_json_success(array(
             'message' => 'Google access token cache cleared successfully'
@@ -2247,7 +2267,7 @@ class Mail_Marketing_Importer
             return;
         }
 
-        $cached_token = get_transient('mmi_google_access_token');
+        $cached_token = get_transient(MMI_DOMAIN_PREFIX . 'mmi_google_access_token');
         $cache_exists = !empty($cached_token);
 
         wp_send_json_success(array(

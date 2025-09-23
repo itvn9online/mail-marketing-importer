@@ -417,7 +417,9 @@ jQuery(document).ready(function ($) {
 				});
 
 				emailsHtml +=
-					'<div style="padding: 10px; border-bottom: 1px solid #eee; ' +
+					'<div data-id="' +
+					message.id +
+					'" style="padding: 10px; border-bottom: 1px solid #eee; ' +
 					(processedCount % 2 === 0 ? "background: #fafafa;" : "") +
 					'">';
 				emailsHtml +=
@@ -447,15 +449,10 @@ jQuery(document).ready(function ($) {
 							showBulkUnsubscribeSection();
 							my_notice("✅ First failed email found: " + firstEmail);
 
-							//
-							if (processedCount > 1) {
+							// Stop the bulk unsubscribe section after 22 seconds
+							setTimeout(() => {
 								stopBulkUnsubscribeSection = true;
-							} else {
-								// Stop the bulk unsubscribe section after 22 seconds
-								setTimeout(() => {
-									stopBulkUnsubscribeSection = true;
-								}, 22 * 1000);
-							}
+							}, 22 * 1000);
 						} else {
 							arrGoogleFailedEmails.push(failedEmail);
 						}
@@ -572,9 +569,6 @@ jQuery(document).ready(function ($) {
 
 	function saveGoogleEmailCache(cache) {
 		try {
-			// Remove sensitive information
-			cache.payload.parts = null;
-
 			// Save to localStorage
 			localStorage.setItem(
 				"cacheDetailedGoogleFailedEmails",
@@ -639,7 +633,7 @@ jQuery(document).ready(function ($) {
 		function processNextEmail() {
 			updateProgress();
 
-			if (selectedEmails.length === 0) {
+			if (selectedEmails.length < 1) {
 				// All emails processed - show completion
 				progressDiv.html(
 					`✅ Completed! Processed ${totalMessages} emails, found ${arrGoogleFailedEmails.length} failed addresses.`
@@ -684,6 +678,23 @@ jQuery(document).ready(function ($) {
 					if (response.success && response.data) {
 						const detailedMessages = response.data.detailed_messages || [];
 
+						// Remove sensitive information
+						if (detailedMessages.length > 0) {
+							detailedMessages.forEach((message) => {
+								// chạy vòng lặp để gán null mọi thứ trong payload trừ headers
+								if (message.payload) {
+									for (const key in message.payload) {
+										if (
+											message.payload.hasOwnProperty(key) &&
+											key !== "headers"
+										) {
+											message.payload[key] = null;
+										}
+									}
+								}
+							});
+						}
+
 						// Save to cache
 						addToGoogleEmailCache(email.id, detailedMessages);
 
@@ -710,7 +721,8 @@ jQuery(document).ready(function ($) {
 	}
 
 	function showBulkUnsubscribeSection() {
-		if (arrGoogleFailedEmails.length === 0) return;
+		if (arrGoogleFailedEmails.length < 1) return;
+		if ($("#google-failed-emails-list").length > 0) return; // Already shown
 
 		const uniqueEmails = [...new Set(arrGoogleFailedEmails)];
 

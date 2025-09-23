@@ -33,7 +33,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
     <div class="google-workspace-integration">
         <h4 style="margin-bottom: 10px; color: #666;">📧 Google Workspace Gmail Failed Delivery Integration</h4>
         <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 3px;">
-            <h6 style="margin-top: 0; color: #856404;">🔧 Redirect URI quan trọng:</h6>
+            <p style="margin-top: 0; color: #856404;">🔧 Redirect URI quan trọng:</p>
             <p style="margin: 5px 0; font-size: 13px; color: #856404;">
                 <strong>Khi tạo Google Cloud Console OAuth 2.0 Client, hãy sử dụng Redirect URI sau:</strong>
             </p>
@@ -53,7 +53,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
         </p>
 
         <div style="background: #d1ecf1; border-left: 4px solid #bee5eb; padding: 10px; margin-bottom: 15px; border-radius: 3px;">
-            <h6 style="margin-top: 0; color: #0c5460;">💡 Cách sử dụng:</h6>
+            <p style="margin-top: 0; color: #0c5460;">💡 Cách sử dụng:</p>
             <ul style="margin: 5px 0 0 20px; font-size: 13px; color: #0c5460;">
                 <li><strong>Save Config:</strong> Lưu từng phần thông tin (không cần điền đầy đủ cùng lúc)</li>
                 <li><strong>Fetch Emails:</strong> Sử dụng Gmail API để tìm email bounce/failed delivery</li>
@@ -167,7 +167,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
         <details style="margin-top: 15px;">
             <summary style="cursor: pointer; color: #0073aa; font-size: 12px;">📋 Google Workspace Setup Guide</summary>
             <div style="margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 3px; font-size: 12px; line-height: 1.5;">
-                <h6 style="margin-top: 0; color: #0066cc;">Bước 1: Tạo Google Cloud Project & OAuth Client</h6>
+                <p style="margin-top: 0; color: #0066cc;">Bước 1: Tạo Google Cloud Project & OAuth Client</p>
                 <ol style="margin: 0; padding-left: 20px;">
                     <li>Truy cập <a href="https://console.cloud.google.com" target="_blank" style="color: #0073aa;">Google Cloud Console</a></li>
                     <li>Tạo new project hoặc chọn existing project</li>
@@ -184,7 +184,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
                     <li>Sau khi tạo, lưu lại <strong>Client ID</strong> và <strong>Client Secret</strong></li>
                 </ol>
 
-                <h6 style="color: #0066cc; margin-top: 15px;">Bước 2: Cấu hình OAuth Consent Screen</h6>
+                <p style="color: #0066cc; margin-top: 15px;">Bước 2: Cấu hình OAuth Consent Screen</p>
                 <ul style="margin: 0; padding-left: 20px;">
                     <li>Vào "APIs & Services" → "OAuth consent screen"</li>
                     <li>Chọn "Internal" (cho Google Workspace) hoặc "External"</li>
@@ -193,7 +193,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
                     <li>Thêm test users (email accounts cần truy cập)</li>
                 </ul>
 
-                <h6 style="color: #0066cc; margin-top: 15px;">Bước 3: Generate Refresh Token</h6>
+                <p style="color: #0066cc; margin-top: 15px;">Bước 3: Generate Refresh Token</p>
                 <ul style="margin: 0; padding-left: 20px;">
                     <li>Điền Client ID và Client Secret vào form trên</li>
                     <li>Nhập Gmail/Workspace email cần truy cập</li>
@@ -203,7 +203,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
                     <li>Google sẽ redirect về WordPress và tự động lưu token</li>
                 </ul>
 
-                <h6 style="color: #0066cc; margin-top: 15px;">Bước 4: Test Functionality</h6>
+                <p style="color: #0066cc; margin-top: 15px;">Bước 4: Test Functionality</p>
                 <ul style="margin: 0; padding-left: 20px;">
                     <li>Chọn search type (ví dụ: "Subject: Delivery")</li>
                     <li>Nhấn "Fetch Failed Emails"</li>

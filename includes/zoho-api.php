@@ -32,7 +32,7 @@ $zoho_config = get_option(MMI_ZOHO_CONFIG, array(
     <div class="zoho-mail-integration">
         <h4 style="margin-bottom: 10px; color: #666;">📬 Zoho Mail Failed Delivery Integration</h4>
         <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 3px;">
-            <h6 style="margin-top: 0; color: #856404;">🔧 Redirect URI quan trọng:</h6>
+            <p style="margin-top: 0; color: #856404;">🔧 Redirect URI quan trọng:</p>
             <p style="margin: 5px 0; font-size: 13px; color: #856404;">
                 <strong>Khi tạo Zoho API App, hãy sử dụng Redirect URI sau:</strong>
             </p>
@@ -52,7 +52,7 @@ $zoho_config = get_option(MMI_ZOHO_CONFIG, array(
         </p>
 
         <div style="background: #d1ecf1; border-left: 4px solid #bee5eb; padding: 10px; margin-bottom: 15px; border-radius: 3px;">
-            <h6 style="margin-top: 0; color: #0c5460;">💡 Cách sử dụng mới:</h6>
+            <p style="margin-top: 0; color: #0c5460;">💡 Cách sử dụng mới:</p>
             <ul style="margin: 5px 0 0 20px; font-size: 13px; color: #0c5460;">
                 <li><strong>Save Config:</strong> Bạn có thể lưu từng phần thông tin (không cần điền đầy đủ cùng lúc)</li>
                 <li><strong>Fetch Emails:</strong> Sẽ tự động sử dụng Account ID đã lưu nếu không nhập</li>
@@ -183,7 +183,7 @@ $zoho_config = get_option(MMI_ZOHO_CONFIG, array(
         <details style="margin-top: 15px;">
             <summary style="cursor: pointer; color: #0073aa; font-size: 12px;">📋 Hướng dẫn chi tiết</summary>
             <div style="margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 3px; font-size: 12px; line-height: 1.5;">
-                <h6 style="margin-top: 0; color: #0066cc;">Bước 1: Tạo Zoho API App</h6>
+                <p style="margin-top: 0; color: #0066cc;">Bước 1: Tạo Zoho API App</p>
                 <ol style="margin: 0; padding-left: 20px;">
                     <li>Truy cập <a href="https://api-console.zoho.com" target="_blank" style="color: #0073aa;">Zoho Developer Console</a></li>
                     <li>Nhấn "GET STARTED" → Chọn "Server-based Applications"</li>
@@ -197,13 +197,13 @@ $zoho_config = get_option(MMI_ZOHO_CONFIG, array(
                     <li>Sau khi tạo, lưu lại <strong>Client ID</strong> và <strong>Client Secret</strong></li>
                 </ol>
 
-                <h6 style="color: #0066cc; margin-top: 15px;">Bước 2: Thiết lập Scopes</h6>
+                <p style="color: #0066cc; margin-top: 15px;">Bước 2: Thiết lập Scopes</p>
                 <ul style="margin: 0; padding-left: 20px;">
                     <li>Trong app vừa tạo, vào tab "Scope"</li>
                     <li>Thêm scope: <code style="background: #f4f4f4; padding: 2px 4px; border-radius: 2px;">ZohoMail.messages.READ</code></li>
                 </ul>
 
-                <h6 style="color: #0066cc; margin-top: 15px;">Bước 4: Tạo Refresh Token</h6>
+                <p style="color: #0066cc; margin-top: 15px;">Bước 4: Tạo Refresh Token</p>
                 <ul style="margin: 0; padding-left: 20px;">
                     <li>Điền Client ID và Client Secret vào form trên</li>
                     <li>Nhấn "🔗 Tạo Auth URL"</li>
@@ -211,7 +211,7 @@ $zoho_config = get_option(MMI_ZOHO_CONFIG, array(
                     <li>Authorize trên Zoho - sẽ tự động redirect về WordPress</li>
                     <li>WordPress sẽ tự động lấy và lưu Refresh Token</li>
                 </ul>
-                <h6 style="color: #0066cc; margin-top: 15px;">Bước 3: Lấy Account ID</h6>
+                <p style="color: #0066cc; margin-top: 15px;">Bước 3: Lấy Account ID</p>
                 <ul style="margin: 0; padding-left: 20px;">
                     <li>Đăng nhập <a href="https://mail.zoho.com/" target="_blank" style="color: #0073aa;">Zoho Mail</a></li>
                     <li>Vào Settings → Account Details</li>

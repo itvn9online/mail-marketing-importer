@@ -2180,7 +2180,7 @@ class Mail_Marketing_Importer
             // Gmail search parameters
             $query_params = array(
                 'q' => $search_query,
-                'maxResults' => 200, // Gmail API max is 500, but we'll use 200 for reasonable response time
+                'maxResults' => 333, // Gmail API max is 500, but we'll use 333 for reasonable response time
             );
 
             // Add date filter for last 7 days

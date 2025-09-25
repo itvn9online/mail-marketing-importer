@@ -1,7 +1,7 @@
 var arrGoogleFailedEmails = [];
 var stopBulkUnsubscribeSection = false;
 
-function bulkUnsubscribeGoogleEmails() {
+function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 	let $ = jQuery;
 	var emails = $("#google-failed-emails-list").val().trim();
 	if (!emails) {
@@ -10,6 +10,7 @@ function bulkUnsubscribeGoogleEmails() {
 	}
 
 	if (
+		is_confirmed === true &&
 		!confirm(
 			"Are you sure you want to unsubscribe " +
 				emails.split(",").length +
@@ -458,6 +459,7 @@ jQuery(document).ready(function ($) {
 								showBulkUnsubscribeSection();
 								setTimeout(() => {
 									stopBulkUnsubscribeSection = true;
+									bulkUnsubscribeGoogleEmails(false);
 								}, 100);
 							}, 22 * 1000);
 						}
@@ -606,9 +608,9 @@ jQuery(document).ready(function ($) {
 			cache.push(cacheItem);
 		}
 
-		// Limit cache size to prevent localStorage bloat (keep last 200 items)
-		if (cache.length > 200) {
-			cache.splice(0, cache.length - 200);
+		// Limit cache size to prevent localStorage bloat (keep last 333 items)
+		if (cache.length > 333) {
+			cache.splice(0, cache.length - 333);
 		}
 
 		saveGoogleEmailCache(cache);

@@ -391,7 +391,11 @@ jQuery(document).ready(function ($) {
 		container.html(html);
 	}
 
-	function displayDetailedGoogleFailedEmails(detailedMessages, processedCount) {
+	function displayDetailedGoogleFailedEmails(
+		detailedMessages,
+		processedCount,
+		inCache = false
+	) {
 		if (detailedMessages.length < 1) {
 			return false;
 		}
@@ -451,11 +455,13 @@ jQuery(document).ready(function ($) {
 
 							// Stop the bulk unsubscribe section after 22 seconds
 							setTimeout(() => {
-								stopBulkUnsubscribeSection = true;
+								showBulkUnsubscribeSection();
+								setTimeout(() => {
+									stopBulkUnsubscribeSection = true;
+								}, 100);
 							}, 22 * 1000);
-						} else {
-							arrGoogleFailedEmails.push(failedEmail);
 						}
+						arrGoogleFailedEmails.push(failedEmail);
 
 						// Show failed email addresses
 						emailsHtml +=
@@ -661,7 +667,11 @@ jQuery(document).ready(function ($) {
 			const cachedData = getCachedGoogleEmail(email.id);
 			if (cachedData) {
 				console.log(`📋 Using cached data for email ID: ${email.id}`);
-				displayDetailedGoogleFailedEmails(cachedData.messages, processedCount);
+				displayDetailedGoogleFailedEmails(
+					cachedData.messages,
+					processedCount,
+					true
+				);
 				setTimeout(processNextEmail, 100); // Faster processing for cached items
 				return;
 			}
@@ -722,9 +732,12 @@ jQuery(document).ready(function ($) {
 
 	function showBulkUnsubscribeSection() {
 		if (arrGoogleFailedEmails.length < 1) return;
-		if ($("#google-failed-emails-list").length > 0) return; // Already shown
 
 		const uniqueEmails = [...new Set(arrGoogleFailedEmails)];
+		if ($("#google-failed-emails-list").length > 0) {
+			$("#google-failed-emails-list").val(uniqueEmails.join(",")).focus();
+			return;
+		}
 
 		let html = "";
 		html +=
@@ -745,6 +758,7 @@ jQuery(document).ready(function ($) {
 		html += "</div>";
 
 		$("#google-emails-container").append(html);
+		$("#google-failed-emails-list").focus();
 	}
 
 	// Global function to clear cache (accessible from onclick)

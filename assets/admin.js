@@ -1,12 +1,16 @@
-function my_warning(message) {
-	return my_notice(message, "warning");
+function my_warning(message, duration = 99) {
+	return my_notice(message, "warning", duration);
 }
 
-function my_error(message) {
-	return my_notice(message, "error");
+function my_error(message, duration = 0) {
+	return my_notice(message, "error", duration);
 }
 
-function my_notice(message, type) {
+function my_success(message, duration = 33) {
+	return my_notice(message, "success", duration);
+}
+
+function my_notice(message, type, duration = 33) {
 	let $ = jQuery;
 	if ($("#parent-notice").length < 1) {
 		$("body").append('<div id="parent-notice"></div>');
@@ -19,11 +23,13 @@ function my_notice(message, type) {
 	);
 	notice.text(message);
 	$("#parent-notice").append(notice);
-	setTimeout(function () {
-		notice.fadeOut(300, function () {
-			$(this).remove();
-		});
-	}, 9000);
+	if (duration > 0) {
+		setTimeout(function () {
+			notice.fadeOut(300, function () {
+				$(this).remove();
+			});
+		}, duration * 1000);
+	}
 }
 
 jQuery(document).ready(function ($) {

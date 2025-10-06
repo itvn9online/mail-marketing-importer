@@ -1,5 +1,7 @@
 var arrGoogleFailedEmails = [];
 var stopBulkUnsubscribeSection = false;
+// var hasCachedGoogleEmails = false;
+var clearTimeoutBulkUnsubscribe = null;
 
 function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 	let $ = jQuery;
@@ -20,10 +22,15 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 		return;
 	}
 
-	// lưu email đầu tiên vào localStorage
+	// lưu email đầu tiên vào localStorage + thời gian hiện tại theo định dạng Năm-Tháng-Ngày Giờ:Phút:Giây, giờ Việt Nam
 	let firstEmail = emails.split(",")[0].trim();
 	if (firstEmail != "" && firstEmail.includes("@")) {
-		localStorage.setItem("firstGoogleFailedEmail", firstEmail);
+		localStorage.setItem(
+			"firstGoogleFailedEmail",
+			firstEmail +
+				"|" +
+				new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" })
+		);
 		my_notice("✅ First failed email saved: " + firstEmail);
 	}
 
@@ -37,11 +44,12 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 		},
 		function (response) {
 			if (response.success) {
-				my_notice(
+				my_success(
 					"✅ Bulk unsubscribe completed!\nProcessed: " +
 						response.processed_emails.length +
 						" emails\nAffected rows: " +
-						response.affected_rows
+						response.affected_rows,
+					0
 				);
 
 				if (response.errors.length > 0) {
@@ -450,18 +458,27 @@ jQuery(document).ready(function ($) {
 					if (failedEmail) {
 						// lấy email trong localStorage để làm nổi bật
 						let firstEmail = localStorage.getItem("firstGoogleFailedEmail");
+						if (firstEmail) {
+							firstEmail = firstEmail.split("|")[0];
+						}
 						if (failedEmail == firstEmail) {
 							showBulkUnsubscribeSection();
 							my_notice("✅ First failed email found: " + firstEmail);
 
 							// Stop the bulk unsubscribe section after 22 seconds
-							setTimeout(() => {
-								showBulkUnsubscribeSection();
-								setTimeout(() => {
-									stopBulkUnsubscribeSection = true;
-									bulkUnsubscribeGoogleEmails(false);
-								}, 100);
-							}, 22 * 1000);
+							if (inCache === true) {
+								my_notice("Auto Unsubscribe after 22 seconds...");
+								clearTimeout(clearTimeoutBulkUnsubscribe);
+								clearTimeoutBulkUnsubscribe = setTimeout(() => {
+									showBulkUnsubscribeSection();
+									setTimeout(() => {
+										stopBulkUnsubscribeSection = true;
+										bulkUnsubscribeGoogleEmails(false);
+									}, 100);
+
+									my_notice("Auto Unsubscribe completed");
+								}, 22 * 1000);
+							}
 						}
 						arrGoogleFailedEmails.push(failedEmail);
 
@@ -643,9 +660,9 @@ jQuery(document).ready(function ($) {
 
 			if (selectedEmails.length < 1) {
 				// All emails processed - show completion
-				progressDiv.html(
-					`✅ Completed! Processed ${totalMessages} emails, found ${arrGoogleFailedEmails.length} failed addresses.`
-				);
+				let msg = `✅ Completed! Processed ${totalMessages} emails, found ${arrGoogleFailedEmails.length} failed addresses.`;
+				progressDiv.html(msg);
+				my_success(msg, 0);
 
 				if (arrGoogleFailedEmails.length > 0) {
 					showBulkUnsubscribeSection();
@@ -669,6 +686,7 @@ jQuery(document).ready(function ($) {
 			const cachedData = getCachedGoogleEmail(email.id);
 			if (cachedData) {
 				console.log(`📋 Using cached data for email ID: ${email.id}`);
+				// hasCachedGoogleEmails = true;
 				displayDetailedGoogleFailedEmails(
 					cachedData.messages,
 					processedCount,
@@ -676,6 +694,10 @@ jQuery(document).ready(function ($) {
 				);
 				setTimeout(processNextEmail, 100); // Faster processing for cached items
 				return;
+			}
+			if (clearTimeoutBulkUnsubscribe !== null) {
+				clearTimeout(clearTimeoutBulkUnsubscribe);
+				clearTimeoutBulkUnsubscribe = null;
 			}
 
 			// Fetch from server
@@ -733,7 +755,9 @@ jQuery(document).ready(function ($) {
 	}
 
 	function showBulkUnsubscribeSection() {
-		if (arrGoogleFailedEmails.length < 1) return;
+		if (arrGoogleFailedEmails.length < 1) {
+			return;
+		}
 
 		const uniqueEmails = [...new Set(arrGoogleFailedEmails)];
 		if ($("#google-failed-emails-list").length > 0) {
@@ -770,4 +794,17 @@ jQuery(document).ready(function ($) {
 			my_notice("✅ Cache cleared successfully!");
 		}
 	};
+
+	// Hiển thị localStorage firstGoogleFailedEmail khi tải trang
+	(function () {
+		var firstEmail = localStorage.getItem("firstGoogleFailedEmail");
+		if (firstEmail && firstEmail.trim() !== "") {
+			$("#localstorage-cache-info").html(
+				'<span style="color: #0073aa; font-size: 12px;">📌 <strong>First Failed Email (cached):</strong> ' +
+					firstEmail.replace("|", " at ") +
+					"</span>" +
+					'<button type="button" class="button button-small" style="font-size: 12px; margin-left: 10px;" onclick="localStorage.removeItem(\'firstGoogleFailedEmail\');">🗑️ Clear</button>'
+			);
+		}
+	})();
 });

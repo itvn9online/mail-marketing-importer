@@ -73,7 +73,7 @@ class Mail_Marketing_Importer
         // Campaign management page
         add_submenu_page(
             'tools.php',
-            'Campaign Management',
+            (isset($_GET['google-workspace']) ? $_SERVER['HTTP_HOST'] . ' - ' : '') . 'Campaign Management',
             'Email Campaigns',
             'manage_options',
             'email-campaigns',

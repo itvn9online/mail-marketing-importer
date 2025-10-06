@@ -32,22 +32,7 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
     <!-- Google Workspace Gmail API Integration -->
     <div class="google-workspace-integration">
         <h4 style="margin-bottom: 10px; color: #666;">📧 Google Workspace Gmail Failed Delivery Integration</h4>
-        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 3px;">
-            <p style="margin-top: 0; color: #856404;">🔧 Redirect URI quan trọng:</p>
-            <p style="margin: 5px 0; font-size: 13px; color: #856404;">
-                <strong>Khi tạo Google Cloud Console OAuth 2.0 Client, hãy sử dụng Redirect URI sau:</strong>
-            </p>
-            <ul style="margin: 5px 0 5px 20px; font-size: 12px; color: #856404;">
-                <li>
-                    <input type="text" readonly style="width: 100%; padding: 2px 4px; border: 1px solid #ddd; border-radius: 2px; font-size: 12px; background: #f4f4f4; color: #333; max-width: 555px;" value="<?php echo home_url('/wp-admin/admin-ajax.php?action=mmi_google_callback'); ?>">
-                    <span style="color: #28a745;">(Khuyến nghị - WordPress Callback)</span>
-                </li>
-                <li>Hoặc tự tạo redirect URI tùy chỉnh</li>
-            </ul>
-            <p style="margin: 5px 0 0 0; font-size: 12px; color: #856404;">
-                <strong>⚠️ Lưu ý:</strong> Redirect URI trong code phải khớp chính xác với Google Cloud Console!
-            </p>
-        </div>
+
         <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
             Automatically fetch failed delivery emails from Google Workspace Gmail and bulk unsubscribe them.
         </p>
@@ -126,6 +111,8 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
                     </button>
                 </div>
             </div>
+
+            <p id="localstorage-cache-info"></p>
         </div>
 
         <div class="google-results-section" style="margin-top: 15px;">
@@ -183,6 +170,23 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
                     </li>
                     <li>Sau khi tạo, lưu lại <strong>Client ID</strong> và <strong>Client Secret</strong></li>
                 </ol>
+
+                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 3px;">
+                    <p style="margin-top: 0; color: #856404;">🔧 Redirect URI quan trọng:</p>
+                    <p style="margin: 5px 0; font-size: 13px; color: #856404;">
+                        <strong>Khi tạo Google Cloud Console OAuth 2.0 Client, hãy sử dụng Redirect URI sau:</strong>
+                    </p>
+                    <ul style="margin: 5px 0 5px 20px; font-size: 12px; color: #856404;">
+                        <li>
+                            <input type="text" readonly style="width: 100%; padding: 2px 4px; border: 1px solid #ddd; border-radius: 2px; font-size: 12px; background: #f4f4f4; color: #333; max-width: 555px;" value="<?php echo home_url('/wp-admin/admin-ajax.php?action=mmi_google_callback'); ?>">
+                            <span style="color: #28a745;">(Khuyến nghị - WordPress Callback)</span>
+                        </li>
+                        <li>Hoặc tự tạo redirect URI tùy chỉnh</li>
+                    </ul>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: #856404;">
+                        <strong>⚠️ Lưu ý:</strong> Redirect URI trong code phải khớp chính xác với Google Cloud Console!
+                    </p>
+                </div>
 
                 <p style="color: #0066cc; margin-top: 15px;">Bước 2: Cấu hình OAuth Consent Screen</p>
                 <ul style="margin: 0; padding-left: 20px;">

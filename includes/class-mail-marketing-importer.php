@@ -54,6 +54,9 @@ class Mail_Marketing_Importer
 
         // Google OAuth callback
         add_action('wp_ajax_mmi_google_callback', array($this, 'handle_google_callback'));
+
+        // Unsubscribe all campaign
+        add_action('wp_ajax_unsubscribe_all_campaign', array($this, 'handle_unsubscribe_all_campaign'));
     }
 
     /**
@@ -530,7 +533,7 @@ class Mail_Marketing_Importer
     {
         global $wpdb;
 
-        $campaigns = $wpdb->get_results("SELECT id, name, status FROM {$wpdb->prefix}mail_marketing_campaigns ORDER BY created_at DESC");
+        $campaigns = $wpdb->get_results("SELECT id, name, status FROM {$wpdb->prefix}mail_marketing_campaigns WHERE status = 'active' ORDER BY created_at DESC");
 
         if (empty($campaigns)) {
             echo '<option value="">No campaigns found</option>';
@@ -2283,5 +2286,60 @@ class Mail_Marketing_Importer
     public function handle_google_callback()
     {
         include_once __DIR__ . '/google_callback.php';
+    }
+
+    /**
+     * Handle unsubscribe all campaign AJAX request
+     */
+    public function handle_unsubscribe_all_campaign()
+    {
+        // Verify nonce
+        if (!wp_verify_nonce($_POST['security'], 'unsubscribe_all_campaign_nonce')) {
+            wp_send_json_error('Invalid security token');
+            return;
+        }
+
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+            return;
+        }
+
+        // Get campaign ID
+        $campaign_id = intval($_POST['campaign_id']);
+        if (!$campaign_id) {
+            wp_send_json_error('Invalid campaign ID');
+            return;
+        }
+
+        global $wpdb;
+
+        // Update all emails in the campaign to unsubscribed
+        $result = $wpdb->update(
+            $wpdb->prefix . 'mail_marketing',
+            array('is_unsubscribed' => 1),
+            array('campaign_id' => $campaign_id),
+            array('%d'),
+            array('%d')
+        );
+
+        if ($result === false) {
+            wp_send_json_error('Database error occurred: ' . $wpdb->last_error);
+            return;
+        }
+
+        // cập nhật trạng thái cho chiến dịch về inactive
+        $wpdb->update(
+            $wpdb->prefix . 'mail_marketing_campaigns',
+            array('status' => 'inactive'),
+            array('id' => $campaign_id),
+            array('%s'),
+            array('%d')
+        );
+
+        wp_send_json_success(array(
+            'message' => 'Successfully unsubscribed all emails in campaign #' . $campaign_id,
+            'affected_rows' => $result
+        ));
     }
 }

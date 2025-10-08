@@ -625,9 +625,11 @@ jQuery(document).ready(function ($) {
 			cache.push(cacheItem);
 		}
 
-		// Limit cache size to prevent localStorage bloat (keep last 333 items)
+		// Limit cache size to prevent localStorage bloat (keep last 250 items if over 333)
 		if (cache.length > 333) {
-			cache.splice(0, cache.length - 333);
+			// Sort by timestamp descending (newest first) then keep only the first 250 items
+			cache.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+			cache.splice(250); // Keep only the first 250 items (newest)
 		}
 
 		saveGoogleEmailCache(cache);
@@ -665,7 +667,17 @@ jQuery(document).ready(function ($) {
 				my_success(msg, 0);
 
 				if (arrGoogleFailedEmails.length > 0) {
-					showBulkUnsubscribeSection();
+					my_notice("Auto Unsubscribe after 6 seconds...");
+					clearTimeout(clearTimeoutBulkUnsubscribe);
+					clearTimeoutBulkUnsubscribe = setTimeout(() => {
+						showBulkUnsubscribeSection();
+						setTimeout(() => {
+							stopBulkUnsubscribeSection = true;
+							bulkUnsubscribeGoogleEmails(false);
+						}, 100);
+
+						my_notice("Auto Unsubscribe completed");
+					}, 6 * 1000);
 				}
 
 				return;
@@ -783,8 +795,14 @@ jQuery(document).ready(function ($) {
 		html += "</div>";
 		html += "</div>";
 
-		$("#google-emails-container").append(html);
-		$("#google-failed-emails-list").focus();
+		$("#google-emails-container").prepend(html);
+		// di chuyển con trỏ đến textarea
+		$("html, body").animate(
+			{
+				scrollTop: $("#google-failed-emails-list").offset().top - 90,
+			},
+			200
+		);
 	}
 
 	// Global function to clear cache (accessible from onclick)

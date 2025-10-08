@@ -36,25 +36,45 @@ if ($template_content === false) {
     exit;
 }
 
-// Sample data for preview
-$sample_data = array(
-    '{FIRST_NAME}' => 'John',
-    '{LAST_NAME}' => 'Doe',
-    '{USER_NAME}' => 'John Doe',
-    '{USER_EMAIL}' => 'john.doe@example.com',
-    '{SITE_NAME}' => 'Your Website Name',
-    '{SITE_URL}' => 'https://yourwebsite.com',
-    '{EMAIL_URL}' => 'https://yourwebsite.com',
-    '{EMAIL2_URL}' => 'https://yourwebsite2.com',
-    '{UNSUBSCRIBE_URL}' => '#unsubscribe',
-    '{CURRENT_DATE}' => date('F j, Y'),
-    '{CURRENT_YEAR}' => date('Y')
+// Replace placeholders in content
+$template_content = str_replace(
+    array(
+        // phần này khi thay thế phải đặt trước để tránh lỗi
+        'http://{',
+        'https://{',
+        // 
+        '{SITE_NAME}',
+        '{USER_EMAIL}',
+        '{USER_PHONE}',
+        '{USER_NAME}',
+        '{FIRST_NAME}',
+        '{LAST_NAME}',
+        '{CITY}',
+        '{UNSUBSCRIBE_URL}',
+        '{CURRENT_DATE}',
+        '{EMAIL_URL}',
+        '{EMAIL2_URL}',
+        '{ADDRESS}',
+    ),
+    array(
+        '{',
+        '{',
+        // 
+        'Your Website Name',
+        'john.doe@example.com',
+        '123-456-7890',
+        'John Doe',
+        'John',
+        'Doe',
+        'New York',
+        '#unsubscribe',
+        date('F j, Y'),
+        'https://yourwebsite.com',
+        'https://yourwebsite2.com',
+        '123 Main St, New York, NY 10001',
+    ),
+    $template_content
 );
-
-// Replace placeholders with sample data
-foreach ($sample_data as $placeholder => $value) {
-    $template_content = str_replace($placeholder, $value, $template_content);
-}
 
 // Output the processed template
 ?>

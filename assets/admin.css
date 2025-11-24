@@ -878,6 +878,43 @@ span[style*="color: red"] {
     color: transparent !important;
 }
 
+#google-email-progress {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f0f8ff;
+    border-radius: 4px;
+    position: relative;
+}
+
+#google-email-progress.processing {
+    /* tạo hiệu ứng chuyển động */
+    animation: progressAnimation 2s linear infinite;
+    color: #fff;
+    font-size: 20px;
+}
+
+.redcolor {
+    color: #c00;
+}
+
+@keyframes progressAnimation {
+    0% {
+        background-color: #828d97;
+    }
+
+    33% {
+        background-color: #5c7b96;
+    }
+
+    66% {
+        background-color: #215d92;
+    }
+
+    100% {
+        background-color: #0088ff;
+    }
+}
+
 /* Responsive design for URL list */
 @media (max-width: 768px) {
     #detected-urls-list div[style*="background: #fff"] {

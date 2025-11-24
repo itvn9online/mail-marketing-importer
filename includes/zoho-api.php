@@ -136,7 +136,7 @@ $zoho_config = get_option(MMI_ZOHO_CONFIG, array(
                 <!-- Failed emails will be populated here -->
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <?php wp_nonce_field('bulk_unsubscribe_nonce', 'bulk_unsubscribe_nonce'); ?>
+                <?php wp_nonce_field('mmi_security_nonce', 'mmi_zoho_unsubscribe_nonce'); ?>
                 <button type="button" id="bulk-unsubscribe-failed" class="button button-secondary" style="font-size: 12px;">
                     Bulk Unsubscribe Selected
                 </button>

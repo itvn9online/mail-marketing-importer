@@ -57,6 +57,9 @@ class Mail_Marketing_Importer
 
         // Unsubscribe all campaign
         add_action('wp_ajax_unsubscribe_all_campaign', array($this, 'handle_unsubscribe_all_campaign'));
+
+        // Reset campaign status to pending
+        add_action('wp_ajax_reset_campaign_status', array($this, 'handle_reset_campaign_status'));
     }
 
     /**
@@ -106,8 +109,7 @@ class Mail_Marketing_Importer
         // Localize script for both admin scripts
         $script_data = array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('mmi_import_nonce'),
-            'bulk_unsubscribe_nonce' => wp_create_nonce('bulk_unsubscribe_nonce'),
+            'nonce' => wp_create_nonce('mmi_security_nonce'),
             'home_url' => home_url()
         );
         wp_localize_script('mmi-admin-js', 'mmi_ajax', $script_data);
@@ -134,7 +136,7 @@ class Mail_Marketing_Importer
 
                     <form id="mmi-upload-form" method="post" enctype="multipart/form-data" action="<?php echo admin_url('admin-post.php'); ?>">
                         <input type="hidden" name="action" value="import_marketing_file">
-                        <?php wp_nonce_field('mmi_upload_nonce', 'mmi_nonce'); ?>
+                        <?php wp_nonce_field('mmi_security_nonce', 'mmi_import_nonce'); ?>
 
                         <!-- Campaign Selection Section -->
                         <div class="campaign-selection">
@@ -776,7 +778,7 @@ class Mail_Marketing_Importer
             wp_die('Security check failed ' . __FUNCTION__);
         }
 
-        if (!wp_verify_nonce($_POST['mmi_nonce'], 'mmi_upload_nonce')) {
+        if (!wp_verify_nonce($_POST['mmi_import_nonce'], 'mmi_security_nonce')) {
             wp_die('Security check failed ' . __FUNCTION__);
         }
 
@@ -1208,7 +1210,7 @@ class Mail_Marketing_Importer
      */
     public function handle_create_campaign()
     {
-        if (!current_user_can('manage_options') || !wp_verify_nonce($_POST['campaign_nonce'], 'campaign_action')) {
+        if (!current_user_can('manage_options') || !wp_verify_nonce($_POST['mmi_campaign_nonce'], 'mmi_security_nonce')) {
             wp_die('Security check failed ' . __FUNCTION__);
         }
 
@@ -1269,7 +1271,7 @@ class Mail_Marketing_Importer
      */
     public function handle_update_campaign()
     {
-        if (!current_user_can('manage_options') || !wp_verify_nonce($_POST['campaign_nonce'], 'campaign_action')) {
+        if (!current_user_can('manage_options') || !wp_verify_nonce($_POST['mmi_campaign_nonce'], 'mmi_security_nonce')) {
             wp_die('Security check failed ' . __FUNCTION__);
         }
 
@@ -1494,7 +1496,7 @@ class Mail_Marketing_Importer
             wp_die('Security check failed ' . __FUNCTION__);
         }
 
-        if (!wp_verify_nonce($_POST['bulk_unsubscribe_nonce'], 'bulk_unsubscribe_nonce')) {
+        if (!wp_verify_nonce($_POST['mmi_unsubscribe_nonce'], 'mmi_security_nonce')) {
             wp_die('Security check failed ' . __FUNCTION__);
         }
 
@@ -1553,7 +1555,7 @@ class Mail_Marketing_Importer
             ]));
         }
 
-        if (!wp_verify_nonce($_POST['bulk_unsubscribe_nonce'] ?? '', 'bulk_unsubscribe_nonce')) {
+        if (!wp_verify_nonce($_POST['bulk_unsubscribe_nonce'], 'mmi_security_nonce')) {
             wp_die(json_encode([
                 'success' => false,
                 'message' => 'Security check failed ' . __FUNCTION__
@@ -1623,7 +1625,7 @@ class Mail_Marketing_Importer
     public function handle_save_zoho_config()
     {
         // Sử dụng cùng nonce với JavaScript
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['zoho_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -1772,7 +1774,7 @@ class Mail_Marketing_Importer
     public function clear_zoho_token_cache()
     {
         // Security check
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['zoho_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -1795,7 +1797,7 @@ class Mail_Marketing_Importer
     public function get_zoho_token_cache_info()
     {
         // Security check
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['zoho_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -1829,7 +1831,7 @@ class Mail_Marketing_Importer
     public function clear_zoho_account_id()
     {
         // Security check
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['zoho_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -1864,7 +1866,7 @@ class Mail_Marketing_Importer
     public function handle_zoho_fetch_failed_emails()
     {
         // Sử dụng cùng nonce với JavaScript
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['zoho_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -1976,7 +1978,7 @@ class Mail_Marketing_Importer
     public function handle_save_google_config()
     {
         // Sử dụng cùng nonce với JavaScript
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['google_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -2115,7 +2117,7 @@ class Mail_Marketing_Importer
     public function handle_google_fetch_failed_emails()
     {
         // Sử dụng cùng nonce với JavaScript
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['google_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -2237,7 +2239,7 @@ class Mail_Marketing_Importer
     public function clear_google_token_cache()
     {
         // Security check
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['google_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -2260,7 +2262,7 @@ class Mail_Marketing_Importer
     public function get_google_token_cache_info()
     {
         // Security check
-        if (!wp_verify_nonce($_POST['security'], 'mmi_import_nonce')) {
+        if (!wp_verify_nonce($_POST['google_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Security check failed ' . __FUNCTION__);
             return;
         }
@@ -2294,7 +2296,7 @@ class Mail_Marketing_Importer
     public function handle_unsubscribe_all_campaign()
     {
         // Verify nonce
-        if (!wp_verify_nonce($_POST['security'], 'unsubscribe_all_campaign_nonce')) {
+        if (!wp_verify_nonce($_POST['campaign_security'], 'mmi_security_nonce')) {
             wp_send_json_error('Invalid security token');
             return;
         }
@@ -2340,6 +2342,52 @@ class Mail_Marketing_Importer
         wp_send_json_success(array(
             'message' => 'Successfully unsubscribed all emails in campaign #' . $campaign_id,
             'affected_rows' => $result
+        ));
+    }
+
+    /**
+     * Handle reset campaign status to pending (0) AJAX request
+     */
+    public function handle_reset_campaign_status()
+    {
+        // Verify nonce
+        if (!wp_verify_nonce($_POST['campaign_security'], 'mmi_security_nonce')) {
+            wp_send_json_error('Invalid security token');
+            return;
+        }
+
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+            return;
+        }
+
+        // Get campaign ID
+        $campaign_id = intval($_POST['campaign_id']);
+        if (!$campaign_id) {
+            wp_send_json_error('Invalid campaign ID');
+            return;
+        }
+
+        global $wpdb;
+
+        // Update status all emails in the campaign to 0 (Pending)
+        $result = $wpdb->update(
+            $wpdb->prefix . 'mail_marketing',
+            array('status' => 0),
+            array('campaign_id' => $campaign_id),
+            array('%d'),
+            array('%d')
+        );
+
+        if ($result === false) {
+            wp_send_json_error('Database error occurred: ' . $wpdb->last_error);
+            return;
+        }
+
+        wp_send_json_success(array(
+            'message' => 'All email in Campaign has been reset status to Pending (0). The system will process this campaign again.',
+            'campaign_id' => $campaign_id
         ));
     }
 }

@@ -11,8 +11,8 @@ if (!defined('ABSPATH')) {
     <h2><?php echo isset($_GET['edit']) ? 'Edit Campaign' : 'Create New Campaign'; ?></h2>
 
     <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
-        <?php wp_nonce_field('campaign_action', 'campaign_nonce'); ?>
-        <input type="hidden" name="action" value="<?php echo isset($_GET['edit']) ? 'update_campaign' : 'create_campaign'; ?>">
+        <?php wp_nonce_field('mmi_security_nonce', 'mmi_campaign_nonce'); ?>
+        <input type="hidden" name="action" value="<?php echo isset($_GET['edit']) ? 'update_campaign' : 'create_campaign'; ?>">"
         <?php if ($edit_campaign): ?>
             <input type="hidden" name="campaign_id" value="<?php echo $edit_campaign->id; ?>">
         <?php endif; ?>
@@ -211,6 +211,8 @@ if (!defined('ABSPATH')) {
             <input type="submit" class="button-primary" value="<?php echo isset($_GET['edit']) ? 'Update Campaign' : 'Create Campaign'; ?>">
             <?php if (isset($_GET['edit'])): ?>
                 <a href="<?php echo admin_url('tools.php?page=email-campaigns'); ?>" class="button button-secondary">Cancel</a>
+                &nbsp; | &nbsp;
+                <button type="button" id="reset-campaign-status" class="button button-secondary" data-campaign-id="<?php echo $edit_campaign->id; ?>" style="color: green; border-color: green;">Reset Status</button>
                 <button type="button" id="unsubscribe-all-campaign" class="button button-secondary" data-campaign-id="<?php echo $edit_campaign->id; ?>" style="color: #d63638; border-color: #d63638;">Unsubscribe All</button>
             <?php endif; ?>
         </p>
@@ -223,52 +225,3 @@ if ($edit_campaign) {
     $_GET['email_campaign'] = $edit_campaign->id;
     include __DIR__ . '/email-list.php';
 }
-?>
-
-<script type="text/javascript">
-    jQuery(document).ready(function($) {
-        // Handle unsubscribe all campaign button
-        $('#unsubscribe-all-campaign').on('click', function(e) {
-            e.preventDefault();
-
-            var campaignId = $(this).data('campaign-id');
-            var button = $(this);
-
-            // Confirmation dialog
-            if (!confirm('Are you sure you want to unsubscribe ALL emails in this campaign?\n\nThis will set is_unsubscribed = 1 for all records in this campaign and cannot be undone!')) {
-                return;
-            }
-
-            // Disable button and show loading
-            button.prop('disabled', true).text('Processing...');
-
-            // Send AJAX request
-            $.ajax({
-                url: ajaxurl,
-                method: 'POST',
-                data: {
-                    action: 'unsubscribe_all_campaign',
-                    campaign_id: campaignId,
-                    security: '<?php echo wp_create_nonce("unsubscribe_all_campaign_nonce"); ?>'
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert('✅ Success! Unsubscribed ' + response.data.affected_rows + ' email(s) in this campaign.');
-                        // Reload page to refresh email list
-                        window.location.reload();
-                    } else {
-                        alert('❌ Error: ' + (response.data || 'Unknown error occurred'));
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('❌ Connection error: ' + error);
-                },
-                complete: function() {
-                    button.prop('disabled', false).text('Unsubscribe All');
-                }
-            });
-        });
-    });
-</script>
-
-<?php

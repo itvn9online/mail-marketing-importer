@@ -39,7 +39,7 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 		mmi_ajax.ajax_url,
 		{
 			action: "bulk_unsubscribe_email",
-			bulk_unsubscribe_nonce: mmi_ajax.bulk_unsubscribe_nonce,
+			bulk_unsubscribe_nonce: mmi_ajax.nonce,
 			unsubscribe_email: emails,
 		},
 		function (response) {
@@ -49,7 +49,8 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 						response.processed_emails.length +
 						" emails\nAffected rows: " +
 						response.affected_rows,
-					0
+					0,
+					"redcolor"
 				);
 
 				if (response.errors.length > 0) {
@@ -103,7 +104,7 @@ jQuery(document).ready(function ($) {
 			method: "POST",
 			data: {
 				action: "mmi_save_google_config",
-				security: mmi_ajax.nonce,
+				google_security: mmi_ajax.nonce,
 				client_id: clientId,
 				client_secret: clientSecret,
 				user_email: userEmail,
@@ -190,6 +191,13 @@ jQuery(document).ready(function ($) {
 	// Fetch Failed Delivery Emails from Google
 	$("#fetch-google-failed-emails").on("click", function () {
 		var button = $(this);
+		// di chuyển con trỏ đến button
+		$("html, body").animate(
+			{
+				scrollTop: button.offset().top,
+			},
+			200
+		);
 		var resultDiv = $("#google-failed-emails-result");
 
 		// Get search query from select
@@ -207,7 +215,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_google_fetch_failed_emails",
-				security: mmi_ajax.nonce,
+				google_security: mmi_ajax.nonce,
 				search_query: searchQuery,
 			},
 			function (response) {
@@ -268,7 +276,7 @@ jQuery(document).ready(function ($) {
 				);
 			})
 			.always(function () {
-				button.prop("disabled", false).text("Fetch Failed Emails");
+				// button.prop("disabled", false).text("Fetch Failed Emails");
 			});
 	});
 
@@ -282,7 +290,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_clear_google_token_cache",
-				security: mmi_ajax.nonce,
+				google_security: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
@@ -333,7 +341,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_get_google_token_cache_info",
-				security: mmi_ajax.nonce,
+				google_security: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
@@ -641,19 +649,32 @@ jQuery(document).ready(function ($) {
 
 	function processGoogleEmailsSequentially(messages) {
 		let processedCount = 0;
+		let dotedCount = [
+			".",
+			". .",
+			". . .",
+			". . . .",
+			". . . . .",
+			". . . . . .",
+			". . . . . . .",
+			". . . . . . . .",
+			". . . . . . . . .",
+			". . . . . . . . . .",
+		];
 		let totalMessages = messages.length;
 		let selectedEmails = [...messages]; // Clone array to avoid mutation
 
 		// Show progress indicator
 		const progressDiv = $(
-			'<div id="google-email-progress" style="margin: 15px 0; padding: 10px; background: #f0f8ff; border-radius: 4px;"></div>'
+			'<div id="google-email-progress" class="processing"></div>'
 		);
 		$("#google-emails-container").prepend(progressDiv);
 
 		function updateProgress() {
 			const progress = Math.round((processedCount / totalMessages) * 100);
 			progressDiv.html(
-				`🔄 Processing emails: ${processedCount}/${totalMessages} (${progress}%)`
+				`🔄 Processing emails: ${processedCount}/${totalMessages} (${progress}%) ` +
+					dotedCount[processedCount % dotedCount.length]
 			);
 		}
 
@@ -665,6 +686,14 @@ jQuery(document).ready(function ($) {
 				let msg = `✅ Completed! Processed ${totalMessages} emails, found ${arrGoogleFailedEmails.length} failed addresses.`;
 				progressDiv.html(msg);
 				my_success(msg, 0);
+
+				//
+				progressDiv.removeClass("processing");
+
+				//
+				$("#fetch-google-failed-emails")
+					.prop("disabled", false)
+					.text("Fetch Failed Emails");
 
 				if (arrGoogleFailedEmails.length > 0) {
 					my_notice("Auto Unsubscribe after 6 seconds...");
@@ -685,9 +714,14 @@ jQuery(document).ready(function ($) {
 
 			//
 			if (stopBulkUnsubscribeSection === true) {
-				progressDiv.html(
-					`⏸️ Processing paused after finding the first failed email.`
-				);
+				progressDiv
+					.html(`⏸️ Processing paused after finding the first failed email.`)
+					.removeClass("processing");
+
+				//
+				$("#fetch-google-failed-emails")
+					.prop("disabled", false)
+					.text("Fetch Failed Emails");
 				return;
 			}
 
@@ -717,7 +751,7 @@ jQuery(document).ready(function ($) {
 				mmi_ajax.ajax_url,
 				{
 					action: "mmi_google_fetch_failed_emails",
-					security: mmi_ajax.nonce,
+					google_security: mmi_ajax.nonce,
 					message_id: email.id,
 				},
 				function (response) {

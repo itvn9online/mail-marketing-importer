@@ -201,7 +201,7 @@ jQuery(document).ready(function ($) {
 			method: "POST",
 			data: {
 				action: "mmi_save_zoho_config",
-				security: mmi_ajax.nonce,
+				zoho_security: mmi_ajax.nonce,
 				client_id: clientId,
 				client_secret: clientSecret,
 				// Bỏ refresh_token - sẽ được lưu tự động từ OAuth callback
@@ -268,7 +268,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_zoho_fetch_failed_emails",
-				security: mmi_ajax.nonce,
+				zoho_security: mmi_ajax.nonce,
 				search_query: searchQuery,
 				// No need to send account_id - server will use saved config
 			},
@@ -530,9 +530,7 @@ jQuery(document).ready(function ($) {
 				data: {
 					action: "bulk_unsubscribe_email",
 					unsubscribe_email: email,
-					bulk_unsubscribe_nonce: $(
-						'input[name="bulk_unsubscribe_nonce"]'
-					).val(),
+					bulk_unsubscribe_nonce: mmi_ajax.nonce,
 				},
 				success: function (response) {
 					console.log("Unsubscribe response for", email, ":", response);
@@ -612,7 +610,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_clear_zoho_token_cache",
-				security: mmi_ajax.nonce,
+				zoho_security: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
@@ -661,7 +659,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_get_zoho_token_cache_info",
-				security: mmi_ajax.nonce,
+				zoho_security: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
@@ -716,7 +714,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_clear_zoho_account_id",
-				security: mmi_ajax.nonce,
+				zoho_security: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {

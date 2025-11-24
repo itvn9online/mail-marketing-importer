@@ -179,7 +179,7 @@ $base_url = admin_url('tools.php?page=email-campaigns');
             <h4 style="margin-bottom: 10px; color: #666;">📧 Manual Email Unsubscribe</h4>
             <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <input type="hidden" name="action" value="bulk_unsubscribe_email">
-                <?php wp_nonce_field('bulk_unsubscribe_nonce', 'bulk_unsubscribe_nonce'); ?>
+                <?php wp_nonce_field('mmi_security_nonce', 'mmi_unsubscribe_nonce'); ?>
 
                 <label for="unsubscribe_email" style="font-weight: 500;">Email to unsubscribe:</label>
                 <input type="email" name="unsubscribe_email" id="unsubscribe_email"

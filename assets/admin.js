@@ -1,16 +1,16 @@
-function my_warning(message, duration = 99) {
-	return my_notice(message, "warning", duration);
+function my_warning(message, duration = 99, cl = "") {
+	return my_notice(message, "warning", duration, cl);
 }
 
-function my_error(message, duration = 0) {
-	return my_notice(message, "error", duration);
+function my_error(message, duration = 0, cl = "") {
+	return my_notice(message, "error", duration, cl);
 }
 
-function my_success(message, duration = 33) {
-	return my_notice(message, "success", duration);
+function my_success(message, duration = 33, cl = "") {
+	return my_notice(message, "success", duration, cl);
 }
 
-function my_notice(message, type, duration = 33) {
+function my_notice(message, type, duration = 33, cl = "") {
 	let $ = jQuery;
 	if ($("#parent-notice").length < 1) {
 		$("body").append('<div id="parent-notice"></div>');
@@ -21,6 +21,9 @@ function my_notice(message, type, duration = 33) {
 	notice.addClass(
 		"my-notice-" + (typeof type == "undefined" ? "success" : type)
 	);
+	if (cl) {
+		notice.addClass(cl);
+	}
 	notice.text(message);
 	$("#parent-notice").append(notice);
 	if (duration > 0) {
@@ -791,5 +794,106 @@ jQuery(document).ready(function ($) {
 			my_error("URL không hợp lệ. Vui lòng kiểm tra lại format URL.");
 			emailUrlInput.focus();
 		}
+	});
+
+	// Handle unsubscribe all campaign button
+	$("#unsubscribe-all-campaign").on("click", function (e) {
+		e.preventDefault();
+
+		var campaignId = $(this).data("campaign-id");
+		var button = $(this);
+
+		// Confirmation dialog
+		if (
+			!confirm(
+				"Are you sure you want to unsubscribe ALL emails in this campaign?\n\nThis will set is_unsubscribed = 1 for all records in this campaign and cannot be undone!"
+			)
+		) {
+			return;
+		}
+
+		// Disable button and show loading
+		button.prop("disabled", true).text("Processing...");
+
+		// Send AJAX request
+		$.ajax({
+			url: ajaxurl,
+			method: "POST",
+			data: {
+				action: "unsubscribe_all_campaign",
+				campaign_id: campaignId,
+				campaign_security: mmi_ajax.nonce,
+			},
+			success: function (response) {
+				if (response.success) {
+					alert(
+						"✅ Success! Unsubscribed " +
+							response.data.affected_rows +
+							" email(s) in this campaign."
+					);
+					// Reload page to refresh email list
+					window.location.reload();
+				} else {
+					alert("❌ Error: " + (response.data || "Unknown error occurred"));
+				}
+			},
+			error: function (xhr, status, error) {
+				alert("❌ Connection error: " + error);
+			},
+			complete: function () {
+				button.prop("disabled", false).text("Unsubscribe All");
+			},
+		});
+	});
+
+	// Handle reset campaign status to pending (0) button
+	$("#reset-campaign-status").on("click", function (e) {
+		e.preventDefault();
+
+		var campaignId = $(this).data("campaign-id");
+		var button = $(this);
+
+		// Confirmation dialog
+		if (
+			!confirm(
+				"Bạn có chắc muốn đặt lại trạng thái của chiến dịch này về Pending (0)?\n\nHệ thống sẽ tự động xử lý và gửi lại email cho chiến dịch này."
+			)
+		) {
+			return;
+		}
+
+		// Disable button and show loading
+		button.prop("disabled", true).text("Đang xử lý...");
+
+		// Send AJAX request
+		$.ajax({
+			url: ajaxurl,
+			method: "POST",
+			data: {
+				action: "reset_campaign_status",
+				campaign_id: campaignId,
+				campaign_security: mmi_ajax.nonce,
+			},
+			success: function (response) {
+				if (response.success) {
+					alert(
+						"✅ Thành công! Chiến dịch #" +
+							response.data.campaign_id +
+							" đã được đặt lại về trạng thái Pending.\n\n" +
+							response.data.message
+					);
+					// Reload page to refresh campaign status
+					window.location.reload();
+				} else {
+					alert("❌ Lỗi: " + (response.data || "Đã xảy ra lỗi không xác định"));
+				}
+			},
+			error: function (xhr, status, error) {
+				alert("❌ Lỗi kết nối: " + error);
+			},
+			complete: function () {
+				button.prop("disabled", false).text("Chờ AI code");
+			},
+		});
 	});
 });

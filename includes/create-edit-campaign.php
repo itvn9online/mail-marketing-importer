@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     <h2><?php echo isset($_GET['edit']) ? 'Edit Campaign' : 'Create New Campaign'; ?></h2>
 
     <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
-        <?php wp_nonce_field('mmi_security_nonce', 'mmi_campaign_nonce'); ?>
+        <?php wp_nonce_field('mmi_action_nonce', 'mmi_nonce'); ?>
         <input type="hidden" name="action" value="<?php echo isset($_GET['edit']) ? 'update_campaign' : 'create_campaign'; ?>">"
         <?php if ($edit_campaign): ?>
             <input type="hidden" name="campaign_id" value="<?php echo $edit_campaign->id; ?>">

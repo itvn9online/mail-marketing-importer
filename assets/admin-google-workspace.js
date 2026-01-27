@@ -16,7 +16,7 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 		!confirm(
 			"Are you sure you want to unsubscribe " +
 				emails.split(",").length +
-				" email addresses?"
+				" email addresses?",
 		)
 	) {
 		return;
@@ -29,7 +29,7 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 			"firstGoogleFailedEmail",
 			firstEmail +
 				"|" +
-				new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" })
+				new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }),
 		);
 		my_notice("✅ First failed email saved: " + firstEmail);
 	}
@@ -39,7 +39,7 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 		mmi_ajax.ajax_url,
 		{
 			action: "bulk_unsubscribe_email",
-			bulk_unsubscribe_nonce: mmi_ajax.nonce,
+			mmi_nonce: mmi_ajax.nonce,
 			unsubscribe_email: emails,
 		},
 		function (response) {
@@ -50,7 +50,7 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 						" emails\nAffected rows: " +
 						response.affected_rows,
 					0,
-					"redcolor"
+					"redcolor",
 				);
 
 				if (response.errors.length > 0) {
@@ -59,7 +59,7 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 			} else {
 				my_error("❌ Bulk unsubscribe failed: " + JSON.stringify(response));
 			}
-		}
+		},
 	).fail(function () {
 		my_error("❌ Connection error during bulk unsubscribe");
 	});
@@ -104,7 +104,7 @@ jQuery(document).ready(function ($) {
 			method: "POST",
 			data: {
 				action: "mmi_save_google_config",
-				google_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 				client_id: clientId,
 				client_secret: clientSecret,
 				user_email: userEmail,
@@ -115,7 +115,7 @@ jQuery(document).ready(function ($) {
 						.html(
 							"✅ " +
 								response.data.message +
-								"<br><small style='color: #666;'>Refresh Token sẽ được lưu tự động từ OAuth callback</small>"
+								"<br><small style='color: #666;'>Refresh Token sẽ được lưu tự động từ OAuth callback</small>",
 						)
 						.css("color", "#46b450");
 
@@ -196,7 +196,7 @@ jQuery(document).ready(function ($) {
 			{
 				scrollTop: button.offset().top,
 			},
-			200
+			200,
 		);
 		var resultDiv = $("#google-failed-emails-result");
 
@@ -208,14 +208,14 @@ jQuery(document).ready(function ($) {
 		resultDiv.html(
 			'<p style="color: #666;">Đang tìm kiếm email với query: ' +
 				searchQuery +
-				"...</p>"
+				"...</p>",
 		);
 
 		$.post(
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_google_fetch_failed_emails",
-				google_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 				search_query: searchQuery,
 			},
 			function (response) {
@@ -248,13 +248,13 @@ jQuery(document).ready(function ($) {
 						resultDiv.prepend(
 							'<p style="color: #46b450; background: #f0f8ff; padding: 10px; border-radius: 4px;">' +
 								statusMsg +
-								"</p>"
+								"</p>",
 						);
 					} else {
 						resultDiv.html(
 							'<p style="color: #dc3232;">❌ Không tìm thấy email nào với query: ' +
 								searchQuery +
-								"</p>"
+								"</p>",
 						);
 					}
 
@@ -268,11 +268,11 @@ jQuery(document).ready(function ($) {
 						"Không tìm thấy email nào với query: " + searchQuery;
 					resultDiv.html('<p style="color: #dc3232;">❌ ' + errorMsg + "</p>");
 				}
-			}
+			},
 		)
 			.fail(function (xhr, status, error) {
 				resultDiv.html(
-					'<p style="color: #dc3232;">❌ Lỗi kết nối: ' + error + "</p>"
+					'<p style="color: #dc3232;">❌ Lỗi kết nối: ' + error + "</p>",
 				);
 			})
 			.always(function () {
@@ -290,7 +290,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_clear_google_token_cache",
-				google_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
@@ -302,7 +302,7 @@ jQuery(document).ready(function ($) {
 						.text("❌ " + response.data)
 						.css("color", "#dc3232");
 				}
-			}
+			},
 		)
 			.fail(function () {
 				$("#google-token-status")
@@ -319,11 +319,11 @@ jQuery(document).ready(function ($) {
 		var is_hidden = $("#google_client_secret").hasClass("is-token-hidden");
 		if (is_hidden) {
 			$("#google_client_secret, #google_refresh_token").removeClass(
-				"is-token-hidden"
+				"is-token-hidden",
 			);
 		} else {
 			$("#google_client_secret, #google_refresh_token").addClass(
-				"is-token-hidden"
+				"is-token-hidden",
 			);
 		}
 
@@ -341,7 +341,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_get_google_token_cache_info",
-				google_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
@@ -355,7 +355,7 @@ jQuery(document).ready(function ($) {
 							status +
 								"<br><small>Token preview: " +
 								(data.token_preview || "N/A") +
-								"</small>"
+								"</small>",
 						)
 						.css("color", data.cache_exists ? "#46b450" : "#856404");
 				} else {
@@ -363,7 +363,7 @@ jQuery(document).ready(function ($) {
 						.text("❌ " + response.data)
 						.css("color", "#dc3232");
 				}
-			}
+			},
 		)
 			.fail(function () {
 				$("#google-token-status")
@@ -411,7 +411,7 @@ jQuery(document).ready(function ($) {
 	function displayDetailedGoogleFailedEmails(
 		detailedMessages,
 		processedCount,
-		inCache = false
+		inCache = false,
 	) {
 		if (detailedMessages.length < 1) {
 			return false;
@@ -543,7 +543,7 @@ jQuery(document).ready(function ($) {
 				.html(
 					"🟢 Using cached token (expires in " +
 						(tokenInfo.expires_in || "unknown") +
-						" seconds)"
+						" seconds)",
 				)
 				.css("color", "#46b450");
 		} else {
@@ -551,7 +551,7 @@ jQuery(document).ready(function ($) {
 				.html(
 					"🔄 New token obtained (cached for " +
 						(tokenInfo.cache_duration || "unknown") +
-						" seconds)"
+						" seconds)",
 				)
 				.css("color", "#0073aa");
 		}
@@ -605,7 +605,7 @@ jQuery(document).ready(function ($) {
 			// Save to localStorage
 			localStorage.setItem(
 				"cacheDetailedGoogleFailedEmails",
-				JSON.stringify(cache)
+				JSON.stringify(cache),
 			);
 		} catch (error) {
 			console.warn("Error saving Google email cache:", error);
@@ -666,7 +666,7 @@ jQuery(document).ready(function ($) {
 
 		// Show progress indicator
 		const progressDiv = $(
-			'<div id="google-email-progress" class="processing"></div>'
+			'<div id="google-email-progress" class="processing"></div>',
 		);
 		$("#google-emails-container").prepend(progressDiv);
 
@@ -674,7 +674,7 @@ jQuery(document).ready(function ($) {
 			const progress = Math.round((processedCount / totalMessages) * 100);
 			progressDiv.html(
 				`🔄 Processing emails: ${processedCount}/${totalMessages} (${progress}%) ` +
-					dotedCount[processedCount % dotedCount.length]
+					dotedCount[processedCount % dotedCount.length],
 			);
 		}
 
@@ -736,7 +736,7 @@ jQuery(document).ready(function ($) {
 				displayDetailedGoogleFailedEmails(
 					cachedData.messages,
 					processedCount,
-					true
+					true,
 				);
 				setTimeout(processNextEmail, 100); // Faster processing for cached items
 				return;
@@ -751,7 +751,7 @@ jQuery(document).ready(function ($) {
 				mmi_ajax.ajax_url,
 				{
 					action: "mmi_google_fetch_failed_emails",
-					google_security: mmi_ajax.nonce,
+					mmi_nonce: mmi_ajax.nonce,
 					message_id: email.id,
 				},
 				function (response) {
@@ -785,7 +785,7 @@ jQuery(document).ready(function ($) {
 					} else {
 						console.warn(`❌ Failed to fetch email ID: ${email.id}`, response);
 					}
-				}
+				},
 			)
 				.fail(function (xhr, status, error) {
 					console.error(`❌ Network error for email ID: ${email.id}`, error);
@@ -835,7 +835,7 @@ jQuery(document).ready(function ($) {
 			{
 				scrollTop: $("#google-failed-emails-list").offset().top - 90,
 			},
-			200
+			200,
 		);
 	}
 
@@ -855,7 +855,7 @@ jQuery(document).ready(function ($) {
 				'<span style="color: #0073aa; font-size: 12px;">📌 <strong>First Failed Email (cached):</strong> ' +
 					firstEmail.replace("|", " at ") +
 					"</span>" +
-					'<button type="button" class="button button-small" style="font-size: 12px; margin-left: 10px;" onclick="localStorage.removeItem(\'firstGoogleFailedEmail\');">🗑️ Clear</button>'
+					'<button type="button" class="button button-small" style="font-size: 12px; margin-left: 10px;" onclick="localStorage.removeItem(\'firstGoogleFailedEmail\');">🗑️ Clear</button>',
 			);
 		}
 	})();

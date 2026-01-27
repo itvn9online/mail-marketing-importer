@@ -17,7 +17,7 @@ jQuery(document).ready(function ($) {
 				var savedFromEmail = localStorage.getItem("zoho_from_email") || "";
 				var fromEmail = prompt(
 					"Nhập email người gửi để tìm kiếm:",
-					savedFromEmail
+					savedFromEmail,
 				);
 
 				if (fromEmail && fromEmail.trim() !== "") {
@@ -49,7 +49,7 @@ jQuery(document).ready(function ($) {
 		// Save previous selection initially
 		localStorage.setItem(
 			"zoho_search_type_previous",
-			$("#zoho-search-type").val()
+			$("#zoho-search-type").val(),
 		);
 	}
 
@@ -70,7 +70,7 @@ jQuery(document).ready(function ($) {
 				$("#zoho_client_secret").focus();
 			}
 			my_warning(
-				"Vui lòng nhập Client ID và Client Secret vào form chính trước."
+				"Vui lòng nhập Client ID và Client Secret vào form chính trước.",
 			);
 			return;
 		}
@@ -110,7 +110,7 @@ jQuery(document).ready(function ($) {
 			.html(
 				"✅ Auth URL đã được tạo từ dữ liệu đã lưu!<br><small style='color: #28a745;'>✅ Sử dụng scope: " +
 					scope +
-					"<br>✅ Sử dụng WordPress callback URL - sẽ tự động xử lý kết quả</small>"
+					"<br>✅ Sử dụng WordPress callback URL - sẽ tự động xử lý kết quả</small>",
 			)
 			.css("color", "#28a745");
 	});
@@ -201,7 +201,7 @@ jQuery(document).ready(function ($) {
 			method: "POST",
 			data: {
 				action: "mmi_save_zoho_config",
-				zoho_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 				client_id: clientId,
 				client_secret: clientSecret,
 				// Bỏ refresh_token - sẽ được lưu tự động từ OAuth callback
@@ -213,7 +213,7 @@ jQuery(document).ready(function ($) {
 						.html(
 							"✅ " +
 								response.data.message +
-								"<br><small style='color: #666;'>Refresh Token và Account ID sẽ được lưu tự động từ OAuth callback</small>"
+								"<br><small style='color: #666;'>Refresh Token và Account ID sẽ được lưu tự động từ OAuth callback</small>",
 						)
 						.css("color", "#46b450");
 
@@ -268,7 +268,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_zoho_fetch_failed_emails",
-				zoho_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 				search_query: searchQuery,
 				// No need to send account_id - server will use saved config
 			},
@@ -280,13 +280,13 @@ jQuery(document).ready(function ($) {
 					// Display failed emails and get count
 					let lens = displayFailedEmails(
 						response.data.messages || response.data,
-						cacheEmailShift
+						cacheEmailShift,
 					);
 
 					//
 					if (cacheEmailShift !== null) {
 						$(
-							"." + cacheEmailShift.replace(/[^a-zA-Z0-9]/g, "_") + ""
+							"." + cacheEmailShift.replace(/[^a-zA-Z0-9]/g, "_") + "",
 						).addClass("orgcolor");
 					}
 
@@ -303,7 +303,7 @@ jQuery(document).ready(function ($) {
 								searchQuery +
 								". Đã chọn " +
 								lens.checked +
-								" email để hủy đăng ký."
+								" email để hủy đăng ký.",
 						)
 						.css("color", "#46b450");
 				} else {
@@ -312,7 +312,7 @@ jQuery(document).ready(function ($) {
 						"Không tìm thấy email nào với query: " + searchQuery;
 					status.text("❌ " + errorMsg).css("color", "#dc3232");
 				}
-			}
+			},
 		)
 			.fail(function () {
 				status.text("❌ Lỗi kết nối server.").css("color", "#dc3232");
@@ -358,14 +358,14 @@ jQuery(document).ready(function ($) {
 				}
 
 				var item = $(
-					'<div class="failed-email-item" style="padding: 5px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 8px;"></div>'
+					'<div class="failed-email-item" style="padding: 5px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 8px;"></div>',
 				);
 				var checkbox = $(
 					'<input type="checkbox" class="failed-email-checkbox" value="' +
 						failedEmail +
 						'"' +
 						checkboxChecked +
-						">"
+						">",
 				);
 				var emailSpan = $(
 					'<a href="https://' +
@@ -376,7 +376,7 @@ jQuery(document).ready(function ($) {
 						failedEmail.replace(/[^a-zA-Z0-9]/g, "_") +
 						'" style="font-family: monospace; font-size: 12px;">' +
 						failedEmail +
-						"</a>"
+						"</a>",
 				);
 				var subject = $(
 					'<small class="' +
@@ -387,7 +387,7 @@ jQuery(document).ready(function ($) {
 						(message.subject || "") +
 						": " +
 						(message.summary || "").substring(0, 155) +
-						"...</small>"
+						"...</small>",
 				);
 
 				item.append(checkbox, emailSpan, subject);
@@ -463,7 +463,7 @@ jQuery(document).ready(function ($) {
 			!confirm(
 				"Bạn có chắc chắn muốn unsubscribe " +
 					selectedEmails.length +
-					" email(s) này?"
+					" email(s) này?",
 			)
 		) {
 			return;
@@ -478,7 +478,7 @@ jQuery(document).ready(function ($) {
 			{
 				scrollTop: $("#failed-emails-list").offset().top - 90,
 			},
-			200
+			200,
 		);
 		// return;
 
@@ -491,12 +491,12 @@ jQuery(document).ready(function ($) {
 			processed++;
 
 			$("." + email.replace(/[^a-zA-Z0-9]/g, "_") + "").addClass(
-				typeof cl == "undefined" ? "greencolor" : cl
+				typeof cl == "undefined" ? "greencolor" : cl,
 			);
 
 			$('input.failed-email-checkbox[value="' + email + '"]').prop(
 				"checked",
-				false
+				false,
 			);
 
 			selectedSendEmails();
@@ -516,7 +516,7 @@ jQuery(document).ready(function ($) {
 				$("#bulk-unsubscribe-failed").attr("data-processing") || "";
 			if (is_processing == "") {
 				my_warning(
-					"Quá trình đã bị hủy bỏ. Đã unsubscribe " + processed + " emails."
+					"Quá trình đã bị hủy bỏ. Đã unsubscribe " + processed + " emails.",
 				);
 				return;
 			}
@@ -530,7 +530,7 @@ jQuery(document).ready(function ($) {
 				data: {
 					action: "bulk_unsubscribe_email",
 					unsubscribe_email: email,
-					bulk_unsubscribe_nonce: mmi_ajax.nonce,
+					mmi_nonce: mmi_ajax.nonce,
 				},
 				success: function (response) {
 					console.log("Unsubscribe response for", email, ":", response);
@@ -539,7 +539,7 @@ jQuery(document).ready(function ($) {
 						typeof response.affected_rows != "undefined" &&
 							response.affected_rows > 0
 							? "greencolor"
-							: "orgcolor"
+							: "orgcolor",
 					);
 
 					// lưu vào localstorage email đầu tiên xử lý thành công
@@ -566,7 +566,7 @@ jQuery(document).ready(function ($) {
 		if (cacheInfoDiv.length < 1) {
 			// Create cache info div if it doesn't exist
 			$("#zoho-status").after(
-				'<div id="zoho-cache-info" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;"></div>'
+				'<div id="zoho-cache-info" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;"></div>',
 			);
 			cacheInfoDiv = $("#zoho-cache-info");
 		}
@@ -610,19 +610,19 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_clear_zoho_token_cache",
-				zoho_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
 					status.text("✅ " + response.data.message).css("color", "#46b450");
 					$("#zoho-cache-info").html(
-						"<strong>🔑 Access Token Cache:</strong> Cleared"
+						"<strong>🔑 Access Token Cache:</strong> Cleared",
 					);
 				} else {
 					var errorMsg = response.data || "Không thể xóa cache.";
 					status.text("❌ " + errorMsg).css("color", "#dc3232");
 				}
-			}
+			},
 		)
 			.fail(function () {
 				status.text("❌ Lỗi kết nối server.").css("color", "#dc3232");
@@ -637,7 +637,7 @@ jQuery(document).ready(function ($) {
 		var is_hidden = $("#zoho_client_secret").hasClass("is-token-hidden");
 		if (is_hidden) {
 			$("#zoho_client_secret, #zoho_refresh_token").removeClass(
-				"is-token-hidden"
+				"is-token-hidden",
 			);
 		} else {
 			$("#zoho_client_secret, #zoho_refresh_token").addClass("is-token-hidden");
@@ -659,7 +659,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_get_zoho_token_cache_info",
-				zoho_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
@@ -683,7 +683,7 @@ jQuery(document).ready(function ($) {
 					var errorMsg = response.data || "Không thể lấy thông tin cache.";
 					status.text("❌ " + errorMsg).css("color", "#dc3232");
 				}
-			}
+			},
 		)
 			.fail(function () {
 				status.text("❌ Lỗi kết nối server.").css("color", "#dc3232");
@@ -698,7 +698,7 @@ jQuery(document).ready(function ($) {
 		// Confirm before clearing
 		if (
 			!confirm(
-				"Bạn có chắc chắn muốn xóa Account ID? Điều này sẽ cho phép bạn kết nối với một tài khoản Zoho khác."
+				"Bạn có chắc chắn muốn xóa Account ID? Điều này sẽ cho phép bạn kết nối với một tài khoản Zoho khác.",
 			)
 		) {
 			return;
@@ -714,7 +714,7 @@ jQuery(document).ready(function ($) {
 			mmi_ajax.ajax_url,
 			{
 				action: "mmi_clear_zoho_account_id",
-				zoho_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 			},
 			function (response) {
 				if (response.success) {
@@ -727,7 +727,7 @@ jQuery(document).ready(function ($) {
 					setTimeout(function () {
 						status
 							.html(
-								"✅ Account ID đã được xóa!<br><small style='color: #666;'>Bây giờ bạn có thể tạo Auth URL mới để kết nối với tài khoản Zoho khác.</small>"
+								"✅ Account ID đã được xóa!<br><small style='color: #666;'>Bây giờ bạn có thể tạo Auth URL mới để kết nối với tài khoản Zoho khác.</small>",
 							)
 							.css("color", "#46b450");
 					}, 1000);
@@ -735,7 +735,7 @@ jQuery(document).ready(function ($) {
 					var errorMsg = response.data || "Không thể xóa Account ID.";
 					status.text("❌ " + errorMsg).css("color", "#dc3232");
 				}
-			}
+			},
 		)
 			.fail(function () {
 				status.text("❌ Lỗi kết nối server.").css("color", "#dc3232");

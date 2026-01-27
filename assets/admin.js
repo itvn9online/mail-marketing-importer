@@ -19,7 +19,7 @@ function my_notice(message, type, duration = 33, cl = "") {
 	//
 	var notice = $('<div class="my-notice"></div>');
 	notice.addClass(
-		"my-notice-" + (typeof type == "undefined" ? "success" : type)
+		"my-notice-" + (typeof type == "undefined" ? "success" : type),
 	);
 	if (cl) {
 		notice.addClass(cl);
@@ -128,7 +128,7 @@ jQuery(document).ready(function ($) {
 		var formData = new FormData();
 		formData.append("action", "read_file_headers");
 		formData.append("file", file);
-		formData.append("nonce", mmi_ajax.nonce);
+		formData.append("mmi_nonce", mmi_ajax.nonce);
 
 		// Send AJAX request to read file headers
 		$.ajax({
@@ -180,14 +180,14 @@ jQuery(document).ready(function ($) {
 					$("#file-info").html(
 						'<div class="notice notice-error"><p>Error: ' +
 							response.data +
-							"</p></div>"
+							"</p></div>",
 					);
 				}
 			},
 			error: function (xhr, status, error) {
 				$(".loading-spinner").hide();
 				$("#file-info").html(
-					'<div class="notice notice-error"><p>Error reading file. Please try again.</p></div>'
+					'<div class="notice notice-error"><p>Error reading file. Please try again.</p></div>',
 				);
 				console.error("AJAX Error:", error);
 			},
@@ -228,7 +228,7 @@ jQuery(document).ready(function ($) {
 				// Add visual indicator for auto-detected mappings
 				if (!$select.siblings(".suggested-indicator").length) {
 					$select.after(
-						'<span class="suggested-indicator" style="color: #00a0d2; font-size: 12px; margin-left: 8px;">✓ Auto-detected</span>'
+						'<span class="suggested-indicator" style="color: #00a0d2; font-size: 12px; margin-left: 8px;">✓ Auto-detected</span>',
 					);
 				}
 			}
@@ -347,7 +347,7 @@ jQuery(document).ready(function ($) {
 		.html(
 			".drag-over { background-color: #e8f4f8; border: 2px dashed #0073aa; }" +
 				".suggested-mapping { border-color: #00a0d2; background-color: #f0f8ff; }" +
-				".suggested-indicator { color: #00a0d2; font-weight: 500; }"
+				".suggested-indicator { color: #00a0d2; font-weight: 500; }",
 		)
 		.appendTo("head");
 
@@ -412,7 +412,7 @@ jQuery(document).ready(function ($) {
 
 		// Create notification
 		var $notification = $(
-			'<div class="copy-notification">' + message + "</div>"
+			'<div class="copy-notification">' + message + "</div>",
 		);
 		$("body").append($notification);
 
@@ -473,7 +473,7 @@ jQuery(document).ready(function ($) {
 			console.log(
 				"Campaign form submission - Email content length:",
 				emailContent.length,
-				"(Empty content will use selected template)"
+				"(Empty content will use selected template)",
 			);
 			console.log("Form action:", $(this).find('input[name="action"]').val());
 
@@ -511,7 +511,7 @@ jQuery(document).ready(function ($) {
 				{
 					scrollTop: $("#imported-email-list").offset().top - 60,
 				},
-				1000
+				1000,
 			);
 		}
 
@@ -525,7 +525,7 @@ jQuery(document).ready(function ($) {
 
 		addCurrentMenu(
 			'#menu-tools a[href="tools.php?page=email-campaigns"]',
-			"email-campaigns"
+			"email-campaigns",
 		);
 	}
 
@@ -549,7 +549,7 @@ jQuery(document).ready(function ($) {
 			type: "POST",
 			data: {
 				action: "toggle_email_status",
-				nonce: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 				email_id: emailId,
 				field: field,
 				current_value: currentValue,
@@ -726,7 +726,7 @@ jQuery(document).ready(function ($) {
 
 		if (
 			!confirm(
-				"This will clear all current email content and load the default template content."
+				"This will clear all current email content and load the default template content.",
 			)
 		) {
 			return;
@@ -777,7 +777,7 @@ jQuery(document).ready(function ($) {
 			if (!params.has("utm_campaign")) {
 				params.set(
 					"utm_campaign",
-					campaignName.toLowerCase().replace(/\s+/g, "_")
+					campaignName.toLowerCase().replace(/\s+/g, "_"),
 				);
 			}
 			if (!params.has("utm_content")) {
@@ -806,7 +806,7 @@ jQuery(document).ready(function ($) {
 		// Confirmation dialog
 		if (
 			!confirm(
-				"Are you sure you want to unsubscribe ALL emails in this campaign?\n\nThis will set is_unsubscribed = 1 for all records in this campaign and cannot be undone!"
+				"Are you sure you want to unsubscribe ALL emails in this campaign?\n\nThis will set is_unsubscribed = 1 for all records in this campaign and cannot be undone!",
 			)
 		) {
 			return;
@@ -822,14 +822,14 @@ jQuery(document).ready(function ($) {
 			data: {
 				action: "unsubscribe_all_campaign",
 				campaign_id: campaignId,
-				campaign_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 			},
 			success: function (response) {
 				if (response.success) {
 					alert(
 						"✅ Success! Unsubscribed " +
 							response.data.affected_rows +
-							" email(s) in this campaign."
+							" email(s) in this campaign.",
 					);
 					// Reload page to refresh email list
 					window.location.reload();
@@ -856,7 +856,7 @@ jQuery(document).ready(function ($) {
 		// Confirmation dialog
 		if (
 			!confirm(
-				"Bạn có chắc muốn đặt lại trạng thái của chiến dịch này về Pending (0)?\n\nHệ thống sẽ tự động xử lý và gửi lại email cho chiến dịch này."
+				"Bạn có chắc muốn đặt lại trạng thái của chiến dịch này về Pending (0)?\n\nHệ thống sẽ tự động xử lý và gửi lại email cho chiến dịch này.",
 			)
 		) {
 			return;
@@ -872,7 +872,7 @@ jQuery(document).ready(function ($) {
 			data: {
 				action: "reset_campaign_status",
 				campaign_id: campaignId,
-				campaign_security: mmi_ajax.nonce,
+				mmi_nonce: mmi_ajax.nonce,
 			},
 			success: function (response) {
 				if (response.success) {
@@ -880,7 +880,7 @@ jQuery(document).ready(function ($) {
 						"✅ Thành công! Chiến dịch #" +
 							response.data.campaign_id +
 							" đã được đặt lại về trạng thái Pending.\n\n" +
-							response.data.message
+							response.data.message,
 					);
 					// Reload page to refresh campaign status
 					window.location.reload();

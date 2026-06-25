@@ -4,7 +4,7 @@
  * Plugin Name: Mail Marketing Importer
  * Plugin URI: https://echbay.com
  * Description: Import email marketing data from Excel files (.xlsx, .xls, .csv)
- * Version: 1.2.4
+ * Version: 1.2.5
  * Author: Dao Quoc Dai
  * License: GPL v2 or later
  * Text Domain: mail-marketing-importer
@@ -15,10 +15,40 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+define('MMI_GITHUB_USER', 'itvn9online');
+define('MMI_GITHUB_REPO', 'mail-marketing-importer');
+define('MMI_GITHUB_BRANCH', 'main');
+
+/**
+ * Read plugin version from version.txt / VERSION, fallback to plugin header.
+ */
+function mmi_get_plugin_version()
+{
+    foreach (['version.txt', 'VERSION'] as $file) {
+        $path = __DIR__ . '/' . $file;
+        if (is_readable($path)) {
+            $version = trim((string) file_get_contents($path));
+            if ($version !== '') {
+                return $version;
+            }
+        }
+    }
+
+    if (!function_exists('get_plugin_data')) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
+
+    $data = get_plugin_data(__FILE__, false, false);
+
+    return $data['Version'] ?? '0.0.0';
+}
+
+$mmi_plugin_version = mmi_get_plugin_version();
+
 // Define plugin constants
 define('MMI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MMI_PLUGIN_PATH', __DIR__ . '/');
-define('MMI_PLUGIN_VERSION', '1.2.4');
+define('MMI_PLUGIN_VERSION', $mmi_plugin_version);
 
 // Create domain-specific config key for multi-domain support
 function mmi_get_domain_config_key()
@@ -42,10 +72,21 @@ define('MMI_ZOHO_CONFIG', 'mmi_zoho_config_' . MMI_DOMAIN_PREFIX);
 define('MMI_GOOGLE_CONFIG', 'mmi_google_config_' . MMI_DOMAIN_PREFIX);
 // echo 'MMI Domain Config Key: ' . MMI_GOOGLE_CONFIG . '<br>';
 
+// Số giờ tối thiểu giữa 2 lần chạy Auto Unsubscribe (dùng để throttle, tránh bị rate limit từ Gmail API)
+define('GG_AUTO_UNSUB_NEXT_RUN', 3);
+// Số lượng email tối đa để fetch từ Gmail API trong 1 lần (dùng cho Auto Unsubscribe)
+define('GG_AUTO_UNSUB_MAXRESULTS', GG_AUTO_UNSUB_NEXT_RUN * 50);
+
 // Include required files
 require_once MMI_PLUGIN_PATH . 'includes/class-mail-marketing-importer.php';
 require_once MMI_PLUGIN_PATH . 'includes/class-excel-reader.php';
 require_once MMI_PLUGIN_PATH . 'includes/class-enhanced-excel-reader.php';
+require_once MMI_PLUGIN_PATH . 'includes/class-auto-unsubscribe.php';
+require_once MMI_PLUGIN_PATH . 'includes/class-plugin-updater.php';
+
+if (is_admin()) {
+    new MMI_Plugin_Updater(__FILE__, MMI_GITHUB_USER, MMI_GITHUB_REPO, MMI_GITHUB_BRANCH);
+}
 
 // Initialize the plugin
 function mail_marketing_importer_init()
@@ -65,12 +106,16 @@ function mail_marketing_importer_settings_link($links)
     return $links;
 }
 
-// Activation hook - create table if not exists
+// Activation hook - create tables + schedule cron
 register_activation_hook(__FILE__, 'mail_marketing_importer_activate');
 function mail_marketing_importer_activate()
 {
     mail_marketing_importer_update_database();
 }
+
+// Deactivation hook - clear cron
+// register_deactivation_hook(__FILE__, 'mail_marketing_importer_deactivate');
+function mail_marketing_importer_deactivate() {}
 
 // Database update function (can be called from activation or version check)
 function mail_marketing_importer_update_database()
@@ -196,6 +241,31 @@ function mail_marketing_importer_update_database()
         // Foreign key constraint failed, but that's okay for some hosting environments
         error_log('MMI: Foreign key constraint could not be added: ' . $e->getMessage());
     }
+
+    // ── Tạo bảng mmi_api_log cho Auto Unsubscribe ──────────────────────────────
+    $api_log_sql = "
+    CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}mmi_api_log` (
+      `id`               BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+      `domain`           VARCHAR(100)     NOT NULL COMMENT 'MMI_DOMAIN_PREFIX',
+      `domain_host`      VARCHAR(255)     NOT NULL COMMENT '$_SERVER[HTTP_HOST] raw',
+      `run_type`         VARCHAR(20)      NOT NULL DEFAULT 'cron' COMMENT 'cron | manual',
+      `gmail_message_id` VARCHAR(100)     NULL,
+      `bounce_email`     VARCHAR(255)     NULL,
+      `unsubscribed`     TINYINT(1)       NOT NULL DEFAULT 0,
+      `api_action`       VARCHAR(50)      NOT NULL COMMENT 'fetch_list|fetch_batch|bounce_found|unsubscribe|run_summary',
+      `status`           VARCHAR(20)      NOT NULL DEFAULT 'success' COMMENT 'success|error|skipped',
+      `response_summary` TEXT             NULL,
+      `error_message`    TEXT             NULL,
+      `created_at`       DATETIME         NOT NULL,
+      PRIMARY KEY (`id`),
+      KEY `idx_domain`         (`domain`),
+      KEY `idx_message_domain` (`gmail_message_id`, `domain`),
+      KEY `idx_bounce_email`   (`bounce_email`(100)),
+      KEY `idx_created_at`     (`created_at`),
+      KEY `idx_status`         (`status`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ";
+    $wpdb->query($api_log_sql);
 }
 
 // Manual database initialization function (for debugging or manual setup)

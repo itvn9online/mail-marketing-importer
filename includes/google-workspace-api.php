@@ -33,9 +33,38 @@ $google_config = get_option(MMI_GOOGLE_CONFIG, array(
     <div class="google-workspace-integration">
         <h4 style="margin-bottom: 10px; color: #666;">📧 Google Workspace Gmail Failed Delivery Integration</h4>
 
-        <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
-            Automatically fetch failed delivery emails from Google Workspace Gmail and bulk unsubscribe them.
-        </p>
+        <?php
+        // ── Auto Unsubscribe Status Block ──────────────────────────────────────
+        $auto_status  = MMI_Auto_Unsubscribe::get_status();
+        $last_summary = $auto_status['last_summary'] ?? [];
+        ?>
+        <div style="background: #e8fde8; border: 1px solid #46b450; padding: 12px 15px; border-radius: 4px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <strong style="font-size: 13px;">⚙️ Auto Unsubscribe</strong>
+                    <div style="font-size: 12px; color: #555; margin-top: 4px; display: flex; gap: 15px; flex-wrap: wrap;">
+                        <span>🕐 Last: <strong><?php echo esc_html($auto_status['last_run'] ?: '—'); ?></strong></span>
+                        <span>⏭️ Next: <strong><?php echo esc_html($auto_status['next_run'] ?: '—'); ?></strong></span>
+                        <?php if (!empty($last_summary)): ?>
+                            <span>📧 Found: <strong><?php echo (int)($last_summary['messages_found'] ?? 0); ?></strong></span>
+                            <span>🚫 Unsub: <strong><?php echo (int)($last_summary['emails_unsubscribed'] ?? 0); ?></strong></span>
+                            <?php if (!empty($last_summary['errors'])): ?>
+                                <span style="color: #dc3232;">⚠️ Errors: <strong><?php echo count($last_summary['errors']); ?></strong></span>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
+                    <button type="button" id="mmi-run-now-btn" class="button button-primary" style="font-size: 12px;">
+                        ▶ Run Now
+                    </button>
+                    <a href="<?php echo admin_url('tools.php?page=mmi-unsubscribe-log'); ?>" class="button" style="font-size: 12px;" target="_blank">
+                        📋 View Log
+                    </a>
+                </div>
+            </div>
+            <div id="mmi-run-now-status" style="margin-top: 8px; font-size: 12px;"></div>
+        </div>
 
         <div style="background: #d1ecf1; border-left: 4px solid #bee5eb; padding: 10px; margin-bottom: 15px; border-radius: 3px;">
             <p style="margin-top: 0; color: #0c5460;">💡 Cách sử dụng:</p>

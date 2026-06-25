@@ -55,6 +55,9 @@ class Mail_Marketing_Importer
         // Google OAuth callback
         add_action('wp_ajax_mmi_google_callback', array($this, 'handle_google_callback'));
 
+        // Auto Unsubscribe - Run Now
+        add_action('wp_ajax_mmi_run_auto_unsubscribe', array($this, 'handle_run_auto_unsubscribe_ajax'));
+
         // Unsubscribe all campaign
         add_action('wp_ajax_unsubscribe_all_campaign', array($this, 'handle_unsubscribe_all_campaign'));
 
@@ -85,6 +88,16 @@ class Mail_Marketing_Importer
             'email-campaigns',
             array($this, 'campaigns_page')
         );
+
+        // Auto Unsubscribe Log Viewer
+        add_submenu_page(
+            'tools.php',
+            'Auto Unsubscribe Log',
+            'Auto Unsubscribe Log',
+            'manage_options',
+            'mmi-unsubscribe-log',
+            array($this, 'auto_unsubscribe_log_page')
+        );
     }
 
     /**
@@ -93,7 +106,11 @@ class Mail_Marketing_Importer
     public function enqueue_scripts($hook)
     {
         // Load scripts and styles for both import and campaign management pages
-        if (!in_array($hook, ['tools_page_mail-marketing-importer', 'tools_page_email-campaigns'])) {
+        if (!in_array($hook, [
+            'tools_page_mail-marketing-importer',
+            'tools_page_email-campaigns',
+            'tools_page_mmi-unsubscribe-log',
+        ])) {
             return;
         }
 
@@ -320,6 +337,39 @@ class Mail_Marketing_Importer
             </div>
         </div>
     <?php
+    }
+
+    /**
+     * Auto Unsubscribe Log Viewer page
+     */
+    public function auto_unsubscribe_log_page()
+    {
+        require_once MMI_PLUGIN_PATH . 'includes/auto-unsubscribe-log-page.php';
+    }
+
+    /**
+     * AJAX: Run Auto Unsubscribe manually
+     */
+    public function handle_run_auto_unsubscribe_ajax()
+    {
+        if (!wp_verify_nonce($_POST['mmi_nonce'] ?? '', 'mmi_action_nonce')) {
+            wp_send_json_error('Security check failed');
+            return;
+        }
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permission denied');
+            return;
+        }
+
+        $runner  = new MMI_Auto_Unsubscribe();
+        $summary = $runner->run('manual');
+
+        if (isset($summary['status']) && $summary['status'] === 'locked') {
+            wp_send_json_error('Another run is in progress. Please wait.');
+            return;
+        }
+
+        wp_send_json_success($summary);
     }
 
     /**
@@ -2185,7 +2235,7 @@ class Mail_Marketing_Importer
             // Gmail search parameters
             $query_params = array(
                 'q' => $search_query,
-                'maxResults' => 333, // Gmail API max is 500, but we'll use 333 for reasonable response time
+                'maxResults' => 500, // Gmail API max is 500, but we'll use 333 for reasonable response time
             );
 
             // Add date filter for last 7 days

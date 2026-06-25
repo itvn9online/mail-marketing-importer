@@ -67,6 +67,105 @@ function bulkUnsubscribeGoogleEmails(is_confirmed = true) {
 
 jQuery(document).ready(function ($) {
 	// ===================
+	// Auto Unsubscribe - Run Now
+	// ===================
+
+	$("#mmi-run-now-btn").on("click", function () {
+		var btn = $(this);
+		var status = $("#mmi-run-now-status");
+		btn.prop("disabled", true).text("⏳ Running...");
+		status.html(
+			'<span style="color:#0073aa">⏳ Đang chạy Auto Unsubscribe (server-side)...</span>',
+		);
+
+		$.post(
+			mmi_ajax.ajax_url,
+			{
+				action: "mmi_run_auto_unsubscribe",
+				mmi_nonce: mmi_ajax.nonce,
+			},
+			function (response) {
+				if (response.success) {
+					var d = response.data;
+					var errs =
+						d.errors && d.errors.length
+							? "<br>⚠️ Errors: " + d.errors.join("; ")
+							: "";
+					status.html(
+						'<span style="color:#46b450; background:#e8fde8; padding:5px 8px; border-radius:3px; display:inline-block;">' +
+							"✅ Hoàn thành! " +
+							"Messages: <b>" +
+							(d.messages_found || 0) +
+							"</b> | New: <b>" +
+							(d.messages_new || 0) +
+							"</b> | Bounces: <b>" +
+							(d.emails_extracted || 0) +
+							"</b> | Unsubscribed: <b>" +
+							(d.emails_unsubscribed || 0) +
+							"</b>" +
+							errs +
+							"</span>",
+					);
+					btn.prop("disabled", false).text("▶ Run Now");
+				} else {
+					var msg = response.data || "Unknown error";
+					if (msg.indexOf("locked") !== -1) {
+						status.html(
+							'<span style="color:#856404">⏳ ' +
+								msg +
+								"</span>",
+						);
+					} else {
+						status.html(
+							'<span style="color:#dc3232">❌ ' +
+								msg +
+								"</span>",
+						);
+					}
+					btn.prop("disabled", false).text("▶ Run Now");
+				}
+			},
+		).fail(function () {
+			status.html(
+				'<span style="color:#dc3232">❌ Connection error</span>',
+			);
+			btn.prop("disabled", false).text("▶ Run Now");
+		});
+	});
+
+	// Re-schedule cron nếu bị mất schedule
+	$("#mmi-reschedule-cron").on("click", function () {
+		var btn = $(this);
+		btn.prop("disabled", true).text("Scheduling...");
+		$.post(
+			mmi_ajax.ajax_url,
+			{
+				action: "mmi_reschedule_cron",
+				mmi_nonce: mmi_ajax.nonce,
+			},
+			function (response) {
+				if (response.success) {
+					$("#mmi-run-now-status").html(
+						'<span style="color:#46b450">✅ Cron đã được schedule lại. Trang sẽ tải lại...</span>',
+					);
+					setTimeout(function () {
+						location.reload();
+					}, 1500);
+				} else {
+					$("#mmi-run-now-status").html(
+						'<span style="color:#dc3232">❌ ' +
+							(response.data || "Failed") +
+							"</span>",
+					);
+					btn.prop("disabled", false).text("🔄 Re-schedule Cron");
+				}
+			},
+		).fail(function () {
+			btn.prop("disabled", false).text("🔄 Re-schedule Cron");
+		});
+	});
+
+	// ===================
 	// Google Workspace API Handlers
 	// ===================
 
